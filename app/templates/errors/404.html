@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}404 - Page Not Found{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="error-container mt-5">
+            <h1 class="pixel-font mb-4">404</h1>
+            <div class="pixel-art-error mb-4">
+                <img src="{{ url_for('static', filename='img/error-waifu.png') }}" alt="Error" style="max-width: 200px;">
+            </div>
+            <h2 class="pixel-font mb-3">Oops! Page Not Found</h2>
+            <p class="mb-4">The waifu you're looking for has gone missing! She might be in another castle.</p>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('main.index') }}" class="btn btn-pixel me-3">Go Home</a>
+                <button class="btn btn-pixel" onclick="history.back()">Go Back</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

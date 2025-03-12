@@ -1,0 +1,152 @@
+{% extends "layout.html" %}
+
+{% block title %}Chad Battles - Meme-Powered Blockchain Game{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">CHAD BATTLES</h1>
+        <p class="hero-subtitle">Transform your X profile into a meme-powered Chad and collect waifus!</p>
+        {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-pixel btn-lg">Login with X</a>
+        {% else %}
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-pixel btn-lg">Go to Dashboard</a>
+        {% endif %}
+    </div>
+</section>
+
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">How to Play</div>
+                <div class="card-body">
+                    <h5 class="pixel-font mb-3">Character Creation</h5>
+                    <ol>
+                        <li>Login with your X account</li>
+                        <li>Tweet <code>@RollMasterChad create character</code></li>
+                        <li>Our AI analyzes your tweets to create your Chad</li>
+                        <li>Receive your starter waifu and begin your journey</li>
+                    </ol>
+                    <a href="{{ url_for('main.how_to_play') }}" class="btn btn-pixel mt-2">Learn More</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Game Features</div>
+                <div class="card-body">
+                    <div class="d-flex mb-2">
+                        <div class="feature-icon me-3">🧙‍♂️</div>
+                        <div>
+                            <h5 class="pixel-font">Collect Waifus</h5>
+                            <p>Unlock powerful waifus that boost your Chad's stats</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-2">
+                        <div class="feature-icon me-3">⚔️</div>
+                        <div>
+                            <h5 class="pixel-font">Battle Other Chads</h5>
+                            <p>Challenge opponents and claim their waifus as prizes</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-2">
+                        <div class="feature-icon me-3">🏆</div>
+                        <div>
+                            <h5 class="pixel-font">Join Cabals</h5>
+                            <p>Form cabals with other players for group challenges</p>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="feature-icon me-3">💰</div>
+                        <div>
+                            <h5 class="pixel-font">NFT Integration</h5>
+                            <p>Mint your waifus as NFTs and trade them on the marketplace</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Leaderboard</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="pixel-font mb-3">Top Chads</h5>
+                            <div class="table-responsive">
+                                <table class="table table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Player</th>
+                                            <th>Level</th>
+                                            <th>Battles Won</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- This will be populated from the database in a real implementation -->
+                                        <tr>
+                                            <td>1</td>
+                                            <td>CryptoChad</td>
+                                            <td>42</td>
+                                            <td>128</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2</td>
+                                            <td>MemeKing</td>
+                                            <td>37</td>
+                                            <td>103</td>
+                                        </tr>
+                                        <tr>
+                                            <td>3</td>
+                                            <td>WaifuCollector</td>
+                                            <td>35</td>
+                                            <td>89</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <a href="{{ url_for('main.leaderboard') }}" class="btn btn-pixel mt-2">View Full Leaderboard</a>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5 class="pixel-font mb-3">Recent Battles</h5>
+                            <div class="battle-log">
+                                <!-- This will be populated from the database in a real implementation -->
+                                <div class="entry">
+                                    <strong>CryptoChad</strong> defeated <strong>DripMaster</strong> and claimed their <span class="rarity-rare">Rare Moon Waifu</span>!
+                                </div>
+                                <div class="entry">
+                                    <strong>MemeKing</strong> defeated <strong>SigmaGrinder</strong> in an epic battle!
+                                </div>
+                                <div class="entry">
+                                    <strong>WaifuCollector</strong> lost to <strong>BasedLord</strong> and surrendered their <span class="rarity-uncommon">Uncommon Trader Waifu</span>!
+                                </div>
+                                <div class="entry">
+                                    <strong>RatioGod</strong> defeated <strong>ChadSupreme</strong> with a devastating final move!
+                                </div>
+                                <div class="entry">
+                                    <strong>RugPullAvenger</strong> challenged <strong>NFTWizard</strong> to a battle!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h2 class="pixel-font mb-4">Getting Started Is Easy</h2>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-pixel btn-lg me-3">Login with X</a>
+            <a href="https://twitter.com/intent/tweet?text=@RollMasterChad+create+character" target="_blank" class="btn btn-pixel btn-lg">Tweet to @RollMasterChad</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

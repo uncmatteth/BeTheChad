@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./app/static:/app/app/static
+    depends_on:
+      - db
+    networks:
+      - chadbattles-network
+
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER:-chadbattles}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-chadbattles_password}
+      - POSTGRES_DB=${DB_NAME:-chadbattles}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - chadbattles-network
+
+  twitter-bot:
+    build: .
+    restart: always
+    command: python twitter_bot.py --interval 300
+    env_file:
+      - .env
+    depends_on:
+      - web
+      - db
+    networks:
+      - chadbattles-network
+
+networks:
+  chadbattles-network:
+    driver: bridge
+
+volumes:
+  postgres_data: 

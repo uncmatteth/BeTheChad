@@ -1,0 +1,574 @@
+{% extends "layout.html" %}
+
+{% block title %}Battle Stash - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="pixel-font text-center">Battle Stash</h1>
+            <p class="text-center">Manage your epic loot, battle waifus, and legendary Chad gear.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <!-- Inventory Navigation -->
+            <div class="card bg-dark border-secondary">
+                <div class="card-header pixel-font">Categories</div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" id="inventory-tabs" role="tablist">
+                        <a class="list-group-item list-group-item-action bg-dark text-light active" id="waifus-tab" data-bs-toggle="list" href="#waifus" role="tab" aria-controls="waifus">
+                            <i class="fas fa-heart me-2"></i> Battle Waifus
+                        </a>
+                        <a class="list-group-item list-group-item-action bg-dark text-light" id="equipped-tab" data-bs-toggle="list" href="#equipped" role="tab" aria-controls="equipped">
+                            <i class="fas fa-shield-alt me-2"></i> Equipped Gear
+                        </a>
+                        <a class="list-group-item list-group-item-action bg-dark text-light" id="items-tab" data-bs-toggle="list" href="#items" role="tab" aria-controls="items">
+                            <i class="fas fa-scroll me-2"></i> Loot Stash
+                        </a>
+                        <a class="list-group-item list-group-item-action bg-dark text-light" id="nfts-tab" data-bs-toggle="list" href="#nfts" role="tab" aria-controls="nfts">
+                            <i class="fas fa-gem me-2"></i> NFT Vault
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chad Stats -->
+            <div class="card bg-dark border-secondary mt-4">
+                <div class="card-header pixel-font">
+                    <i class="fas fa-user-circle me-2"></i> Chad Stats
+                </div>
+                <div class="card-body">
+                    {% if current_user.chad %}
+                    <div class="text-center mb-3">
+                        <img src="{{ url_for('static', filename='img/chad/' ~ current_user.chad.chad_class.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ current_user.chad.chad_class.name }}" class="character-sprite" width="80">
+                        <h5 class="pixel-font mt-2">{{ current_user.chad.name }}</h5>
+                        <div class="badge bg-primary">{{ current_user.chad.chad_class.name }}</div>
+                        <div class="badge bg-secondary">Level {{ current_user.chad.level }}</div>
+                    </div>
+                    
+                    <div class="inventory-stats">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Clout:</span>
+                            <span>{{ current_user.chad.get_total_stats().clout }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Roast Level:</span>
+                            <span>{{ current_user.chad.get_total_stats().roast_level }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Cringe Resist:</span>
+                            <span>{{ current_user.chad.get_total_stats().cringe_resistance }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Drip Factor:</span>
+                            <span>{{ current_user.chad.get_total_stats().drip_factor }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <button class="btn btn-pixel" id="mint-chad-btn" {% if current_user.chad.is_minted %}disabled{% endif %}>
+                            {% if current_user.chad.is_minted %}Chad NFT Minted{% else %}Mint Chad as NFT{% endif %}
+                        </button>
+                    </div>
+                    {% else %}
+                    <p class="text-center">No Chad character created yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <!-- Inventory Content -->
+            <div class="tab-content">
+                <!-- Waifus Tab -->
+                <div class="tab-pane fade show active" id="waifus" role="tabpanel" aria-labelledby="waifus-tab">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="pixel-font">Battle Waifus</span>
+                            <div>
+                                <select class="form-select form-select-sm bg-dark text-light border-secondary" id="waifu-filter">
+                                    <option value="all">All Rarities</option>
+                                    <option value="common">Common</option>
+                                    <option value="rare">Rare</option>
+                                    <option value="epic">Epic</option>
+                                    <option value="legendary">Legendary</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="waifu-container">
+                                {% if waifus %}
+                                    {% for waifu in waifus %}
+                                    <div class="col-md-4 col-sm-6 mb-4">
+                                        <div class="card bg-dark border-secondary h-100">
+                                            <div class="card-body text-center">
+                                                <img src="{{ url_for('static', filename='img/waifu/' ~ waifu.waifu_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ waifu.waifu_type.name }}" class="waifu-sprite mb-2">
+                                                <h5 class="pixel-font">{{ waifu.waifu_type.name }}</h5>
+                                                <div class="badge rarity-{{ waifu.waifu_type.rarity.name|lower }} mb-2">{{ waifu.waifu_type.rarity.name }}</div>
+                                                
+                                                {% if waifu.is_equipped %}
+                                                <div class="badge bg-success mb-2">Equipped</div>
+                                                {% endif %}
+                                                
+                                                {% if waifu.is_minted %}
+                                                <div class="badge bg-warning mb-2">NFT</div>
+                                                {% endif %}
+                                                
+                                                <div class="d-flex justify-content-between mt-2">
+                                                    <button class="btn btn-sm {% if waifu.is_equipped %}btn-danger-pixel{% else %}btn-pixel{% endif %} btn-equip-waifu" data-waifu-id="{{ waifu.id }}">
+                                                        {% if waifu.is_equipped %}Unequip{% else %}Equip{% endif %}
+                                                    </button>
+                                                    <button class="btn btn-sm {% if waifu.is_minted %}btn-secondary{% else %}btn-pixel{% endif %} btn-mint-waifu" data-waifu-id="{{ waifu.id }}" {% if waifu.is_minted %}disabled{% endif %}>
+                                                        {% if waifu.is_minted %}Minted{% else %}Mint NFT{% endif %}
+                                                    </button>
+                                                </div>
+                                                
+                                                <button class="btn btn-sm btn-pixel w-100 mt-2 btn-waifu-details" data-waifu-id="{{ waifu.id }}">Details</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="col-12 text-center py-4">
+                                    <p>No waifus found. Battle to win waifus!</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Equipped Gear Tab -->
+                <div class="tab-pane fade" id="equipped" role="tabpanel" aria-labelledby="equipped-tab">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-header pixel-font">Equipped Gear</div>
+                        <div class="card-body">
+                            <div class="row" id="equipped-container">
+                                {% if equipped_items %}
+                                    {% for item in equipped_items %}
+                                    <div class="col-md-4 col-sm-6 mb-4">
+                                        <div class="card bg-dark border-secondary h-100">
+                                            <div class="card-body text-center">
+                                                <img src="{{ url_for('static', filename='img/item/' ~ item.item_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ item.item_type.name }}" class="item-sprite mb-2">
+                                                <h5 class="pixel-font">{{ item.item_type.name }}</h5>
+                                                <div class="badge rarity-{{ item.item_type.rarity.name|lower }} mb-2">{{ item.item_type.rarity.name }}</div>
+                                                
+                                                {% if item.is_minted %}
+                                                <div class="badge bg-warning mb-2">NFT</div>
+                                                {% endif %}
+                                                
+                                                <div class="item-stats small">
+                                                    {% if item.clout_bonus %}
+                                                    <div>+{{ item.clout_bonus }} Clout</div>
+                                                    {% endif %}
+                                                    {% if item.roast_bonus %}
+                                                    <div>+{{ item.roast_bonus }} Roast</div>
+                                                    {% endif %}
+                                                    {% if item.cringe_resistance_bonus %}
+                                                    <div>+{{ item.cringe_resistance_bonus }} Cringe Resist</div>
+                                                    {% endif %}
+                                                    {% if item.drip_bonus %}
+                                                    <div>+{{ item.drip_bonus }} Drip</div>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <button class="btn btn-sm btn-danger-pixel w-100 mt-3 btn-unequip-item" data-item-id="{{ item.id }}">Unequip</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="col-12 text-center py-4">
+                                    <p>No equipped items found. Equip items to boost your stats!</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Items Tab -->
+                <div class="tab-pane fade" id="items" role="tabpanel" aria-labelledby="items-tab">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="pixel-font">Loot Stash</span>
+                            <div>
+                                <select class="form-select form-select-sm bg-dark text-light border-secondary" id="item-filter">
+                                    <option value="all">All Items</option>
+                                    <option value="weapon">Weapons</option>
+                                    <option value="armor">Armor</option>
+                                    <option value="accessory">Accessories</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row" id="items-container">
+                                {% if unequipped_items %}
+                                    {% for item in unequipped_items %}
+                                    <div class="col-md-4 col-sm-6 mb-4">
+                                        <div class="card bg-dark border-secondary h-100">
+                                            <div class="card-body text-center">
+                                                <img src="{{ url_for('static', filename='img/item/' ~ item.item_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ item.item_type.name }}" class="item-sprite mb-2">
+                                                <h5 class="pixel-font">{{ item.item_type.name }}</h5>
+                                                <div class="badge rarity-{{ item.item_type.rarity.name|lower }} mb-2">{{ item.item_type.rarity.name }}</div>
+                                                
+                                                {% if item.is_minted %}
+                                                <div class="badge bg-warning mb-2">NFT</div>
+                                                {% endif %}
+                                                
+                                                <div class="item-stats small">
+                                                    {% if item.clout_bonus %}
+                                                    <div>+{{ item.clout_bonus }} Clout</div>
+                                                    {% endif %}
+                                                    {% if item.roast_bonus %}
+                                                    <div>+{{ item.roast_bonus }} Roast</div>
+                                                    {% endif %}
+                                                    {% if item.cringe_resistance_bonus %}
+                                                    <div>+{{ item.cringe_resistance_bonus }} Cringe Resist</div>
+                                                    {% endif %}
+                                                    {% if item.drip_bonus %}
+                                                    <div>+{{ item.drip_bonus }} Drip</div>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div class="d-flex justify-content-between mt-3">
+                                                    <button class="btn btn-sm btn-pixel btn-equip-item" data-item-id="{{ item.id }}">Equip</button>
+                                                    <button class="btn btn-sm {% if item.is_minted %}btn-secondary{% else %}btn-pixel{% endif %} btn-mint-item" data-item-id="{{ item.id }}" {% if item.is_minted %}disabled{% endif %}>
+                                                        {% if item.is_minted %}Minted{% else %}Mint NFT{% endif %}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="col-12 text-center py-4">
+                                    <p>No items found. Battle to win loot or craft new items!</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- NFTs Tab -->
+                <div class="tab-pane fade" id="nfts" role="tabpanel" aria-labelledby="nfts-tab">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-header pixel-font">NFT Vault</div>
+                        <div class="card-body">
+                            {% if not current_user.wallet_address %}
+                            <div class="text-center py-4">
+                                <p>Connect your Solana wallet to mint and manage NFTs.</p>
+                                <button id="connect-wallet-btn" class="btn btn-pixel mt-3">Connect Wallet</button>
+                            </div>
+                            {% else %}
+                            <div class="wallet-connected mb-4">
+                                <i class="fas fa-wallet me-2"></i> Connected: 
+                                <span class="wallet-type">{{ current_user.wallet_type|capitalize }}</span>
+                                <span class="wallet-address">{{ current_user.wallet_address[:6] }}...{{ current_user.wallet_address[-4:] }}</span>
+                            </div>
+                            
+                            <div class="row" id="nfts-container">
+                                {% if nfts %}
+                                    {% for nft in nfts %}
+                                    <div class="col-md-4 col-sm-6 mb-4">
+                                        <div class="card bg-dark border-secondary h-100">
+                                            <div class="card-body text-center">
+                                                {% if nft.entity_type == 'waifu' %}
+                                                <img src="{{ url_for('static', filename='img/waifu/' ~ nft.waifu.waifu_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ nft.waifu.waifu_type.name }}" class="nft-sprite mb-2">
+                                                <h5 class="pixel-font">{{ nft.waifu.waifu_type.name }}</h5>
+                                                <div class="badge rarity-{{ nft.waifu.waifu_type.rarity.name|lower }} mb-2">{{ nft.waifu.waifu_type.rarity.name }}</div>
+                                                {% elif nft.entity_type == 'item' %}
+                                                <img src="{{ url_for('static', filename='img/item/' ~ nft.item.item_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ nft.item.item_type.name }}" class="nft-sprite mb-2">
+                                                <h5 class="pixel-font">{{ nft.item.item_type.name }}</h5>
+                                                <div class="badge rarity-{{ nft.item.item_type.rarity.name|lower }} mb-2">{{ nft.item.item_type.rarity.name }}</div>
+                                                {% elif nft.entity_type == 'chad' %}
+                                                <img src="{{ url_for('static', filename='img/chad/' ~ nft.chad.chad_class.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ nft.chad.chad_class.name }}" class="nft-sprite mb-2">
+                                                <h5 class="pixel-font">{{ nft.chad.name }}</h5>
+                                                <div class="badge bg-primary mb-2">{{ nft.chad.chad_class.name }}</div>
+                                                {% endif %}
+                                                
+                                                <div class="nft-info">
+                                                    <div class="small">Token ID: {{ nft.token_id[:6] }}...{{ nft.token_id[-4:] }}</div>
+                                                    <div class="small">Minted: {{ nft.minted_at.strftime('%b %d, %Y') }}</div>
+                                                </div>
+                                                
+                                                <div class="d-flex justify-content-between mt-3">
+                                                    <button class="btn btn-sm btn-pixel btn-view-nft" data-nft-id="{{ nft.id }}" data-entity-type="{{ nft.entity_type }}">Details</button>
+                                                    <button class="btn btn-sm btn-danger-pixel btn-burn-nft" data-nft-id="{{ nft.id }}">Burn for Chadcoin</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="col-12 text-center py-4">
+                                    <p>No NFTs minted yet. Mint your waifus, items, or Chad as NFTs!</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="nft-info-box mt-4">
+                                <h5 class="pixel-font">NFT Trading</h5>
+                                <p>Your NFTs can be traded on third-party Solana marketplaces like Magic Eden, OpenSea, or SolSea.</p>
+                                <p>All NFT transactions include a 1% royalty that supports the game's development.</p>
+                                <p>When you burn an NFT, you'll receive Chadcoin based on the rarity and level of the item.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Waifu Detail Modal -->
+<div class="modal fade" id="waifuDetailModal" tabindex="-1" aria-labelledby="waifuDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title pixel-font" id="waifuDetailModalTitle">Waifu Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center" id="waifuDetailContent">
+                <!-- Content loaded via JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NFT Detail Modal -->
+<div class="modal fade" id="nftDetailModal" tabindex="-1" aria-labelledby="nftDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title pixel-font" id="nftDetailModalTitle">NFT Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center" id="nftDetailContent">
+                <!-- Content loaded via JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Waifu filter
+        const waifuFilter = document.getElementById('waifu-filter');
+        if (waifuFilter) {
+            waifuFilter.addEventListener('change', function() {
+                const rarity = this.value;
+                const waifuCards = document.querySelectorAll('#waifu-container .card');
+                
+                waifuCards.forEach(card => {
+                    if (rarity === 'all' || card.querySelector(`.badge.rarity-${rarity}`)) {
+                        card.closest('.col-md-4').style.display = '';
+                    } else {
+                        card.closest('.col-md-4').style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Item filter
+        const itemFilter = document.getElementById('item-filter');
+        if (itemFilter) {
+            itemFilter.addEventListener('change', function() {
+                const type = this.value;
+                const itemCards = document.querySelectorAll('#items-container .card');
+                
+                // Implementation would depend on how item types are stored in the DOM
+                // This is a placeholder for the filtering logic
+            });
+        }
+        
+        // Waifu detail buttons
+        const waifuDetailButtons = document.querySelectorAll('.btn-waifu-details');
+        waifuDetailButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const waifuId = this.getAttribute('data-waifu-id');
+                
+                // Fetch waifu details and populate modal
+                fetch(`/inventory/waifu/${waifuId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const modal = document.getElementById('waifuDetailContent');
+                            modal.innerHTML = data.html;
+                            
+                            // Show modal
+                            const waifuModal = new bootstrap.Modal(document.getElementById('waifuDetailModal'));
+                            waifuModal.show();
+                        } else {
+                            showAlert('danger', data.message);
+                        }
+                    });
+            });
+        });
+        
+        // Equip/Unequip waifu buttons
+        const equipWaifuButtons = document.querySelectorAll('.btn-equip-waifu');
+        equipWaifuButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const waifuId = this.getAttribute('data-waifu-id');
+                const isEquipped = this.textContent.trim() === 'Unequip';
+                
+                fetch(`/inventory/waifu/${waifuId}/${isEquipped ? 'unequip' : 'equip'}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update button text and class
+                        this.textContent = isEquipped ? 'Equip' : 'Unequip';
+                        this.classList.toggle('btn-danger-pixel');
+                        this.classList.toggle('btn-pixel');
+                        
+                        // Update equipped status badge
+                        const card = this.closest('.card');
+                        let badge = card.querySelector('.badge.bg-success');
+                        
+                        if (isEquipped && badge) {
+                            badge.remove();
+                        } else if (!isEquipped && !badge) {
+                            badge = document.createElement('div');
+                            badge.className = 'badge bg-success mb-2';
+                            badge.textContent = 'Equipped';
+                            card.querySelector('.badge.rarity-common, .badge.rarity-rare, .badge.rarity-epic, .badge.rarity-legendary').after(badge);
+                        }
+                        
+                        showAlert('success', data.message);
+                    } else {
+                        showAlert('danger', data.message);
+                    }
+                });
+            });
+        });
+        
+        // Mint buttons
+        const mintButtons = document.querySelectorAll('.btn-mint-waifu, .btn-mint-item');
+        mintButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const entityType = this.classList.contains('btn-mint-waifu') ? 'waifu' : 'item';
+                const entityId = this.getAttribute('data-' + entityType + '-id');
+                
+                if (!confirm(`Are you sure you want to mint this ${entityType} as an NFT? This will cost 50 Chadcoin.`)) {
+                    return;
+                }
+                
+                this.disabled = true;
+                this.innerHTML = 'Minting...';
+                
+                fetch('/api/mint-nft', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        entity_type: entityType,
+                        entity_id: entityId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update button
+                        this.classList.remove('btn-pixel');
+                        this.classList.add('btn-secondary');
+                        this.innerHTML = 'Minted';
+                        this.disabled = true;
+                        
+                        // Add NFT badge
+                        const card = this.closest('.card');
+                        const badges = card.querySelector('.badge.rarity-common, .badge.rarity-rare, .badge.rarity-epic, .badge.rarity-legendary').parentNode;
+                        
+                        const nftBadge = document.createElement('div');
+                        nftBadge.className = 'badge bg-warning mb-2';
+                        nftBadge.textContent = 'NFT';
+                        badges.appendChild(nftBadge);
+                        
+                        showAlert('success', data.message);
+                    } else {
+                        this.disabled = false;
+                        this.innerHTML = 'Mint NFT';
+                        showAlert('danger', data.message);
+                    }
+                });
+            });
+        });
+        
+        // Mint Chad button
+        const mintChadBtn = document.getElementById('mint-chad-btn');
+        if (mintChadBtn && !mintChadBtn.disabled) {
+            mintChadBtn.addEventListener('click', function() {
+                if (!confirm('Are you sure you want to mint your Chad as an NFT? This will cost 100 Chadcoin.')) {
+                    return;
+                }
+                
+                this.disabled = true;
+                this.innerHTML = 'Minting...';
+                
+                fetch('/api/mint-chad-nft', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        this.innerHTML = 'Chad NFT Minted';
+                        showAlert('success', data.message);
+                    } else {
+                        this.disabled = false;
+                        this.innerHTML = 'Mint Chad as NFT';
+                        showAlert('danger', data.message);
+                    }
+                });
+            });
+        }
+        
+        // Helper function to show alerts
+        function showAlert(type, message) {
+            const alertContainer = document.createElement('div');
+            alertContainer.className = 'alert-container position-fixed top-0 end-0 p-3';
+            alertContainer.style.zIndex = '9999';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            alertContainer.appendChild(alert);
+            document.body.appendChild(alertContainer);
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    alertContainer.remove();
+                }, 300);
+            }, 5000);
+        }
+    });
+</script>
+{% endblock %} 

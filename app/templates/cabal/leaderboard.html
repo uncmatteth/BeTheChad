@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+
+{% block title %}Cabal Leaderboard - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="pixel-font">Cabal Leaderboard</h1>
+        <p class="lead">The most powerful cabals in the Chad Battles universe!</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Top Cabals</span>
+                {% if current_user.is_authenticated and current_user.chad %}
+                    {% if current_user.chad.cabal_membership %}
+                        <a href="{{ url_for('cabal.index') }}" class="btn btn-sm btn-pixel">My Cabal</a>
+                    {% else %}
+                        <a href="{{ url_for('cabal.create') }}" class="btn btn-sm btn-pixel">Create Cabal</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if cabals %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Cabal</th>
+                                    <th>Level</th>
+                                    <th>Battle Power</th>
+                                    <th>Members</th>
+                                    <th>Lord of the Shill</th>
+                                    <th>W/L</th>
+                                    <th>Win Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cabal in cabals %}
+                                <tr>
+                                    <td>{{ cabal.rank }}</td>
+                                    <td>
+                                        <a href="{{ url_for('cabal.battles', cabal_id=cabal.id) }}" class="cabal-name">{{ cabal.name }}</a>
+                                    </td>
+                                    <td>{{ cabal.level }}</td>
+                                    <td>{{ cabal.power | number_format }}</td>
+                                    <td>{{ cabal.member_count }}</td>
+                                    <td>
+                                        <span class="leader-name">{{ cabal.leader_name }}</span>
+                                        <small class="text-muted d-block">@{{ cabal.leader_username }}</small>
+                                    </td>
+                                    <td>{{ cabal.battles_won }}/{{ cabal.battles_lost }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                data-width="{{ cabal.win_rate }}"
+                                                aria-valuenow="{{ cabal.win_rate }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                                {{ cabal.win_rate }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <p>No cabals found. Be the first to create one!</p>
+                        {% if current_user.is_authenticated and current_user.chad %}
+                            <a href="{{ url_for('cabal.create') }}" class="btn btn-pixel mt-2">Create Cabal</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">Cabal Perks</div>
+            <div class="card-body">
+                <h5 class="pixel-font">Why Join a Cabal?</h5>
+                <ul>
+                    <li>Gain stat bonuses from the Lord of the Shill and Officers</li>
+                    <li>Participate in cabal battles for bonus XP and rewards</li>
+                    <li>Climb the leaderboard ranks together</li>
+                    <li>Access to special cabal-only missions and events</li>
+                    <li>Form alliances with other cabals for strategic advantage</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">Officer System</div>
+            <div class="card-body">
+                <h5 class="pixel-font">Cabal Officers</h5>
+                <p>Each cabal can have four officers, each granting bonuses to all members:</p>
+                <ul>
+                    <li><strong>Clout Commander:</strong> Grants 50% of their Clout stat to all cabal members</li>
+                    <li><strong>Roast Master:</strong> Grants 50% of their Roast Level stat to all cabal members</li>
+                    <li><strong>Cringe Shield:</strong> Grants 50% of their Cringe Resistance stat to all cabal members</li>
+                    <li><strong>Drip Director:</strong> Grants 50% of their Drip Factor stat to all cabal members</li>
+                </ul>
+                <p class="text-muted">The Lord of the Shill also grants 0.1 to all stats for every cabal member.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set width of progress bars based on data-width attribute
+        const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+        progressBars.forEach(bar => {
+            const width = bar.getAttribute('data-width');
+            bar.style.width = width + '%';
+        });
+    });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .cabal-name {
+        color: #ffc107;
+        font-weight: bold;
+    }
+    
+    .cabal-name:hover {
+        color: #ffc107;
+        text-decoration: none;
+    }
+    
+    .leader-name {
+        font-weight: bold;
+    }
+    
+    .progress {
+        background-color: #343a40;
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block title %}Login - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                Login to Chad Battles
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <img src="{{ url_for('static', filename='img/chad-logo.png') }}" alt="Chad Battles Logo" class="img-fluid mb-3" style="max-width: 150px;">
+                    <h4 class="pixel-font">Transform your X profile into a Chad</h4>
+                    <p class="text-muted">Connect with your X account to start your journey</p>
+                </div>
+                
+                <a href="{{ url_for('auth.twitter_login') }}" class="btn btn-pixel btn-lg mb-3 d-block">
+                    <i class="fab fa-twitter me-2"></i> Login with X
+                </a>
+                
+                <div class="mt-4">
+                    <h5 class="pixel-font mb-3">What You'll Get</h5>
+                    <div class="d-flex justify-content-center mb-2">
+                        <div class="feature-icon me-2">🎮</div>
+                        <div class="text-start">A unique Chad character based on your X profile</div>
+                    </div>
+                    <div class="d-flex justify-content-center mb-2">
+                        <div class="feature-icon me-2">🏆</div>
+                        <div class="text-start">Battle other Chads and win prizes</div>
+                    </div>
+                    <div class="d-flex justify-content-center mb-2">
+                        <div class="feature-icon me-2">🧙‍♂️</div>
+                        <div class="text-start">Collect rare waifus with special powers</div>
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <div class="feature-icon me-2">💰</div>
+                        <div class="text-start">Mint and trade NFTs on the blockchain</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <small>By logging in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Font Awesome for Twitter icon -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+{% endblock %} 

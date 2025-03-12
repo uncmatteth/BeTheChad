@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Connect Wallet - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Connect Your Wallet</h1>
+            <p class="lead">Choose a wallet provider to connect to Chad Battles.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-wallet me-2"></i>Select a Wallet</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Phantom Wallet -->
+                        <div class="col-md-6">
+                            <div class="card wallet-card h-100 border hover-shadow">
+                                <div class="card-body text-center py-4">
+                                    <img src="{{ url_for('static', filename='img/wallets/placeholder.png') }}" alt="Phantom" class="wallet-logo mb-3" width="64">
+                                    <h5>Phantom</h5>
+                                    <p class="text-muted mb-4">The friendly Solana wallet with dApp browser</p>
+                                    <button class="btn btn-primary wallet-connect-btn" data-wallet-type="phantom">
+                                        <i class="fas fa-link me-2"></i>Connect
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Solflare Wallet -->
+                        <div class="col-md-6">
+                            <div class="card wallet-card h-100 border hover-shadow">
+                                <div class="card-body text-center py-4">
+                                    <img src="{{ url_for('static', filename='img/wallets/placeholder.png') }}" alt="Solflare" class="wallet-logo mb-3" width="64">
+                                    <h5>Solflare</h5>
+                                    <p class="text-muted mb-4">Non-custodial Solana wallet with staking</p>
+                                    <button class="btn btn-primary wallet-connect-btn" data-wallet-type="solflare">
+                                        <i class="fas fa-link me-2"></i>Connect
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slope Wallet -->
+                        <div class="col-md-6">
+                            <div class="card wallet-card h-100 border hover-shadow">
+                                <div class="card-body text-center py-4">
+                                    <img src="{{ url_for('static', filename='img/wallets/placeholder.png') }}" alt="Slope" class="wallet-logo mb-3" width="64">
+                                    <h5>Slope</h5>
+                                    <p class="text-muted mb-4">Cross-platform Solana wallet with DEX</p>
+                                    <button class="btn btn-primary wallet-connect-btn" data-wallet-type="slope">
+                                        <i class="fas fa-link me-2"></i>Connect
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Magic Eden Wallet -->
+                        <div class="col-md-6">
+                            <div class="card wallet-card h-100 border hover-shadow">
+                                <div class="card-body text-center py-4">
+                                    <img src="{{ url_for('static', filename='img/wallets/placeholder.png') }}" alt="Magic Eden" class="wallet-logo mb-3" width="64">
+                                    <h5>Magic Eden</h5>
+                                    <p class="text-muted mb-4">NFT marketplace with integrated wallet</p>
+                                    <button class="btn btn-primary wallet-connect-btn" data-wallet-type="magiceden">
+                                        <i class="fas fa-link me-2"></i>Connect
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Demo Mode for Development -->
+                    <div class="mt-5 pt-3 border-top">
+                        <h5>Development Mode</h5>
+                        <p>For testing purposes only:</p>
+                        <form action="{{ url_for('wallet.connect') }}" method="POST">
+                            <div class="mb-3">
+                                <label for="wallet_address" class="form-label">Wallet Address</label>
+                                <input type="text" class="form-control" id="wallet_address" name="wallet_address" placeholder="Enter a Solana wallet address" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="wallet_type" class="form-label">Wallet Type</label>
+                                <select class="form-select" id="wallet_type" name="wallet_type" required>
+                                    <option value="phantom">Phantom</option>
+                                    <option value="solflare">Solflare</option>
+                                    <option value="slope">Slope</option>
+                                    <option value="magiceden">Magic Eden</option>
+                                </select>
+                            </div>
+                            <input type="hidden" name="signature" value="demo_signature">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-code me-2"></i>Connect Demo Wallet
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Instructions Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>How to Connect</h5>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li class="mb-2">Select your preferred wallet provider.</li>
+                        <li class="mb-2">If you don't have the wallet installed, you'll be redirected to install it.</li>
+                        <li class="mb-2">Approve the connection request in your wallet.</li>
+                        <li class="mb-2">Once connected, you'll be able to mint NFTs and perform blockchain operations.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Why Connect Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Why Connect a Wallet?</h5>
+                </div>
+                <div class="card-body">
+                    <p>Connecting your wallet enables you to:</p>
+                    <ul class="mb-0">
+                        <li>Mint your game assets as NFTs</li>
+                        <li>Own your digital items on the blockchain</li>
+                        <li>Trade your NFTs on marketplaces</li>
+                        <li>Earn Chadcoin by burning NFTs</li>
+                        <li>Participate in exclusive NFT events</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Connection Status Modal -->
+<div class="modal fade" id="walletConnectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Connecting Wallet</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0">Please approve the connection request in your wallet...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // This is a simplified mock implementation for development
+    // In production, this would use the Solana Web3 library to connect to actual wallets
+    document.addEventListener('DOMContentLoaded', function() {
+        const connectButtons = document.querySelectorAll('.wallet-connect-btn');
+        
+        connectButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const walletType = this.getAttribute('data-wallet-type');
+                
+                // Show connection modal
+                const modal = new bootstrap.Modal(document.getElementById('walletConnectionModal'));
+                modal.show();
+                
+                // Mock wallet connection
+                setTimeout(() => {
+                    // In production, this would handle the actual wallet connection
+                    // And verify the signature
+                    
+                    // For development, we'll simulate a successful connection
+                    const mockAddress = 'GgE2mC81tLTggDay' + Math.random().toString(36).substr(2, 9);
+                    
+                    // Create a form and submit it
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ url_for("wallet.connect") }}';
+                    
+                    const addressInput = document.createElement('input');
+                    addressInput.type = 'hidden';
+                    addressInput.name = 'wallet_address';
+                    addressInput.value = mockAddress;
+                    
+                    const typeInput = document.createElement('input');
+                    typeInput.type = 'hidden';
+                    typeInput.name = 'wallet_type';
+                    typeInput.value = walletType;
+                    
+                    const signatureInput = document.createElement('input');
+                    signatureInput.type = 'hidden';
+                    signatureInput.name = 'signature';
+                    signatureInput.value = 'mock_signature_' + Date.now();
+                    
+                    form.appendChild(addressInput);
+                    form.appendChild(typeInput);
+                    form.appendChild(signatureInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }, 2000);
+            });
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+
+{% block title %}Edit Cabal - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <a href="{{ url_for('cabal.index') }}" class="btn btn-outline-secondary mb-3">
+            <i class="fas fa-arrow-left"></i> Back to Cabal
+        </a>
+        <h1 class="pixel-font">Edit Cabal</h1>
+        <p>Update your cabal's information.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">Edit Cabal Details</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('cabal.edit', cabal_id=cabal.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="mb-3">
+                        <label for="cabalName" class="form-label">Cabal Name</label>
+                        <input type="text" class="form-control" id="cabalName" name="name" value="{{ cabal.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cabalDescription" class="form-label">Cabal Description</label>
+                        <textarea class="form-control" id="cabalDescription" name="description" rows="4">{{ cabal.description }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Invite Code</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ cabal.invite_code }}" readonly>
+                            <button type="button" class="btn btn-outline-primary" onclick="copyToClipboard('{{ cabal.invite_code }}')">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <small class="text-muted">Share this code with others to invite them to your cabal.</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-pixel">Save Changes</button>
+                        <a href="{{ url_for('cabal.disband', cabal_id=cabal.id) }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to disband the cabal? This action cannot be undone.');">
+                            Disband Cabal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        alert('Copied to clipboard!');
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,177 @@
+{% extends "layout.html" %}
+
+{% block title %}NFT Details - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">{{ nft_data.metadata.name }}</h3>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ nft_data.metadata.image }}" alt="{{ nft_data.metadata.name }}" class="img-fluid rounded mb-3" style="max-height: 300px;">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="badge bg-primary">{{ nft_data.entity_type|capitalize }}</span>
+                        {% if nft_data.entity_type == 'chad' %}
+                            <span class="badge bg-danger">Level {{ nft_data.metadata.attributes|selectattr('trait_type', 'equalto', 'Level')|map(attribute='value')|first }}</span>
+                        {% else %}
+                            {% set rarity = nft_data.metadata.attributes|selectattr('trait_type', 'equalto', 'Rarity')|map(attribute='value')|first %}
+                            {% if rarity == 'Common' %}
+                                <span class="badge bg-secondary">{{ rarity }}</span>
+                            {% elif rarity == 'Rare' %}
+                                <span class="badge bg-info">{{ rarity }}</span>
+                            {% elif rarity == 'Epic' %}
+                                <span class="badge bg-purple">{{ rarity }}</span>
+                            {% elif rarity == 'Legendary' %}
+                                <span class="badge bg-warning">{{ rarity }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <p class="card-text">{{ nft_data.metadata.description }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">NFT Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5>Token ID</h5>
+                        <p class="text-muted small">{{ nft_data.token_id }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Metadata URI</h5>
+                        <p class="text-muted small">{{ nft_data.metadata_uri }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Minting Transaction</h5>
+                        <p class="text-muted small">{{ nft_data.transaction_id }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Minted On</h5>
+                        <p>{{ nft_data.created_at|date }}</p>
+                    </div>
+                    
+                    {% if is_owner %}
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#burnModal">
+                            <i class="fas fa-fire me-2"></i> Burn NFT for Chadcoin
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow-lg mt-4">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">Attributes</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for attr in nft_data.metadata.attributes %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ attr.trait_type }}</h6>
+                                    <p class="card-text fw-bold">{{ attr.value }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if is_owner %}
+<!-- Burn NFT Modal -->
+<div class="modal fade" id="burnModal" tabindex="-1" aria-labelledby="burnModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="burnModalLabel">Burn NFT</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to burn this NFT? This action cannot be undone.</p>
+                <p>You will receive <span class="fw-bold">{{ chadcoin_reward }}</span> Chadcoin for burning this NFT.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmBurn">Burn NFT</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if is_owner %}
+        const confirmBurnBtn = document.getElementById('confirmBurn');
+        if (confirmBurnBtn) {
+            confirmBurnBtn.addEventListener('click', function() {
+                // Show loading state
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                this.disabled = true;
+                
+                // Send burn request
+                fetch('/api/burn-nft', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nft_id: "{{ nft_data.id }}"
+                    })
+                })
+                .then(function(response) { 
+                    return response.json(); 
+                })
+                .then(function(data) {
+                    if (data.success) {
+                        // Show success message
+                        const burnModal = document.getElementById('burnModal');
+                        const modal = bootstrap.Modal.getInstance(burnModal);
+                        modal.hide();
+                        
+                        // Show success toast
+                        const toast = new bootstrap.Toast(document.getElementById('successToast'));
+                        document.getElementById('toastMessage').textContent = 'Successfully burned NFT and received ' + data.chadcoin_reward + ' Chadcoin!';
+                        toast.show();
+                        
+                        // Redirect to inventory after a delay
+                        setTimeout(function() {
+                            window.location.href = '/inventory';
+                        }, 2000);
+                    } else {
+                        // Show error message
+                        alert('Error: ' + data.error);
+                        this.innerHTML = 'Burn NFT';
+                        this.disabled = false;
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                    this.innerHTML = 'Burn NFT';
+                    this.disabled = false;
+                });
+            });
+        }
+        {% endif %}
+    });
+</script>
+{% endblock %} 

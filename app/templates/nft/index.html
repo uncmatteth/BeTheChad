@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{% block title %}My NFTs - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">My NFTs</h1>
+            <p class="lead">View and manage your NFT collection</p>
+        </div>
+    </div>
+    
+    {% if nfts %}
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for nft in nfts %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ nft.metadata.name }}</h5>
+                    <span class="badge bg-primary">{{ nft.entity_type|capitalize }}</span>
+                </div>
+                <img src="{{ nft.metadata.image }}" class="card-img-top p-3" alt="{{ nft.metadata.name }}" style="height: 200px; object-fit: contain;">
+                <div class="card-body">
+                    <p class="card-text small">{{ nft.metadata.description|truncate(100) }}</p>
+                    
+                    {% if nft.entity_type == 'chad' %}
+                        {% set level = nft.metadata.attributes|selectattr('trait_type', 'equalto', 'Level')|map(attribute='value')|first %}
+                        <div class="d-flex justify-content-between">
+                            <span class="badge bg-danger">Level {{ level }}</span>
+                            <span class="badge bg-info">{{ nft.metadata.attributes|selectattr('trait_type', 'equalto', 'Class')|map(attribute='value')|first }}</span>
+                        </div>
+                    {% else %}
+                        {% set rarity = nft.metadata.attributes|selectattr('trait_type', 'equalto', 'Rarity')|map(attribute='value')|first %}
+                        <div class="text-center">
+                            {% if rarity == 'Common' %}
+                                <span class="badge bg-secondary">{{ rarity }}</span>
+                            {% elif rarity == 'Rare' %}
+                                <span class="badge bg-info">{{ rarity }}</span>
+                            {% elif rarity == 'Epic' %}
+                                <span class="badge bg-purple">{{ rarity }}</span>
+                            {% elif rarity == 'Legendary' %}
+                                <span class="badge bg-warning">{{ rarity }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-grid">
+                        <a href="{{ url_for('nft.view', nft_id=nft.id) }}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <h3 class="mb-4">You don't have any NFTs yet</h3>
+                    <p class="mb-4">Mint your first NFT by going to your inventory and selecting a waifu, item, or your Chad character.</p>
+                    <a href="{{ url_for('inventory.index') }}" class="btn btn-primary btn-lg">Go to Inventory</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Success Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-success text-white">
+            <strong class="me-auto">Success</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            Operation completed successfully!
+        </div>
+    </div>
+</div>
+{% endblock %} 

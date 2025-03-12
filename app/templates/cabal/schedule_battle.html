@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+
+{% block title %}Schedule Cabal Battle - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <a href="{{ url_for('cabal.index') }}" class="btn btn-outline-secondary mb-3">
+            <i class="fas fa-arrow-left"></i> Back to Cabal
+        </a>
+        <h1 class="pixel-font">Schedule Cabal Battle</h1>
+        <p>Challenge another cabal to battle and increase your cabal's glory!</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">Battle Schedule</div>
+            <div class="card-body">
+                {% if battles_remaining > 0 %}
+                    <p>Your cabal can schedule <strong>{{ battles_remaining }}</strong> more battles this week.</p>
+                    
+                    <form method="POST" action="{{ url_for('cabal.schedule_battle', cabal_id=cabal.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <div class="mb-3">
+                            <label for="opponentCabal" class="form-label">Select Opponent Cabal</label>
+                            <select class="form-select" id="opponentCabal" name="opponent_cabal_id" required>
+                                <option value="" selected disabled>-- Select Opponent --</option>
+                                {% for opponent in other_cabals %}
+                                <option value="{{ opponent.id }}">{{ opponent.name }} (Level {{ opponent.level }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="battleDate" class="form-label">Battle Date</label>
+                                <input type="date" class="form-control" id="battleDate" name="battle_date" required min="{{ now.strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="battleTime" class="form-label">Battle Time (UTC)</label>
+                                <input type="time" class="form-control" id="battleTime" name="battle_time" required>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Battles must be scheduled at least 1 hour in the future to allow members time to opt in.
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-pixel">Schedule Battle</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Your cabal has already scheduled the maximum 3 battles for this week.
+                    </div>
+                    <p>Try again next week, or focus on the battles you've already scheduled!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">Battle Tips</div>
+            <div class="card-body">
+                <h5 class="pixel-font">For Maximum Success:</h5>
+                <ul>
+                    <li>Encourage all cabal members to opt in</li>
+                    <li>Challenge cabals near your own level</li>
+                    <li>Make sure your officers are optimized for their roles</li>
+                    <li>Schedule battles when most of your members are available</li>
+                    <li>Use Meme Elixirs before important battles</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Rewards</div>
+            <div class="card-body">
+                <h5 class="pixel-font">Battle Victory Yields:</h5>
+                <ul>
+                    <li>Chadcoin for all participating members</li>
+                    <li>XP for both the cabal and individual members</li>
+                    <li>Increased cabal ranking</li>
+                    <li>Chance for rare item drops</li>
+                </ul>
+                <p class="text-muted">Even in defeat, participants earn some XP for their effort.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set minimum date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        document.getElementById('battleDate').setAttribute('min', formattedDate);
+        
+        // Set default date to today
+        document.getElementById('battleDate').value = formattedDate;
+        
+        // Set default time to current time + 2 hours
+        const hours = today.getHours() + 2;
+        const minutes = today.getMinutes();
+        const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        document.getElementById('battleTime').value = formattedTime;
+    });
+</script>
+{% endblock %} 

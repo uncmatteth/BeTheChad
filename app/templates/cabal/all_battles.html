@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Cabal Battles{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Cabal Battles</h1>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">Your Cabal</h4>
+                        </div>
+                        <div class="card-body">
+                            <h5>{{ cabal.name }} (Level {{ cabal.level }})</h5>
+                            <p>Total Power: <strong>{{ cabal.total_power|int }}</strong></p>
+                            <p>Rank: <strong>#{{ cabal.rank }}</strong></p>
+                            <p>Members: <strong>{{ cabal.member_count }}</strong></p>
+                            
+                            <div class="mt-3">
+                                <a href="{{ url_for('cabal.index') }}" class="btn btn-outline-primary">Back to Cabal Home</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                            <h4 class="mb-0">Battle Stats</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <h2 class="mb-0">{{ cabal.battles_won }}</h2>
+                                    <p>Wins</p>
+                                </div>
+                                <div class="col-4">
+                                    <h2 class="mb-0">{{ cabal.battles_lost }}</h2>
+                                    <p>Losses</p>
+                                </div>
+                                <div class="col-4">
+                                    <h2 class="mb-0">
+                                        {% if (cabal.battles_won + cabal.battles_lost) > 0 %}
+                                            {{ (cabal.battles_won / (cabal.battles_won + cabal.battles_lost) * 100)|round(1) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </h2>
+                                    <p>Win Rate</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Battles -->
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">Upcoming Battles</h3>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_battles %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Opponent</th>
+                                        <th>Scheduled</th>
+                                        <th>Time Until Battle</th>
+                                        <th>Participants</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for battle in upcoming_battles %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ battle.opponent_cabal.name }}</strong>
+                                                <div class="small text-muted">Power: {{ battle.opponent_cabal.total_power|int }}</div>
+                                            </td>
+                                            <td>{{ battle.scheduled_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                                            <td>
+                                                {% set time_diff = (battle.scheduled_at - now).total_seconds() %}
+                                                {% if time_diff < 3600 %}
+                                                    <span class="text-danger">{{ (time_diff / 60)|int }} minutes</span>
+                                                {% elif time_diff < 86400 %}
+                                                    <span class="text-warning">{{ (time_diff / 3600)|int }} hours</span>
+                                                {% else %}
+                                                    <span class="text-info">{{ (time_diff / 86400)|int }} days</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="me-2">{{ battle.participant_count }}</span>
+                                                    <div class="progress flex-grow-1" style="height: 10px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" 
+                                                            data-width="{{ (battle.participant_count / cabal.member_count * 100)|int }}"
+                                                            aria-valuenow="{{ battle.participant_count }}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="{{ cabal.member_count }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if battle.id in opted_battles %}
+                                                    <span class="badge bg-success">You're In</span>
+                                                {% else %}
+                                                    <a href="{{ url_for('cabal.opt_into_battle', battle_id=battle.id) }}" 
+                                                       class="btn btn-sm btn-outline-success">Opt In</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No upcoming battles scheduled.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Past Battles -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="mb-0">Past Battles</h3>
+                </div>
+                <div class="card-body">
+                    {% if past_battles %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Opponent</th>
+                                        <th>Date</th>
+                                        <th>Result</th>
+                                        <th>Participants</th>
+                                        <th>XP Earned</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for battle in past_battles %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ battle.opponent_cabal.name }}</strong>
+                                            </td>
+                                            <td>{{ battle.scheduled_at.strftime('%Y-%m-%d %H:%M UTC') }}</td>
+                                            <td>
+                                                {% if battle.winner_id == cabal.id %}
+                                                    <span class="badge bg-success">Victory</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Defeat</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ battle.participant_count }} members</td>
+                                            <td>
+                                                {% if battle.xp_earned %}
+                                                    +{{ battle.xp_earned }} XP
+                                                {% else %}
+                                                    --
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No past battles recorded yet.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Battle Mechanics Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">Battle Mechanics</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>How Battles Work</h4>
+                            <ol>
+                                <li>Battles occur at the scheduled time</li>
+                                <li>Only members who opted in will participate</li>
+                                <li>Cabal power is calculated based on:
+                                    <ul>
+                                        <li>Participating members' stats</li>
+                                        <li>Officer bonuses</li>
+                                        <li>Cabal level</li>
+                                    </ul>
+                                </li>
+                                <li>Higher participation rate increases chance of victory</li>
+                                <li>Results are determined by combined power and a bit of RNG</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Battle Rewards</h4>
+                            <ul>
+                                <li><strong>Victory:</strong>
+                                    <ul>
+                                        <li>XP for all participating members</li>
+                                        <li>Bonus cabal XP</li>
+                                        <li>Increased reputation</li>
+                                        <li>Special drops based on Drip bonus</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Defeat:</strong>
+                                    <ul>
+                                        <li>Small amount of XP for participation</li>
+                                        <li>Valuable battle experience</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Add current datetime to template for battle countdown calculations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set width of progress bars based on data-width attribute
+        const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+        progressBars.forEach(bar => {
+            const width = bar.getAttribute('data-width');
+            bar.style.width = width + '%';
+        });
+    });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .progress {
+        background-color: #343a40;
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    
+    .btn-pixel {
+        background-color: #6c5ce7;
+        color: white;
+        border: none;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+    }
+    
+    .btn-pixel:hover {
+        background-color: #5b4cc3;
+        color: white;
+    }
+    
+    .pixel-font {
+        font-weight: bold;
+        letter-spacing: 0.5px;
+    }
+</style>
+{% endblock %} 

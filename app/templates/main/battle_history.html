@@ -1,0 +1,332 @@
+{% extends "layout.html" %}
+
+{% block title %}Battle History - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="pixel-font">Battle History</h1>
+        <p>View your past and ongoing battles against other Chads.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Battles</span>
+                <div>
+                    <a href="https://twitter.com/intent/tweet?text=@ChadBot+fight+@opponent" target="_blank" class="btn btn-sm btn-pixel">New Battle</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-3" id="battleTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="all-battles-tab" data-bs-toggle="tab" data-bs-target="#all-battles" type="button" role="tab" aria-controls="all-battles" aria-selected="true">All Battles</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="won-battles-tab" data-bs-toggle="tab" data-bs-target="#won-battles" type="button" role="tab" aria-controls="won-battles" aria-selected="false">Victories</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lost-battles-tab" data-bs-toggle="tab" data-bs-target="#lost-battles" type="button" role="tab" aria-controls="lost-battles" aria-selected="false">Defeats</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ongoing-battles-tab" data-bs-toggle="tab" data-bs-target="#ongoing-battles" type="button" role="tab" aria-controls="ongoing-battles" aria-selected="false">Ongoing</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="battleTabsContent">
+                    <!-- All Battles Tab -->
+                    <div class="tab-pane fade show active" id="all-battles" role="tabpanel" aria-labelledby="all-battles-tab">
+                        {% if battles %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Opponent</th>
+                                            <th>Result</th>
+                                            <th>Wager</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for battle in battles %}
+                                        <tr>
+                                            <td>{{ battle.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                {% if battle.initiator_id == chad.id %}
+                                                    {{ battle.opponent.user.x_username }}
+                                                {% else %}
+                                                    {{ battle.initiator.user.x_username }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if battle.status == 'completed' %}
+                                                    {% if battle.winner_id == chad.id %}
+                                                        <span class="text-success">Victory</span>
+                                                    {% else %}
+                                                        <span class="text-danger">Defeat</span>
+                                                    {% endif %}
+                                                {% elif battle.status == 'pending' %}
+                                                    <span class="text-warning">Pending</span>
+                                                {% else %}
+                                                    <span class="text-info">{{ battle.status|capitalize }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if battle.waifu_at_stake %}
+                                                    <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span>
+                                                {% elif battle.chadcoin_wager > 0 %}
+                                                    <span>{{ battle.chadcoin_wager }} Chadcoin</span>
+                                                {% else %}
+                                                    <span>None</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if battle.status == 'completed' %}
+                                                    <span class="badge bg-success">Completed</span>
+                                                {% elif battle.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pending</span>
+                                                {% elif battle.status == 'in_progress' %}
+                                                    <span class="badge bg-info">In Progress</span>
+                                                {% elif battle.status == 'canceled' %}
+                                                    <span class="badge bg-secondary">Canceled</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('main.battle_detail', battle_id=battle.id) }}" class="btn btn-sm btn-pixel">Details</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            {% if pagination.pages > 1 %}
+                                <nav aria-label="Battle page navigation" class="mt-4">
+                                    <ul class="pagination justify-content-center">
+                                        {% if pagination.has_prev %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('main.battle_history', page=pagination.prev_num) }}">Previous</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">Previous</span>
+                                            </li>
+                                        {% endif %}
+                                        
+                                        {% for page in pagination.iter_pages() %}
+                                            {% if page %}
+                                                {% if page == pagination.page %}
+                                                    <li class="page-item active">
+                                                        <span class="page-link">{{ page }}</span>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ url_for('main.battle_history', page=page) }}">{{ page }}</a>
+                                                    </li>
+                                                {% endif %}
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if pagination.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('main.battle_history', page=pagination.next_num) }}">Next</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">Next</span>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <p>You haven't participated in any battles yet.</p>
+                                <a href="https://twitter.com/intent/tweet?text=@ChadBot+fight+@opponent" target="_blank" class="btn btn-pixel mt-3">
+                                    Start a Battle
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Won Battles Tab -->
+                    <div class="tab-pane fade" id="won-battles" role="tabpanel" aria-labelledby="won-battles-tab">
+                        {% if won_battles %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Opponent</th>
+                                            <th>Reward</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for battle in won_battles %}
+                                        <tr>
+                                            <td>{{ battle.completed_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                {% if battle.initiator_id == chad.id %}
+                                                    {{ battle.opponent.user.x_username }}
+                                                {% else %}
+                                                    {{ battle.initiator.user.x_username }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if battle.waifu_at_stake %}
+                                                    <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span>
+                                                {% elif battle.chadcoin_wager > 0 %}
+                                                    <span>{{ battle.chadcoin_wager }} Chadcoin</span>
+                                                {% else %}
+                                                    <span>XP Only</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('main.battle_detail', battle_id=battle.id) }}" class="btn btn-sm btn-pixel">Details</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <p>You haven't won any battles yet.</p>
+                                <a href="https://twitter.com/intent/tweet?text=@ChadBot+fight+@opponent" target="_blank" class="btn btn-pixel mt-3">
+                                    Start a Battle
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Lost Battles Tab -->
+                    <div class="tab-pane fade" id="lost-battles" role="tabpanel" aria-labelledby="lost-battles-tab">
+                        {% if lost_battles %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Opponent</th>
+                                            <th>Lost Wager</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for battle in lost_battles %}
+                                        <tr>
+                                            <td>{{ battle.completed_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                {% if battle.initiator_id == chad.id %}
+                                                    {{ battle.opponent.user.x_username }}
+                                                {% else %}
+                                                    {{ battle.initiator.user.x_username }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if battle.waifu_at_stake %}
+                                                    <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span>
+                                                {% elif battle.chadcoin_wager > 0 %}
+                                                    <span>{{ battle.chadcoin_wager }} Chadcoin</span>
+                                                {% else %}
+                                                    <span>XP Only</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('main.battle_detail', battle_id=battle.id) }}" class="btn btn-sm btn-pixel">Details</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <p>You haven't lost any battles yet. Keep up the good work!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Ongoing Battles Tab -->
+                    <div class="tab-pane fade" id="ongoing-battles" role="tabpanel" aria-labelledby="ongoing-battles-tab">
+                        {% if ongoing_battles %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Started</th>
+                                            <th>Opponent</th>
+                                            <th>Wager</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for battle in ongoing_battles %}
+                                        <tr>
+                                            <td>{{ battle.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                {% if battle.initiator_id == chad.id %}
+                                                    {{ battle.opponent.user.x_username }}
+                                                {% else %}
+                                                    {{ battle.initiator.user.x_username }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if battle.waifu_at_stake %}
+                                                    <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span>
+                                                {% elif battle.chadcoin_wager > 0 %}
+                                                    <span>{{ battle.chadcoin_wager }} Chadcoin</span>
+                                                {% else %}
+                                                    <span>None</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if battle.status == 'pending' %}
+                                                    <span class="badge bg-warning">Pending Acceptance</span>
+                                                {% elif battle.status == 'in_progress' %}
+                                                    <span class="badge bg-info">In Progress</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('main.battle_detail', battle_id=battle.id) }}" class="btn btn-sm btn-pixel">Details</a>
+                                                
+                                                {% if battle.status == 'pending' and battle.opponent_id == chad.id %}
+                                                    <form action="{{ url_for('main.accept_battle', battle_id=battle.id) }}" method="post" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-success-pixel">Accept</button>
+                                                    </form>
+                                                    <form action="{{ url_for('main.decline_battle', battle_id=battle.id) }}" method="post" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-danger-pixel">Decline</button>
+                                                    </form>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <p>You don't have any ongoing battles.</p>
+                                <a href="https://twitter.com/intent/tweet?text=@ChadBot+fight+@opponent" target="_blank" class="btn btn-pixel mt-3">
+                                    Start a Battle
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

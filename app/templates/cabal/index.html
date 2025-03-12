@@ -1,0 +1,472 @@
+{% extends "layout.html" %}
+
+{% block title %}My Cabal - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if cabal %}
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h3 class="mb-0">{{ cabal.name }} (Level {{ cabal.level }})</h3>
+                            <a href="{{ url_for('analytics.cabal_analytics', cabal_id=cabal.id) }}" class="btn btn-info">
+                                <i class="fas fa-chart-line"></i> Analytics
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">{{ cabal.description }}</p>
+                        
+                        <!-- Cabal Stats -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <h5>Total Power</h5>
+                                <p class="display-6">{{ cabal.total_power|int }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h5>Members</h5>
+                                <p class="display-6">{{ cabal.member_count }}/{{ cabal.max_size }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h5>Rank</h5>
+                                <p class="display-6">#{{ cabal.rank }}</p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Leader Info -->
+                        <div class="d-flex align-items-center mb-3">
+                            <h5 class="me-3 mb-0">Lord of the Shill:</h5>
+                            <span class="badge bg-danger me-2">LORD</span>
+                            <strong>{{ cabal.leader.name }}</strong>
+                            {% if cabal.leader.user %}
+                                (@{{ cabal.leader.user.twitter_handle }})
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Officers -->
+                        <h5>Officers:</h5>
+                        <div class="row mb-3">
+                            {% for role_type, title in [
+                                ('clout', 'Duke of Dank Memes'),
+                                ('roast_level', 'Earl of Edgelords'),
+                                ('cringe_resistance', 'Baron of Bagholders'),
+                                ('drip_factor', 'Viscount of Vaporware')
+                            ] %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6 class="card-title">{{ title }}</h6>
+                                            {% if officers and officers.get(role_type) %}
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-primary me-2">OFFICER</span>
+                                                    <strong>{{ officers[role_type].name }}</strong>
+                                                    <small class="ms-1">(@{{ officers[role_type].username }})</small>
+                                                    {% if is_leader %}
+                                                        <a href="{{ url_for('cabal.remove_officer', cabal_id=cabal.id, role_type=role_type) }}" 
+                                                           class="btn btn-sm btn-outline-danger ms-auto"
+                                                           onclick="return confirm('Are you sure you want to remove this officer?')">Remove</a>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <p class="card-text text-muted">No officer appointed</p>
+                                                {% if is_leader %}
+                                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            data-bs-toggle="modal" data-bs-target="#appointOfficerModal"
+                                                            data-role-type="{{ role_type }}" data-role-title="{{ title }}">
+                                                        Appoint
+                                                    </button>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Invite Code -->
+                        <div class="alert alert-info">
+                            <h5>Invite Code</h5>
+                            <p>Share this code to recruit new members: <strong>{{ cabal.invite_code }}</strong></p>
+                            <p>Or use this link: <code>{{ url_for('cabal.join', code=cabal.invite_code, _external=True) }}</code></p>
+                            
+                            <!-- Referral Link Section -->
+                            <div class="mt-3">
+                                <h5>Referral Link</h5>
+                                <p>Share your personal referral link to earn rewards when new members join:</p>
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" id="referralLink" value="{{ url_for('cabal.join', code=cabal.invite_code, ref=current_user.twitter_handle, _external=True) }}" readonly>
+                                    <button class="btn btn-outline-primary" type="button" onclick="copyReferralLink()">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="https://twitter.com/intent/tweet?text={{ 'Join my cabal \'' ~ cabal.name ~ '\' in #ChadBattles! Use this link to get started: ' ~ url_for('cabal.join', code=cabal.invite_code, ref=current_user.twitter_handle, _external=True) ~ ' #GamersUnite #CryptoGaming' | url_encode }}" 
+                                       class="btn btn-primary" target="_blank">
+                                        <i class="fab fa-twitter"></i> Share on Twitter
+                                    </a>
+                                </div>
+                                <small class="text-muted mt-2">
+                                    <i class="fas fa-gift"></i> Earn 50 Chadcoin and contribution points for each new member who joins using your link!
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- Battle Record -->
+                        <div class="mt-3">
+                            <h5>Battle Record</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p>Wins: <strong>{{ cabal.battles_won }}</strong></p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p>Losses: <strong>{{ cabal.battles_lost }}</strong></p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p>Win Rate: <strong>
+                                        {% if (cabal.battles_won + cabal.battles_lost) > 0 %}
+                                            {{ (cabal.battles_won / (cabal.battles_won + cabal.battles_lost) * 100)|round(1) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </strong></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cabal Member Actions -->
+                        <div class="mt-4">
+                            <h5>Member Actions</h5>
+                            <div class="btn-group">
+                                {% if is_leader %}
+                                    <a href="{{ url_for('cabal.edit', cabal_id=cabal.id) }}" class="btn btn-outline-primary">Edit Cabal</a>
+                                    <a href="{{ url_for('cabal.disband', cabal_id=cabal.id) }}" 
+                                       class="btn btn-outline-danger"
+                                       onclick="return confirm('Are you sure you want to disband this cabal? This action cannot be undone.')">
+                                        Disband Cabal
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('cabal.leave', cabal_id=cabal.id) }}"
+                                       class="btn btn-outline-danger"
+                                       onclick="return confirm('Are you sure you want to leave this cabal?')">
+                                        Leave Cabal
+                                    </a>
+                                    
+                                    {% if not user_voted %}
+                                        <a href="{{ url_for('cabal.vote_remove_leader', cabal_id=cabal.id) }}"
+                                           class="btn btn-outline-warning"
+                                           onclick="return confirm('Are you sure you want to vote to remove the current leader?')">
+                                            Vote to Remove Leader
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-outline-secondary" disabled>Vote Cast</button>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Leader Vote Status - Only visible to non-leaders -->
+                        {% if not is_leader %}
+                            <div class="mt-3">
+                                <h5>Leader Removal Vote Status</h5>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-warning" role="progressbar" 
+                                         data-width="{{ removal_vote_percentage }}"
+                                         aria-valuenow="{{ removal_vote_percentage }}" 
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ removal_vote_percentage|round|int }}%
+                                    </div>
+                                </div>
+                                <p class="small text-muted">{{ leader_removal_votes }} out of {{ cabal.get_active_member_count() }} votes 
+                                   (66% needed to remove leader)</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Cabal Benefits Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Cabal Benefits</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5>Active Bonuses</h5>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Clout Bonus
+                                <span class="badge bg-success">+{{ cabal.clout_bonus }}%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Roast Damage
+                                <span class="badge bg-danger">+{{ cabal.roast_bonus }}%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Cringe Defense
+                                <span class="badge bg-info">+{{ cabal.cringe_bonus }}%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Drip Bonus
+                                <span class="badge bg-warning text-dark">+{{ cabal.drip_bonus }}%</span>
+                            </li>
+                        </ul>
+                        
+                        <p class="text-muted">Bonuses are calculated based on officer stats and cabal level.</p>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Battles Card -->
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">Upcoming Battles</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if is_leader %}
+                            <a href="{{ url_for('cabal.schedule_battle', cabal_id=cabal.id) }}" class="btn btn-outline-danger mb-3">Schedule New Battle</a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('cabal.all_battles') }}" class="btn btn-outline-secondary mb-3">View All Battles</a>
+                        
+                        {% if upcoming_battles %}
+                            <div class="list-group">
+                                {% for battle in upcoming_battles %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">vs. {{ battle.opponent_cabal.name }}</h5>
+                                            <small>
+                                                {% set time_diff = (battle.scheduled_at - now).total_seconds() %}
+                                                {% if time_diff < 3600 %}
+                                                    <span class="text-danger">{{ (time_diff / 60)|int }} minutes</span>
+                                                {% elif time_diff < 86400 %}
+                                                    <span class="text-warning">{{ (time_diff / 3600)|int }} hours</span>
+                                                {% else %}
+                                                    <span class="text-info">{{ (time_diff / 86400)|int }} days</span>
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <p class="mb-1">{{ battle.scheduled_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+                                        <small>{{ battle.participant_count }} members participating</small>
+                                        
+                                        {% set user_participating = battle.is_user_participating(current_user.chad.id) %}
+                                        
+                                        {% if not user_participating %}
+                                            <a href="{{ url_for('cabal.opt_into_battle', battle_id=battle.id) }}" 
+                                               class="btn btn-sm btn-success mt-2">Opt In</a>
+                                        {% else %}
+                                            <span class="badge bg-success mt-2">You're In</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No upcoming battles scheduled.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Appoint Officer Modal -->
+        <div class="modal fade" id="appointOfficerModal" tabindex="-1" aria-labelledby="appointOfficerModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="appointOfficerModalLabel">Appoint Officer</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ url_for('cabal.appoint_officer', cabal_id=cabal.id) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="role_type" id="role_type">
+                            <div class="mb-3">
+                                <h5 id="role_title"></h5>
+                                <p class="text-muted" id="role_description"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label for="chad_id" class="form-label">Select Member</label>
+                                <select class="form-select" id="chad_id" name="chad_id" required>
+                                    <option value="">Select a member...</option>
+                                    {% for member in cabal.members %}
+                                        {% if member.chad_id != cabal.leader_id %}
+                                            <option value="{{ member.chad_id }}">{{ member.chad.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Appoint Officer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Officer role selection
+                const roleSelect = document.getElementById('officer_role');
+                if (roleSelect) {
+                    roleSelect.addEventListener('change', function() {
+                        const role = this.value;
+                        let description = '';
+                        switch(role) {
+                            case 'clout':
+                                description = 'Increases cabal XP gain from activities';
+                                break;
+                            case 'roast_level':
+                                description = 'Boosts attack damage in battles';
+                                break;
+                            case 'cringe_resistance':
+                                description = 'Improves defense against attacks';
+                                break;
+                            case 'drip_factor':
+                                description = 'Enhances reward drops after victories';
+                                break;
+                        }
+                        document.getElementById('role_description').textContent = description;
+                    });
+                }
+
+                // Set width of progress bars based on data-width attribute
+                const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+                progressBars.forEach(bar => {
+                    const width = bar.getAttribute('data-width');
+                    bar.style.width = width + '%';
+                });
+            });
+        </script>
+    {% else %}
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h3 class="mb-0">Join a Cabal</h3>
+            </div>
+            <div class="card-body">
+                <p class="lead">You are not currently in a cabal. Join an existing cabal or create your own!</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h4>Create Your Own Cabal</h4>
+                            </div>
+                            <div class="card-body">
+                                <p>Form your own cabal and become the Lord of the Shill. Recruit members and battle other cabals for glory!</p>
+                                <a href="{{ url_for('cabal.create') }}" class="btn btn-primary">Create Cabal</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h4>Join Existing Cabal</h4>
+                            </div>
+                            <div class="card-body">
+                                <p>Join an existing cabal with an invite code.</p>
+                                <form action="{{ url_for('cabal.join') }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" placeholder="Enter invite code" name="invite_code" required>
+                                        <button class="btn btn-success" type="submit">Join</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('cabal.leaderboard') }}" class="btn btn-outline-dark">View Cabal Leaderboard</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function preSelectRole(roleType) {
+        document.getElementById('roleSelect').value = roleType;
+    }
+    
+    function preSelectMember(chadId) {
+        document.getElementById('memberSelect').value = chadId;
+    }
+    
+    function copyReferralLink() {
+        const referralLinkInput = document.getElementById('referralLink');
+        referralLinkInput.select();
+        document.execCommand('copy');
+        
+        // Show feedback
+        const originalText = referralLinkInput.nextElementSibling.innerHTML;
+        referralLinkInput.nextElementSibling.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        
+        // Reset button text after 2 seconds
+        setTimeout(() => {
+            referralLinkInput.nextElementSibling.innerHTML = originalText;
+        }, 2000);
+    }
+    
+    // Set width of progress bars based on data-width attribute
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+        progressBars.forEach(bar => {
+            const width = bar.getAttribute('data-width');
+            bar.style.width = width + '%';
+        });
+    });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .cabal-level-badge {
+        width: 50px;
+        height: 50px;
+        background-color: #ffc107;
+        color: #000;
+        font-weight: bold;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    
+    .leadership-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin: 0 auto;
+    }
+    
+    .leadership-avatar.lord {
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .leadership-avatar.officer {
+        background-color: #17a2b8;
+        color: #fff;
+    }
+    
+    .role-bonus {
+        margin-top: 8px;
+    }
+    
+    .leader-name, .officer-name {
+        font-weight: bold;
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,296 @@
+{% extends "layout.html" %}
+
+{% block title %}About - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="pixel-font">About Chad Battles</h1>
+        <p class="lead">The ultimate meme-powered blockchain gaming experience</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">Our Story</div>
+            <div class="card-body">
+                <p>Chad Battles was born from a simple idea: what if your X (Twitter) personality could become a character in a game? What if the memes, jokes, and digital culture we all share could be transformed into a fun, interactive experience?</p>
+                
+                <p>Founded in 2023, Chad Battles combines the best of social media culture, RPG gameplay, collectibles, and blockchain technology. We've created a universe where your online persona transforms into a "Chad" character with unique abilities based on your digital footprint.</p>
+                
+                <p>Our team of developers, artists, and meme connoisseurs work tirelessly to ensure Chad Battles stays fresh, fun, and at the cutting edge of internet culture.</p>
+                
+                <div class="mt-4">
+                    <h4 class="pixel-font">Our Mission</h4>
+                    <p>We aim to create the most entertaining and rewarding social gaming experience on the web, bringing together communities from across the internet while introducing blockchain technology in an accessible, enjoyable way.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">Technology</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="pixel-font">Game Platform</h5>
+                        <ul>
+                            <li>Python backend with Flask framework</li>
+                            <li>SQLAlchemy for database management</li>
+                            <li>Responsive frontend with Bootstrap and custom pixel art styling</li>
+                            <li>Real-time updates with JavaScript and AJAX</li>
+                            <li>Secure authentication via X (Twitter) OAuth</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="pixel-font">Blockchain Integration</h5>
+                        <ul>
+                            <li>Solana blockchain for NFT operations</li>
+                            <li>SPL Token standard for Chadcoin</li>
+                            <li>Metaplex for NFT metadata</li>
+                            <li>Decentralized marketplace functionality</li>
+                            <li>Wallet-based authentication options</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h5 class="pixel-font mt-4">AI and Data Analysis</h5>
+                <p>Chad Battles uses natural language processing and machine learning to analyze X profiles and create personalized gaming experiences:</p>
+                <ul>
+                    <li>Analysis of posting patterns and content themes to determine Chad class</li>
+                    <li>Interaction analysis to map social connections and potential cabal recommendations</li>
+                    <li>Trend detection to keep game content relevant to current meme culture</li>
+                    <li>Predictive modeling for dynamic game balancing and matchmaking</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">Team</div>
+            <div class="card-body">
+                <div class="team-member mb-4">
+                    <img src="{{ url_for('static', filename='img/team/founder.png') }}" alt="Founder" class="rounded-circle mb-2" width="100">
+                    <h5 class="pixel-font">GigaChad</h5>
+                    <div class="badge bg-primary mb-2">Founder & CEO</div>
+                    <p class="small">Former meme curator and blockchain enthusiast who wanted to create the ultimate game for the X community.</p>
+                </div>
+                
+                <div class="team-member mb-4">
+                    <img src="{{ url_for('static', filename='img/team/developer.png') }}" alt="Lead Developer" class="rounded-circle mb-2" width="100">
+                    <h5 class="pixel-font">CodeLord</h5>
+                    <div class="badge bg-info mb-2">Lead Developer</div>
+                    <p class="small">Full-stack developer with a passion for gaming and blockchain technology. Previously worked on several successful indie game titles.</p>
+                </div>
+                
+                <div class="team-member mb-4">
+                    <img src="{{ url_for('static', filename='img/team/artist.png') }}" alt="Art Director" class="rounded-circle mb-2" width="100">
+                    <h5 class="pixel-font">PixelMaster</h5>
+                    <div class="badge bg-success mb-2">Art Director</div>
+                    <p class="small">Digital artist specializing in pixel art and character design. Created all the waifu and Chad class artwork.</p>
+                </div>
+                
+                <div class="team-member">
+                    <img src="{{ url_for('static', filename='img/team/community.png') }}" alt="Community Manager" class="rounded-circle mb-2" width="100">
+                    <h5 class="pixel-font">MemeQueen</h5>
+                    <div class="badge bg-warning mb-2">Community Manager</div>
+                    <p class="small">Social media expert and community builder. Keeps the Chad Battles community engaged and growing.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">Contact Us</div>
+            <div class="card-body">
+                <div class="contact-item mb-3">
+                    <i class="fas fa-envelope me-2"></i>
+                    <a href="mailto:support@chadbattles.com">support@chadbattles.com</a>
+                </div>
+                
+                <div class="contact-item mb-3">
+                    <i class="fab fa-twitter me-2"></i>
+                    <a href="https://twitter.com/ChadBattles" target="_blank">@ChadBattles</a>
+                </div>
+                
+                <div class="contact-item mb-3">
+                    <i class="fab fa-discord me-2"></i>
+                    <a href="https://discord.gg/chadbattles" target="_blank">Discord Server</a>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fab fa-github me-2"></i>
+                    <a href="https://github.com/chadbattles/game" target="_blank">GitHub</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Join Our Community</div>
+            <div class="card-body text-center">
+                <p>Be part of the Chad Battles community and stay updated on the latest features, events, and memes!</p>
+                <a href="https://discord.gg/chadbattles" target="_blank" class="btn btn-pixel mb-2 w-100">
+                    <i class="fab fa-discord me-2"></i> Join Discord
+                </a>
+                <a href="https://twitter.com/ChadBattles" target="_blank" class="btn btn-pixel w-100">
+                    <i class="fab fa-twitter me-2"></i> Follow on X
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">Roadmap</div>
+            <div class="card-body">
+                <div class="roadmap">
+                    <div class="roadmap-item">
+                        <div class="roadmap-date">Q2 2023</div>
+                        <div class="roadmap-content">
+                            <h5 class="pixel-font">Alpha Launch</h5>
+                            <ul>
+                                <li>Core gameplay mechanics</li>
+                                <li>X integration</li>
+                                <li>Basic character system</li>
+                                <li>Initial waifu collection</li>
+                            </ul>
+                        </div>
+                        <div class="roadmap-status completed">Completed</div>
+                    </div>
+                    
+                    <div class="roadmap-item">
+                        <div class="roadmap-date">Q3 2023</div>
+                        <div class="roadmap-content">
+                            <h5 class="pixel-font">Beta Release</h5>
+                            <ul>
+                                <li>Cabal system implementation</li>
+                                <li>Marketplace functionality</li>
+                                <li>Enhanced battle mechanics</li>
+                                <li>Expanded waifu collection</li>
+                            </ul>
+                        </div>
+                        <div class="roadmap-status completed">Completed</div>
+                    </div>
+                    
+                    <div class="roadmap-item">
+                        <div class="roadmap-date">Q4 2023</div>
+                        <div class="roadmap-content">
+                            <h5 class="pixel-font">Blockchain Integration</h5>
+                            <ul>
+                                <li>Solana integration</li>
+                                <li>NFT minting capability</li>
+                                <li>Chadcoin implementation</li>
+                                <li>Wallet connectivity</li>
+                            </ul>
+                        </div>
+                        <div class="roadmap-status current">Current Phase</div>
+                    </div>
+                    
+                    <div class="roadmap-item">
+                        <div class="roadmap-date">Q1 2024</div>
+                        <div class="roadmap-content">
+                            <h5 class="pixel-font">Community & Events</h5>
+                            <ul>
+                                <li>Special events system</li>
+                                <li>Tournaments and competitions</li>
+                                <li>Community governance features</li>
+                                <li>Advanced cabal battles</li>
+                            </ul>
+                        </div>
+                        <div class="roadmap-status upcoming">Upcoming</div>
+                    </div>
+                    
+                    <div class="roadmap-item">
+                        <div class="roadmap-date">Q2 2024</div>
+                        <div class="roadmap-content">
+                            <h5 class="pixel-font">Expansion</h5>
+                            <ul>
+                                <li>Mobile app version</li>
+                                <li>Cross-platform support</li>
+                                <li>Advanced AI integration</li>
+                                <li>Expanded blockchain features</li>
+                            </ul>
+                        </div>
+                        <div class="roadmap-status upcoming">Upcoming</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .roadmap {
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .roadmap:before {
+        content: '';
+        position: absolute;
+        left: 50px;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #2a2a2a;
+    }
+    
+    .roadmap-item {
+        position: relative;
+        padding-left: 70px;
+        margin-bottom: 40px;
+    }
+    
+    .roadmap-date {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 50px;
+        text-align: right;
+        font-weight: bold;
+        color: #6c757d;
+    }
+    
+    .roadmap-content {
+        background: #2a2a2a;
+        padding: 15px;
+        border-radius: 5px;
+    }
+    
+    .roadmap-status {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 3px;
+        font-size: 12px;
+        margin-top: 10px;
+    }
+    
+    .roadmap-status.completed {
+        background: #28a745;
+        color: white;
+    }
+    
+    .roadmap-status.current {
+        background: #007bff;
+        color: white;
+    }
+    
+    .roadmap-status.upcoming {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .team-member {
+        text-align: center;
+    }
+</style>
+{% endblock %} 

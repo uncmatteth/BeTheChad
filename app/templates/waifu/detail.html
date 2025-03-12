@@ -1,0 +1,291 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ waifu.waifu_type.name }} - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('waifu.index') }}">Waifus</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ waifu.waifu_type.name }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body text-center">
+                <img src="{{ url_for('static', filename='img/waifu/' ~ waifu.waifu_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ waifu.waifu_type.name }}" class="waifu-sprite detail-view mb-3">
+                <h2 class="pixel-font">{{ waifu.waifu_type.name }}</h2>
+                <div class="badge rarity-{{ waifu.waifu_type.rarity.name|lower }} mb-3">{{ waifu.waifu_type.rarity.name }}</div>
+                
+                {% if waifu.is_minted %}
+                    <div class="nft-badge mb-3">NFT</div>
+                {% endif %}
+                
+                <p class="waifu-description">{{ waifu.waifu_type.description }}</p>
+                
+                <div class="stat-bonuses mb-4">
+                    <h5 class="pixel-font mb-3">Stat Bonuses</h5>
+                    <div class="row text-center">
+                        {% if waifu.clout_bonus %}
+                            <div class="col-6 mb-3">
+                                <div class="bonus-badge">
+                                    <span class="bonus-icon">🔥</span>
+                                    <span class="bonus-value">+{{ waifu.clout_bonus }}</span>
+                                    <span class="bonus-stat">Clout</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if waifu.roast_bonus %}
+                            <div class="col-6 mb-3">
+                                <div class="bonus-badge">
+                                    <span class="bonus-icon">🔪</span>
+                                    <span class="bonus-value">+{{ waifu.roast_bonus }}</span>
+                                    <span class="bonus-stat">Roast</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if waifu.cringe_resistance_bonus %}
+                            <div class="col-6 mb-3">
+                                <div class="bonus-badge">
+                                    <span class="bonus-icon">🛡️</span>
+                                    <span class="bonus-value">+{{ waifu.cringe_resistance_bonus }}</span>
+                                    <span class="bonus-stat">Resistance</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if waifu.drip_bonus %}
+                            <div class="col-6 mb-3">
+                                <div class="bonus-badge">
+                                    <span class="bonus-icon">💧</span>
+                                    <span class="bonus-value">+{{ waifu.drip_bonus }}</span>
+                                    <span class="bonus-stat">Drip</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="special-ability mb-4">
+                    <h5 class="pixel-font mb-2">Special Ability</h5>
+                    <div class="ability-card">
+                        <div class="ability-icon">✨</div>
+                        <div class="ability-name">{{ waifu.waifu_type.special_ability_name }}</div>
+                        <div class="ability-description">{{ waifu.waifu_type.special_ability_description }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <div class="card mb-4">
+            <div class="card-header">Waifu Status</div>
+            <div class="card-body">
+                <div class="status-item d-flex justify-content-between mb-3">
+                    <span>Acquired:</span>
+                    <span>{{ waifu.acquired_at.strftime('%b %d, %Y') }}</span>
+                </div>
+                
+                <div class="status-item d-flex justify-content-between mb-3">
+                    <span>Status:</span>
+                    <span>
+                        {% if waifu.is_equipped %}
+                            <span class="badge bg-success">Equipped</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Not Equipped</span>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="status-item d-flex justify-content-between mb-3">
+                    <span>Level:</span>
+                    <span>{{ waifu.level }}</span>
+                </div>
+                
+                <div class="status-item d-flex justify-content-between mb-3">
+                    <span>Experience:</span>
+                    <div class="progress w-50">
+                        <div class="progress-bar" role="progressbar" style="width: {{ (waifu.xp % 100) }}%;" aria-valuenow="{{ waifu.xp % 100 }}" aria-valuemin="0" aria-valuemax="100">{{ waifu.xp % 100 }}/100</div>
+                    </div>
+                </div>
+                
+                <div class="status-item d-flex justify-content-between mb-3">
+                    <span>Battles Won:</span>
+                    <span>{{ waifu.battles_won }}</span>
+                </div>
+                
+                <div class="status-item d-flex justify-content-between mb-3">
+                    <span>NFT Status:</span>
+                    <span>
+                        {% if waifu.is_minted %}
+                            <span class="badge bg-info">Minted as NFT</span>
+                        {% else %}
+                            <span class="badge bg-warning">Not Minted</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">Equipped Items</div>
+            <div class="card-body">
+                {% if waifu.equipped_items %}
+                    <div class="row">
+                        {% for item in waifu.equipped_items %}
+                            <div class="col-md-6 mb-3">
+                                <div class="item-card d-flex">
+                                    <div class="item-image me-3">
+                                        <img src="{{ url_for('static', filename='img/item/' ~ item.item_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ item.item_type.name }}" width="64">
+                                    </div>
+                                    <div class="item-details">
+                                        <h6 class="pixel-font">{{ item.item_type.name }}</h6>
+                                        <div class="badge rarity-{{ item.item_type.rarity.name|lower }} mb-1">{{ item.item_type.rarity.name }}</div>
+                                        <div class="bonuses small">
+                                            {% if item.clout_bonus %}+{{ item.clout_bonus }} Clout<br>{% endif %}
+                                            {% if item.roast_bonus %}+{{ item.roast_bonus }} Roast<br>{% endif %}
+                                            {% if item.cringe_resistance_bonus %}+{{ item.cringe_resistance_bonus }} Resist<br>{% endif %}
+                                            {% if item.drip_bonus %}+{{ item.drip_bonus }} Drip{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center mb-3">No items equipped</p>
+                {% endif %}
+                
+                <div class="text-center">
+                    <a href="{{ url_for('waifu.manage_items', waifu_id=waifu.id) }}" class="btn btn-pixel">Manage Items</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+            {% if not waifu.is_equipped %}
+                <form action="{{ url_for('waifu.equip', waifu_id=waifu.id) }}" method="post">
+                    <button type="submit" class="btn btn-pixel me-2">Equip Waifu</button>
+                </form>
+            {% else %}
+                <form action="{{ url_for('waifu.unequip', waifu_id=waifu.id) }}" method="post">
+                    <button type="submit" class="btn btn-danger-pixel me-2">Unequip Waifu</button>
+                </form>
+            {% endif %}
+            
+            {% if not waifu.is_minted and current_user.wallet_address %}
+                <button id="mint-nft-btn" class="btn btn-pixel me-2" data-waifu-id="{{ waifu.id }}">Mint as NFT</button>
+            {% endif %}
+            
+            <button class="btn btn-pixel-secondary" onclick="history.back()">Back</button>
+        </div>
+    </div>
+</div>
+
+<!-- Mint NFT Modal -->
+<div class="modal fade" id="mintNFTModal" tabindex="-1" aria-labelledby="mintNFTModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title pixel-font" id="mintNFTModalLabel">Mint Waifu as NFT</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Minting <strong>{{ waifu.waifu_type.name }}</strong> as an NFT will cost <strong>50 Chadcoin</strong>.</p>
+                <p>You currently have <strong>{{ current_user.chadcoin_balance }} Chadcoin</strong>.</p>
+                <p>Once minted, you'll be able to list this waifu on the marketplace for other players to purchase.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-pixel" id="confirmMintNFT">Mint NFT</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up NFT minting modal
+        const mintNFTModal = new bootstrap.Modal(document.getElementById('mintNFTModal'));
+        
+        // Handle mint button click
+        const mintBtn = document.getElementById('mint-nft-btn');
+        if (mintBtn) {
+            mintBtn.addEventListener('click', function() {
+                mintNFTModal.show();
+            });
+        }
+        
+        // Handle mint confirmation
+        const confirmMintBtn = document.getElementById('confirmMintNFT');
+        if (confirmMintBtn) {
+            confirmMintBtn.addEventListener('click', function() {
+                const waifuId = mintBtn.dataset.waifuId;
+                
+                fetch('/api/mint_nft', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        entity_type: 'waifu',
+                        entity_id: waifuId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    mintNFTModal.hide();
+                    
+                    if (data.success) {
+                        showAlert('success', data.message);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('danger', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mintNFTModal.hide();
+                    showAlert('danger', 'An error occurred while minting the NFT');
+                });
+            });
+        }
+    });
+    
+    // Alert display function
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+        alertDiv.setAttribute('role', 'alert');
+        alertDiv.style.zIndex = '9999';
+        
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 300);
+        }, 5000);
+    }
+</script>
+{% endblock %} 

@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block title %}500 - Server Error{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="error-container mt-5">
+            <h1 class="pixel-font mb-4">500</h1>
+            <div class="pixel-art-error mb-4">
+                <img src="{{ url_for('static', filename='img/error-chad.png') }}" alt="Error" style="max-width: 200px;">
+            </div>
+            <h2 class="pixel-font mb-3">Internal Server Error</h2>
+            <p class="mb-4">Even the strongest Chads have bad days. Our servers are having a moment.</p>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('main.index') }}" class="btn btn-pixel me-3">Go Home</a>
+                <button class="btn btn-pixel" onclick="location.reload()">Try Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

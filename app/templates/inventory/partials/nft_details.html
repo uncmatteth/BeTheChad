@@ -1,0 +1,118 @@
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">{{ metadata.name }}</h5>
+    </div>
+    <div class="card-body text-center">
+        <img src="{{ metadata.image }}" class="img-fluid rounded mb-3" style="max-height: 200px;" alt="{{ metadata.name }}">
+        
+        <div class="mb-3">
+            <span class="badge bg-primary me-2">{{ nft.entity_type|capitalize }}</span>
+            {% if nft.entity_type == 'chad' %}
+                {% set level = metadata.attributes|selectattr('trait_type', 'equalto', 'Level')|map(attribute='value')|first %}
+                <span class="badge bg-danger">Level {{ level }}</span>
+            {% elif 'Rarity' in metadata.attributes|map(attribute='trait_type')|list %}
+                {% set rarity = metadata.attributes|selectattr('trait_type', 'equalto', 'Rarity')|map(attribute='value')|first %}
+                {% if rarity == 'Common' %}
+                    <span class="badge bg-secondary">{{ rarity }}</span>
+                {% elif rarity == 'Rare' %}
+                    <span class="badge bg-info">{{ rarity }}</span>
+                {% elif rarity == 'Epic' %}
+                    <span class="badge bg-purple">{{ rarity }}</span>
+                {% elif rarity == 'Legendary' %}
+                    <span class="badge bg-warning">{{ rarity }}</span>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+        <p>{{ metadata.description }}</p>
+        
+        <div class="row mb-3">
+            {% if nft.entity_type == 'chad' %}
+                {% for attr in metadata.attributes %}
+                    {% if attr.trait_type not in ['Class', 'Level'] %}
+                        <div class="col-6 mb-2">
+                            <small><strong>{{ attr.trait_type }}:</strong> {{ attr.value }}</small>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% elif nft.entity_type == 'waifu' %}
+                {% for attr in metadata.attributes %}
+                    {% if attr.trait_type not in ['Type', 'Rarity'] %}
+                        <div class="col-6 mb-2">
+                            <small><strong>{{ attr.trait_type }}:</strong> {{ attr.value }}</small>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% elif nft.entity_type == 'item' %}
+                {% for attr in metadata.attributes %}
+                    {% if attr.trait_type not in ['Type', 'Rarity', 'Slot'] %}
+                        <div class="col-6 mb-2">
+                            <small><strong>{{ attr.trait_type }}:</strong> {{ attr.value }}</small>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+        <div class="d-grid gap-2">
+            <a href="{{ url_for('nft.view', nft_id=nft.id) }}" class="btn btn-primary">
+                <i class="fas fa-eye me-2"></i> View NFT Details
+            </a>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="row">
+            <div class="col-6">
+                <small class="text-muted">Token ID:</small>
+                <p class="small text-truncate">{{ nft.token_id }}</p>
+            </div>
+            <div class="col-6 text-end">
+                <small class="text-muted">Minted:</small>
+                <p class="small">{{ nft.created_at|datetime }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle burning NFT from within the modal
+    const burnButton = document.querySelector('.btn-burn-nft-modal');
+    if (burnButton) {
+        burnButton.addEventListener('click', function() {
+            const nftId = this.getAttribute('data-nft-id');
+            const chadcoinValue = this.textContent.trim().split(' ')[2];  // Extract the Chadcoin value
+            
+            if (!confirm(`Are you sure you want to burn this NFT? You will receive ${chadcoinValue} Chadcoin, but the NFT will be permanently destroyed.`)) {
+                return;
+            }
+            
+            this.disabled = true;
+            this.innerHTML = 'Burning...';
+            
+            fetch('/api/burn-nft', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    nft_id: nftId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('nftDetailModal')).hide();
+                    
+                    // Reload page to reflect changes
+                    location.reload();
+                } else {
+                    this.disabled = false;
+                    this.innerHTML = `Burn for ${chadcoinValue} Chadcoin`;
+                    alert(data.message);
+                }
+            });
+        });
+    }
+</script> 

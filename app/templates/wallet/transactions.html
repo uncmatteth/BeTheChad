@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaction History - Chad Battles{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/wallet.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h1 class="mb-4">Transaction History</h1>
+            
+            <div class="wallet-card">
+                <div class="wallet-card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Your Transactions</h5>
+                    <div>
+                        <span class="wallet-type-badge">{{ current_user.wallet_type|capitalize if current_user.wallet_type else 'No Wallet' }}</span>
+                        <span class="wallet-address">{{ current_user.wallet_address|truncate(12) if current_user.wallet_address else 'Not connected' }}</span>
+                    </div>
+                </div>
+                <div class="wallet-card-body">
+                    {% if transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in transactions %}
+                                    <tr>
+                                        <td>{{ transaction.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            {% if transaction.transaction_type == 'nft_mint' %}
+                                                <span class="badge bg-success">NFT Mint</span>
+                                            {% elif transaction.transaction_type == 'nft_burn' %}
+                                                <span class="badge bg-danger">NFT Burn</span>
+                                            {% elif transaction.transaction_type == 'nft_transfer' %}
+                                                <span class="badge bg-primary">NFT Transfer</span>
+                                            {% elif transaction.transaction_type == 'chadcoin_add' %}
+                                                <span class="badge bg-success">Chadcoin +</span>
+                                            {% elif transaction.transaction_type == 'chadcoin_remove' %}
+                                                <span class="badge bg-danger">Chadcoin -</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ transaction.transaction_type|replace('_', ' ')|capitalize }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ transaction.description }}</td>
+                                        <td>
+                                            {% if transaction.transaction_type in ['chadcoin_add', 'nft_burn'] %}
+                                                <span class="text-success">+{{ transaction.amount }} Chadcoin</span>
+                                            {% elif transaction.transaction_type in ['chadcoin_remove', 'nft_mint'] %}
+                                                <span class="text-danger">-{{ transaction.amount }} Chadcoin</span>
+                                            {% else %}
+                                                {{ transaction.amount }} Chadcoin
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.status == 'completed' %}
+                                                <span class="badge bg-success">Completed</span>
+                                            {% elif transaction.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% elif transaction.status == 'failed' %}
+                                                <span class="badge bg-danger">Failed</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ transaction.status|capitalize }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if transaction.transaction_hash %}
+                                                <a href="https://explorer.solana.com/tx/{{ transaction.transaction_hash }}?cluster={{ config.SOLANA_NETWORK|default('devnet') }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    View on Explorer
+                                                </a>
+                                            {% elif transaction.nft_id %}
+                                                <a href="{{ url_for('nft.view', token_id=transaction.nft.token_id) }}" class="btn btn-sm btn-outline-primary">
+                                                    View NFT
+                                                </a>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <p class="mb-0">You don't have any transactions yet.</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="wallet-actions mt-4">
+                        <a href="{{ url_for('wallet.index') }}" class="wallet-btn wallet-btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Wallet
+                        </a>
+                        <a href="{{ url_for('nft.transactions') }}" class="wallet-btn wallet-btn-secondary">
+                            <i class="fas fa-exchange-alt"></i> NFT Transactions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="wallet-card">
+                <div class="wallet-card-header">
+                    <h5 class="mb-0">Transaction Stats</h5>
+                </div>
+                <div class="wallet-card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Total Transactions:</span>
+                        <span class="fw-bold">{{ transactions|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>NFT Mints:</span>
+                        <span class="fw-bold">{{ transactions|selectattr('transaction_type', 'equalto', 'nft_mint')|list|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>NFT Burns:</span>
+                        <span class="fw-bold">{{ transactions|selectattr('transaction_type', 'equalto', 'nft_burn')|list|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Chadcoin Earned:</span>
+                        <span class="fw-bold text-success">
+                            +{{ transactions|selectattr('transaction_type', 'equalto', 'chadcoin_add')|sum(attribute='amount') }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Chadcoin Spent:</span>
+                        <span class="fw-bold text-danger">
+                            -{{ transactions|selectattr('transaction_type', 'equalto', 'chadcoin_remove')|sum(attribute='amount') }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Current Balance:</span>
+                        <span class="fw-bold">{{ current_user.chadcoin_balance }} Chadcoin</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wallet-card mt-4">
+                <div class="wallet-card-header">
+                    <h5 class="mb-0">About Transactions</h5>
+                </div>
+                <div class="wallet-card-body">
+                    <p>Transactions in Chad Battles include:</p>
+                    <ul>
+                        <li><strong>NFT Minting:</strong> Creating NFTs from your Chads, Waifus, or Items</li>
+                        <li><strong>NFT Burning:</strong> Converting NFTs back to Chadcoin</li>
+                        <li><strong>Chadcoin Transfers:</strong> Sending or receiving Chadcoin</li>
+                        <li><strong>Game Purchases:</strong> Buying items, waifus, or other game assets</li>
+                    </ul>
+                    <p>All blockchain transactions are recorded on the Solana blockchain and can be viewed on the Solana Explorer.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/wallet.js') }}"></script>
+{% endblock %} 

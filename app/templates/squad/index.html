@@ -1,0 +1,309 @@
+{% extends "layout.html" %}
+
+{% block title %}Squad Management - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="pixel-font">Squad Management</h1>
+        <p>Form or join a squad with other Chads for group battles and special events.</p>
+    </div>
+</div>
+
+{% if squad %}
+<!-- User is in a squad -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>{{ squad.name }}</span>
+                {% if squad.leader_id == current_user.chad.id %}
+                    <span class="badge bg-primary">Squad Leader</span>
+                {% else %}
+                    <span class="badge bg-secondary">Squad Member</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img src="{{ url_for('static', filename='img/squad-badge.png') }}" alt="Squad Badge" class="img-fluid mb-3" style="max-width: 128px;">
+                        <h4 class="pixel-font">{{ squad.name }}</h4>
+                        <p class="mb-1">Created {{ squad.created_at.strftime('%b %d, %Y') }}</p>
+                        <div class="d-flex justify-content-center mt-2">
+                            <span class="badge bg-success me-2">Level {{ squad.level }}</span>
+                            <span class="badge bg-info">{{ squad.members|length }} Members</span>
+                        </div>
+                        
+                        <div class="squad-stats mt-3">
+                            <div class="stat-row mb-2">
+                                <div class="stat-label">XP Progress</div>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ squad.xp % 1000 / 10 }}%" aria-valuenow="{{ squad.xp % 1000 }}" aria-valuemin="0" aria-valuemax="1000">
+                                        {{ squad.xp % 1000 }}/1000
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-around mt-3">
+                                <div class="text-center">
+                                    <span class="d-block fs-4 fw-bold text-success">{{ squad.battles_won }}</span>
+                                    <small>Victories</small>
+                                </div>
+                                <div class="text-center">
+                                    <span class="d-block fs-4 fw-bold text-danger">{{ squad.battles_lost }}</span>
+                                    <small>Defeats</small>
+                                </div>
+                                <div class="text-center">
+                                    <span class="d-block fs-4 fw-bold">{{ (squad.battles_won / (squad.battles_won + squad.battles_lost) * 100)|int if (squad.battles_won + squad.battles_lost) > 0 else 0 }}%</span>
+                                    <small>Win Rate</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <h5 class="pixel-font mb-3">Squad Bonuses</h5>
+                        <div class="row mb-4">
+                            <div class="col-6 mb-2">
+                                <div class="bonus-badge">
+                                    <span class="bonus-icon">🔥</span>
+                                    <span class="bonus-value">+{{ squad.level * 2 }}%</span>
+                                    <span class="bonus-stat">Clout</span>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <div class="bonus-badge">
+                                    <span class="bonus-icon">🔪</span>
+                                    <span class="bonus-value">+{{ squad.level * 1.5 }}%</span>
+                                    <span class="bonus-stat">Roast</span>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <div class="bonus-badge">
+                                    <span class="bonus-icon">🛡️</span>
+                                    <span class="bonus-value">+{{ squad.level * 2 }}%</span>
+                                    <span class="bonus-stat">Resistance</span>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-2">
+                                <div class="bonus-badge">
+                                    <span class="bonus-icon">💧</span>
+                                    <span class="bonus-value">+{{ squad.level * 1.5 }}%</span>
+                                    <span class="bonus-stat">Drip</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if squad.description %}
+                            <div class="mb-4">
+                                <h5 class="pixel-font mb-2">Description</h5>
+                                <p>{{ squad.description }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="squad-actions d-flex">
+                            {% if squad.leader_id == current_user.chad.id %}
+                                <a href="{{ url_for('squad.edit', squad_id=squad.id) }}" class="btn btn-pixel me-2">Edit Squad</a>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('squad.battles', squad_id=squad.id) }}" class="btn btn-pixel me-2">Squad Battles</a>
+                            
+                            {% if squad.leader_id != current_user.chad.id %}
+                                <form action="{{ url_for('squad.leave') }}" method="post" class="ms-auto">
+                                    <button type="submit" class="btn btn-danger-pixel" onclick="return confirm('Are you sure you want to leave this squad?')">Leave Squad</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Squad Members</span>
+                {% if squad.leader_id == current_user.chad.id %}
+                    <button type="button" class="btn btn-sm btn-pixel" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                        Invite Members
+                    </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Level</th>
+                                <th>Class</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                {% if squad.leader_id == current_user.chad.id %}
+                                    <th>Actions</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in squad.members %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ url_for('static', filename='img/chad/' ~ member.chad.chad_class.name|lower|replace(' ', '-') ~ '.png') }}" alt="Chad" width="32" height="32" class="me-2">
+                                            <div>
+                                                <div>{{ member.chad.user.x_username }}</div>
+                                                {% if member.chad_id == squad.leader_id %}
+                                                    <small class="text-muted">Squad Leader</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ member.chad.level }}</td>
+                                    <td>{{ member.chad.chad_class.name }}</td>
+                                    <td>
+                                        {% if member.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ member.joined_at.strftime('%b %d, %Y') }}</td>
+                                    {% if squad.leader_id == current_user.chad.id and member.chad_id != current_user.chad.id %}
+                                        <td>
+                                            <form action="{{ url_for('squad.remove_member', member_id=member.id) }}" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-danger-pixel" onclick="return confirm('Are you sure you want to remove this member?')">Remove</button>
+                                            </form>
+                                            
+                                            {% if not member.is_active %}
+                                                <form action="{{ url_for('squad.activate_member', member_id=member.id) }}" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-success-pixel">Activate</button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                    {% elif squad.leader_id == current_user.chad.id %}
+                                        <td>
+                                            <button class="btn btn-sm btn-secondary" disabled>Leader</button>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title pixel-font" id="inviteModalLabel">Invite to Squad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Share this link with other Chads to invite them to your squad:</p>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="inviteLink" value="{{ url_for('squad.join', code=squad.invite_code, _external=True) }}" readonly>
+                    <button class="btn btn-pixel" type="button" id="copyInviteLink">Copy</button>
+                </div>
+                
+                <p>Or invite them via Twitter:</p>
+                <a href="https://twitter.com/intent/tweet?text=Join%20my%20Chad%20Battles%20squad!%20%40ChadBot%20join%20squad%20{{ squad.invite_code }}" target="_blank" class="btn btn-pixel w-100">
+                    <i class="fab fa-twitter me-2"></i> Tweet Invite
+                </a>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- User is not in a squad -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">Create a Squad</div>
+            <div class="card-body">
+                <p>Form your own squad and recruit other Chads to join your team!</p>
+                <p>Squad benefits:</p>
+                <ul>
+                    <li>Stat bonuses for all members</li>
+                    <li>Participate in squad battles and events</li>
+                    <li>Access to exclusive squad challenges</li>
+                    <li>Squad-only marketplace deals</li>
+                </ul>
+                
+                <form action="{{ url_for('squad.create') }}" method="post">
+                    <div class="mb-3">
+                        <label for="squadName" class="form-label">Squad Name</label>
+                        <input type="text" class="form-control" id="squadName" name="name" placeholder="Enter squad name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="squadDescription" class="form-label">Squad Description</label>
+                        <textarea class="form-control" id="squadDescription" name="description" rows="3" placeholder="Describe your squad"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-pixel w-100">Create Squad</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">Join a Squad</div>
+            <div class="card-body">
+                <p>Join an existing squad by entering their invite code:</p>
+                
+                <form action="{{ url_for('squad.join_with_code') }}" method="post">
+                    <div class="mb-3">
+                        <label for="inviteCode" class="form-label">Invite Code</label>
+                        <input type="text" class="form-control" id="inviteCode" name="invite_code" placeholder="Enter invite code" required>
+                    </div>
+                    <button type="submit" class="btn btn-pixel w-100">Join Squad</button>
+                </form>
+                
+                <hr>
+                
+                <p class="mt-4">Or tweet to join a squad:</p>
+                <div class="d-grid">
+                    <a href="https://twitter.com/intent/tweet?text=@ChadBot+join+squad+SQUAD_CODE" target="_blank" class="btn btn-pixel">
+                        Tweet to Join
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Copy invite link functionality
+        const copyBtn = document.getElementById('copyInviteLink');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                const inviteLink = document.getElementById('inviteLink');
+                inviteLink.select();
+                document.execCommand('copy');
+                
+                // Show feedback
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            });
+        }
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,53 @@
+<!-- NFT Minting Modal -->
+<div class="modal fade" id="mintNftModal" tabindex="-1" aria-labelledby="mintNftModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="mintNftModalLabel">Mint NFT Confirmation</h5>
+                <button type="button" class="btn-close btn-close-white close-mint-modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-coins fa-3x text-warning mb-3"></i>
+                    <h4>Mint <span id="entityName">item</span> as NFT?</h4>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Minting this entity as an NFT will create a permanent record on the Solana blockchain.
+                </div>
+                
+                <p>By minting this NFT, you will:</p>
+                <ul>
+                    <li>Pay any associated gas fees</li>
+                    <li>Create a permanent token on the Solana blockchain</li>
+                    <li>Be able to transfer or sell this item outside the game</li>
+                    <li>Be able to burn the NFT for Chadcoin</li>
+                </ul>
+                
+                <div class="alert alert-warning" id="mintWarningContainer">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="mintWarning"></span>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" value="" id="confirmMintCheckbox" required>
+                    <label class="form-check-label" for="confirmMintCheckbox">
+                        I understand and confirm this action
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-mint-modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmMintButton" disabled>Confirm Mint</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enable/disable confirm button based on checkbox
+    document.getElementById('confirmMintCheckbox')?.addEventListener('change', function() {
+        document.getElementById('confirmMintButton').disabled = !this.checked;
+    });
+</script> 

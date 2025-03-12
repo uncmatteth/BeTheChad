@@ -1,0 +1,15 @@
+{% macro render_mint_button(entity_type, entity_id, is_minted, wallet_connected) %}
+    {% if is_minted %}
+        <button class="btn btn-sm btn-success" disabled>
+            <i class="fas fa-check me-1"></i> Minted
+        </button>
+    {% else %}
+        <button class="btn btn-sm btn-primary mint-nft-button" 
+                data-entity-type="{{ entity_type }}" 
+                data-entity-id="{{ entity_id }}"
+                {% if not wallet_connected %}disabled{% endif %}
+                {% if not wallet_connected %}title="Connect wallet to mint NFT"{% endif %}>
+            <i class="fas fa-coins me-1"></i> Mint NFT
+        </button>
+    {% endif %}
+{% endmacro %} 

@@ -1,0 +1,315 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="pixel-font">Dashboard</h1>
+        <p>Welcome back, {{ current_user.x_displayname }}!</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Chad Character Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Your Chad</span>
+                <a href="{{ url_for('chad.index') }}" class="btn btn-sm btn-pixel">Details</a>
+            </div>
+            <div class="card-body text-center">
+                {% if chad %}
+                    <img src="{{ url_for('static', filename='img/chad/' ~ chad.chad_class.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ chad.chad_class.name }}" class="character-sprite mb-3">
+                    <h4 class="pixel-font">{{ current_user.x_username }}</h4>
+                    <div class="badge bg-primary mb-2">{{ chad.chad_class.name }}</div>
+                    <div class="badge bg-secondary mb-3">Level {{ chad.level }}</div>
+                    
+                    <!-- Stats -->
+                    <div class="stats-container text-start mt-3">
+                        <div class="stat-row mb-2">
+                            <div class="stat-label">Clout</div>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill clout-fill" data-value="{{ stats.clout }}" data-max="100"></div>
+                                <div class="stat-bar-text">{{ stats.clout }}</div>
+                            </div>
+                        </div>
+                        <div class="stat-row mb-2">
+                            <div class="stat-label">Roast Level</div>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill roast-fill" data-value="{{ stats.roast_level }}" data-max="20"></div>
+                                <div class="stat-bar-text">{{ stats.roast_level }}</div>
+                            </div>
+                        </div>
+                        <div class="stat-row mb-2">
+                            <div class="stat-label">Cringe Resistance</div>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill cringe-fill" data-value="{{ stats.cringe_resistance }}" data-max="20"></div>
+                                <div class="stat-bar-text">{{ stats.cringe_resistance }}</div>
+                            </div>
+                        </div>
+                        <div class="stat-row">
+                            <div class="stat-label">Drip Factor</div>
+                            <div class="stat-bar">
+                                <div class="stat-bar-fill drip-fill" data-value="{{ stats.drip_factor }}" data-max="20"></div>
+                                <div class="stat-bar-text">{{ stats.drip_factor }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="battle-stats mt-3">
+                        <span class="badge bg-success me-2">🏆 {{ chad.battles_won }} Wins</span>
+                        <span class="badge bg-danger">☠️ {{ chad.battles_lost }} Losses</span>
+                    </div>
+                {% else %}
+                    <div class="no-chad-placeholder mb-4">
+                        <img src="{{ url_for('static', filename='img/chad-placeholder.png') }}" alt="No Chad" class="character-sprite mb-3 opacity-50">
+                        <h5 class="pixel-font">No Chad Character Yet</h5>
+                    </div>
+                    <p class="mb-4">Create your Chad character by tweeting <code>@RollMasterChad create character</code> or clicking the button below:</p>
+                    <a href="{{ url_for('chad.create') }}" class="btn btn-pixel">Create Chad Character</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Equipped Waifus -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Equipped Waifus</span>
+                <a href="{{ url_for('waifu.index') }}" class="btn btn-sm btn-pixel">View All</a>
+            </div>
+            <div class="card-body">
+                {% if equipped_waifus %}
+                    <div class="row">
+                        {% for waifu in equipped_waifus %}
+                            <div class="col-6 mb-3">
+                                <div class="waifu-card text-center">
+                                    <img src="{{ url_for('static', filename='img/waifu/' ~ waifu.waifu_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ waifu.waifu_type.name }}" class="waifu-sprite mb-2">
+                                    <h6 class="pixel-font">{{ waifu.waifu_type.name }}</h6>
+                                    <span class="badge rarity-{{ waifu.waifu_type.rarity.name|lower }}">{{ waifu.waifu_type.rarity.name }}</span>
+                                    
+                                    <!-- Stat bonuses -->
+                                    <div class="stats-bonus mt-2">
+                                        {% if waifu.clout_bonus %}
+                                            <small>+{{ waifu.clout_bonus }} Clout</small><br>
+                                        {% endif %}
+                                        {% if waifu.roast_bonus %}
+                                            <small>+{{ waifu.roast_bonus }} Roast</small><br>
+                                        {% endif %}
+                                        {% if waifu.cringe_resistance_bonus %}
+                                            <small>+{{ waifu.cringe_resistance_bonus }} Resist</small><br>
+                                        {% endif %}
+                                        {% if waifu.drip_bonus %}
+                                            <small>+{{ waifu.drip_bonus }} Drip</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        {% for i in range(3 - equipped_waifus|length) %}
+                            <div class="col-6 mb-3">
+                                <div class="waifu-card text-center empty-slot">
+                                    <div class="waifu-sprite mb-2 d-flex justify-content-center align-items-center bg-dark opacity-25">
+                                        <span class="fs-2">+</span>
+                                    </div>
+                                    <h6 class="pixel-font">Empty Slot</h6>
+                                    <a href="{{ url_for('waifu.index') }}" class="btn btn-sm btn-pixel">Equip</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>No waifus equipped</p>
+                        <a href="{{ url_for('waifu.index') }}" class="btn btn-pixel">Equip Waifus</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Battles -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Battles</span>
+                <a href="{{ url_for('main.battle_history') }}" class="btn btn-sm btn-pixel">View All</a>
+            </div>
+            <div class="card-body">
+                {% if battles %}
+                    <div class="battle-log">
+                        {% for battle in battles %}
+                            <div class="entry">
+                                {% if battle.winner_id == chad.id %}
+                                    You defeated <strong>{{ battle.opponent.user.x_username }}</strong>
+                                    {% if battle.waifu_at_stake %}
+                                        and claimed their <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span> waifu!
+                                    {% endif %}
+                                {% elif battle.winner_id == battle.opponent_id %}
+                                    You lost to <strong>{{ battle.opponent.user.x_username }}</strong>
+                                    {% if battle.waifu_at_stake %}
+                                        and lost your <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span> waifu!
+                                    {% endif %}
+                                {% elif battle.winner_id == battle.initiator_id and battle.initiator_id != chad.id %}
+                                    <strong>{{ battle.initiator.user.x_username }}</strong> defeated you
+                                    {% if battle.waifu_at_stake %}
+                                        and claimed your <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span> waifu!
+                                    {% endif %}
+                                {% else %}
+                                    Battle with <strong>{{ battle.opponent.user.x_username if battle.initiator_id == chad.id else battle.initiator.user.x_username }}</strong> ({{ battle.status }})
+                                {% endif %}
+                                <span class="small text-muted d-block">{{ battle.completed_at.strftime('%b %d, %Y') if battle.completed_at else battle.created_at.strftime('%b %d, %Y') }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="https://twitter.com/intent/tweet?text=@RollMasterChad+fight+@opponent" target="_blank" class="btn btn-pixel">
+                            Start New Battle
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>No battles yet</p>
+                        <a href="https://twitter.com/intent/tweet?text=@RollMasterChad+fight+@opponent" target="_blank" class="btn btn-pixel">
+                            Start New Battle
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Cabal -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">Cabal</div>
+            <div class="card-body">
+                {% if cabal %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="cabal-badge me-3 p-2 bg-dark rounded">
+                            <img src="{{ url_for('static', filename='img/cabal-badge.png') }}" alt="Cabal" width="64">
+                        </div>
+                        <div>
+                            <h4 class="pixel-font">{{ cabal.name }}</h4>
+                            <p class="mb-1">Level {{ cabal.level }} • {{ cabal.member_count }} members</p>
+                            <div class="cabal-stats">
+                                <span class="badge bg-success me-2">🏆 {{ cabal.battles_won }} Wins</span>
+                                <span class="badge bg-danger">☠️ {{ cabal.battles_lost }} Losses</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if cabal.has_debuff() %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Your cabal is currently debuffed until {{ cabal.debuff_until.strftime('%b %d, %H:%M') }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('cabal.index') }}" class="btn btn-pixel">View Cabal</a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>You're not in a cabal</p>
+                        <div class="d-flex justify-content-center mt-3">
+                            <a href="{{ url_for('cabal.index') }}" class="btn btn-pixel me-2">
+                                Create Cabal
+                            </a>
+                            <a href="{{ url_for('cabal.index') }}" class="btn btn-pixel">
+                                Join Cabal
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Wallet & NFTs -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">Wallet & NFTs</div>
+            <div class="card-body">
+                {% if current_user.wallet_address %}
+                    <div class="wallet-info mb-3">
+                        <h5 class="pixel-font">Connected Wallet</h5>
+                        <p class="mb-1">
+                            <span class="badge bg-success me-2"><i class="fas fa-check-circle"></i> Connected</span>
+                            {{ current_user.wallet_address[:6] }}...{{ current_user.wallet_address[-4:] }}
+                        </p>
+                        <p class="mb-3">
+                            <span class="chadcoin-balance">
+                                <img src="{{ url_for('static', filename='img/chadcoin.png') }}" alt="Chadcoin" class="coin-icon">
+                                {{ current_user.chadcoin_balance }} Chadcoin
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <h5 class="pixel-font">Your NFTs</h5>
+                    <div class="row nft-grid">
+                        {% if current_user.owned_nfts %}
+                            {% for nft in current_user.owned_nfts[:4] %}
+                                <div class="col-6 mb-3">
+                                    <div class="nft-card">
+                                        {% if nft.entity_type == 'waifu' %}
+                                            <img src="{{ url_for('static', filename='img/waifu/' ~ nft.waifu.waifu_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ nft.waifu.waifu_type.name }}" class="nft-image">
+                                            <div class="nft-info">
+                                                <h6 class="pixel-font">{{ nft.waifu.waifu_type.name }}</h6>
+                                                <span class="badge rarity-{{ nft.waifu.waifu_type.rarity.name|lower }}">{{ nft.waifu.waifu_type.rarity.name }}</span>
+                                            </div>
+                                        {% else %}
+                                            <img src="{{ url_for('static', filename='img/item/' ~ nft.item.item_type.name|lower|replace(' ', '-') ~ '.png') }}" alt="{{ nft.item.item_type.name }}" class="nft-image">
+                                            <div class="nft-info">
+                                                <h6 class="pixel-font">{{ nft.item.item_type.name }}</h6>
+                                                <span class="badge rarity-{{ nft.item.item_type.rarity.name|lower }}">{{ nft.item.item_type.rarity.name }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <p>No NFTs minted yet</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-center mt-2">
+                        <p class="small">Your NFTs can be traded on third-party Solana marketplaces like Magic Eden</p>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>Connect your Solana wallet to mint and trade NFTs</p>
+                        <button id="connect-wallet-btn" class="btn btn-pixel">Connect Wallet</button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<script>
+    // Initialize stat bars on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Find all stat bar fill elements
+        const statBars = document.querySelectorAll('.stat-bar-fill');
+        
+        // Set the width for each stat bar based on data attributes
+        statBars.forEach(function(bar) {
+            const value = parseFloat(bar.getAttribute('data-value'));
+            const max = parseFloat(bar.getAttribute('data-max'));
+            const percentage = (value / max) * 100;
+            bar.style.width = percentage + '%';
+        });
+    });
+</script>
+{% endblock %} 
