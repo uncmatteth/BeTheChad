@@ -34,11 +34,25 @@ class User(UserMixin, db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     
+    # Twitter/X info
+    x_id = db.Column(db.String(64), unique=True, nullable=True)
+    x_username = db.Column(db.String(64), unique=True, nullable=True)
+    x_displayname = db.Column(db.String(64), nullable=True)
+    x_profile_image = db.Column(db.String(255), nullable=True)
+    
+    # Admin flag
+    is_admin = db.Column(db.Boolean, default=False)
+    
     # Relationships
     chad = db.relationship('Chad', backref='user', uselist=False, lazy=True)
     waifus = db.relationship('Waifu', backref='user', lazy=True)
     items = db.relationship('Item', backref='user', lazy=True)
-    transactions = db.relationship('Transaction', backref='user', lazy=True)
+    
+    # Fix the ambiguous relationships by specifying foreign_keys
+    transactions = db.relationship('Transaction', 
+                                  foreign_keys='Transaction.user_id',
+                                  backref='user', 
+                                  lazy=True)
     
     def __repr__(self):
         return f'<User {self.username}>'
