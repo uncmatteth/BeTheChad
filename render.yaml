@@ -26,7 +26,7 @@ services:
       - key: ENABLE_BLOCKCHAIN
         value: false
       - key: ENABLE_TWITTER_BOT
-        value: false
+        value: true
       - key: TWITTER_API_KEY
         sync: false
       - key: TWITTER_API_SECRET
@@ -40,36 +40,36 @@ services:
       - key: LOG_LEVEL
         value: DEBUG
 
-  # Twitter bot cron job - commenting out for initial deployment
-  # - type: cron
-  #   name: twitter-bot
-  #   env: python
-  #   schedule: "*/5 * * * *"
-  #   buildCommand: pip install -r requirements_deployment.txt
-  #   startCommand: python twitter_bot.py
-  #   envVars:
-  #     - key: FLASK_APP
-  #       value: app
-  #     - key: FLASK_ENV
-  #       value: production
-  #     - key: DATABASE_URL
-  #       fromDatabase:
-  #         name: chad-battles-db
-  #         property: connectionString
-  #     - key: ENABLE_BLOCKCHAIN
-  #       value: false
-  #     - key: ENABLE_TWITTER_BOT
-  #       value: true
-  #     - key: TWITTER_API_KEY
-  #       sync: false
-  #     - key: TWITTER_API_SECRET
-  #       sync: false
-  #     - key: TWITTER_ACCESS_TOKEN
-  #       sync: false
-  #     - key: TWITTER_ACCESS_TOKEN_SECRET
-  #       sync: false
-  #     - key: TWITTER_BEARER_TOKEN
-  #       sync: false
+  # Twitter bot cron job
+  - type: cron
+    name: twitter-bot
+    env: python
+    schedule: "*/5 * * * *"
+    buildCommand: pip install -r requirements_deployment.txt
+    startCommand: python twitter_bot.py
+    envVars:
+      - key: FLASK_APP
+        value: app
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chad-battles-db
+          property: connectionString
+      - key: ENABLE_BLOCKCHAIN
+        value: false
+      - key: ENABLE_TWITTER_BOT
+        value: true
+      - key: TWITTER_API_KEY
+        sync: false
+      - key: TWITTER_API_SECRET
+        sync: false
+      - key: TWITTER_ACCESS_TOKEN
+        sync: false
+      - key: TWITTER_ACCESS_TOKEN_SECRET
+        sync: false
+      - key: TWITTER_BEARER_TOKEN
+        sync: false
 
 # Database
 databases:
