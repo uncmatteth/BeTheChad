@@ -20,7 +20,7 @@ itsdangerous==2.0.1
 MarkupSafe==2.0.1
 
 # API and networking
-requests==2.26.0 
+requests==2.27.0
 urllib3==1.26.7
 tweepy==4.10.0
 
