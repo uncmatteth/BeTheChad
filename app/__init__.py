@@ -5,18 +5,12 @@ import os
 from flask import Flask, render_template, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager
 from config import config_by_name
 import logging
 from logging.handlers import RotatingFileHandler
 from werkzeug.middleware.proxy_fix import ProxyFix
 from app.extensions import db, migrate, login_manager, cache
 from app.utils.scheduler import init_scheduler
-
-# Initialize extensions
-db = SQLAlchemy()
-migrate = Migrate()
-login_manager = LoginManager()
 
 # Import models to ensure they are registered with SQLAlchemy
 from app.models.user import User
@@ -28,6 +22,12 @@ from app.models.battle import Battle
 from app.models.meme_elixir import MemeElixir
 from app.models.transaction import Transaction
 from app.models.nft import NFT
+
+# User loader function for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    """Load a user by ID."""
+    return User.query.get(int(user_id))
 
 def create_app(config_name='development'):
     """
