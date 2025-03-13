@@ -16,8 +16,11 @@ RUN pip install --no-cache-dir -r requirements_deployment.txt
 # Copy application code
 COPY . .
 
-# Run the setup script
-RUN python setup_deployment_db.py
+# Add debug output before running the setup script
+RUN ls -la && echo "Checking for setup_deployment_db.py:" && ls -la setup_deployment_db.py
+
+# Run the setup script with debug mode
+RUN python -u setup_deployment_db.py
 
 # Create non-root user
 RUN useradd -m chadbattles && \
