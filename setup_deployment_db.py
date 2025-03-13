@@ -8,10 +8,12 @@ from app.models.chad import Chad, ChadClass
 from app.models.waifu import Waifu, WaifuType, WaifuRarity
 from app.models.item import Item, ItemType, ItemRarity, WaifuItem, CharacterItem
 from app.models.cabal import Cabal, CabalMember
+from app.models.transaction import Transaction, TransactionType
 import os
 import sys
 import random
 from datetime import datetime
+import traceback
 
 def setup_deployment_db(env='production'):
     """Initialize the database with minimal required data.
@@ -21,15 +23,48 @@ def setup_deployment_db(env='production'):
     """
     print(f"Starting database initialization for {env} environment...")
     
-    # Set a default SQLite database URI if DATABASE_URL is not set
-    if 'DATABASE_URL' not in os.environ:
-        print("DATABASE_URL not found, using SQLite database for deployment")
+    # Check if DATABASE_URL is set and print its format (without credentials)
+    if 'DATABASE_URL' in os.environ:
+        db_url = os.environ['DATABASE_URL']
+        # Mask the credentials in the URL for safe logging
+        masked_url = db_url
+        if '@' in db_url:
+            # Format: postgresql://username:password@host:port/dbname
+            parts = db_url.split('@')
+            protocol_and_creds = parts[0].split('://')
+            masked_url = f"{protocol_and_creds[0]}://****:****@{parts[1]}"
+        print(f"Using DATABASE_URL: {masked_url}")
+        
+        # Handle postgres:// vs postgresql:// in the URL
+        if db_url.startswith('postgres://'):
+            fixed_url = db_url.replace('postgres://', 'postgresql://', 1)
+            os.environ['DATABASE_URL'] = fixed_url
+            print("Updated DATABASE_URL to use postgresql:// prefix")
+    else:
+        print("WARNING: DATABASE_URL not found, using SQLite database for deployment")
         os.environ['DATABASE_URL'] = 'sqlite:///app.db'
     
     try:
+        print("Creating application instance...")
         app = create_app(env)
         
         with app.app_context():
+            # Test the database connection
+            print("Testing database connection...")
+            try:
+                db.engine.execute("SELECT 1")
+                print("Database connection successful!")
+            except Exception as e:
+                print(f"Database connection test failed: {str(e)}")
+                print("Detailed error information:")
+                traceback.print_exc()
+                return False
+            
+            # Print detailed engine information
+            print(f"SQLAlchemy engine: {db.engine.name}")
+            print(f"Database driver: {db.engine.driver}")
+            print(f"Tables that will be created: {', '.join([t.name for t in db.metadata.sorted_tables])}")
+            
             # Create tables in a specific order to avoid foreign key problems
             print("Creating database tables in dependency order...")
             
@@ -39,148 +74,75 @@ def setup_deployment_db(env='production'):
             
             # If tables already exist, skip table creation
             if not inspector.get_table_names():
-                # Create tables in dependency order instead of using db.create_all()
-                # First, create parent tables that don't depend on others
-                tables_to_create = [
-                    User.__table__,
-                    ItemRarity.__table__,
-                    ItemType.__table__,
-                    WaifuRarity.__table__,
-                    WaifuType.__table__,
-                    ChadClass.__table__
-                ]
-                db.metadata.create_tables(tables_to_create)
-                print("Base tables created successfully.")
-                
-                # Then create tables that depend on the parent tables
-                dependent_tables = [
-                    Chad.__table__,
-                    Waifu.__table__,
-                    Cabal.__table__,
-                    Item.__table__
-                ]
-                db.metadata.create_tables(dependent_tables)
-                print("Secondary tables created successfully.")
-                
-                # Finally create tables that depend on secondary tables
-                relationship_tables = [
-                    CabalMember.__table__,
-                    WaifuItem.__table__,
-                    CharacterItem.__table__
-                ]
-                db.metadata.create_tables(relationship_tables)
-                print("Relationship tables created successfully.")
-                
-                # Create any remaining tables that were not explicitly defined above
-                db.create_all()
-                print("All remaining tables created successfully.")
+                try:
+                    # Create tables in dependency order instead of using db.create_all()
+                    # First, create parent tables that don't depend on others
+                    tables_to_create = [
+                        User.__table__,
+                        ItemRarity.__table__,
+                        ItemType.__table__,
+                        WaifuRarity.__table__,
+                        WaifuType.__table__,
+                        ChadClass.__table__
+                    ]
+                    db.metadata.create_tables(tables_to_create)
+                    print("Base tables created successfully.")
+                    
+                    # Then create tables that depend on the parent tables
+                    dependent_tables = [
+                        Chad.__table__,
+                        Waifu.__table__,
+                        Cabal.__table__,
+                        Item.__table__,
+                        Transaction.__table__
+                    ]
+                    db.metadata.create_tables(dependent_tables)
+                    print("Secondary tables created successfully.")
+                    
+                    # Finally create tables that depend on secondary tables
+                    relationship_tables = [
+                        CabalMember.__table__,
+                        WaifuItem.__table__,
+                        CharacterItem.__table__
+                    ]
+                    db.metadata.create_tables(relationship_tables)
+                    print("Relationship tables created successfully.")
+                    
+                    # Create any remaining tables that were not explicitly defined above
+                    db.create_all()
+                    print("All remaining tables created successfully.")
+                except Exception as e:
+                    print(f"Error creating tables: {str(e)}")
+                    print("Detailed error information:")
+                    traceback.print_exc()
+                    return False
             else:
                 print("Tables already exist, skipping table creation.")
             
-            # Check if we need to add seed data
-            if ItemRarity.query.count() == 0:
-                print("Adding seed data for rarities and types...")
-                
-                # Create item rarities
-                print("Creating ItemRarity entries...")
-                common = ItemRarity(name="Common", description="Common items with basic stats", drop_rate=0.6, min_stat_bonus=1, max_stat_bonus=3)
-                rare = ItemRarity(name="Rare", description="Rare items with improved stats", drop_rate=0.3, min_stat_bonus=2, max_stat_bonus=5)
-                epic = ItemRarity(name="Epic", description="Epic items with powerful stats", drop_rate=0.09, min_stat_bonus=3, max_stat_bonus=8)
-                legendary = ItemRarity(name="Legendary", description="Legendary items with amazing stats", drop_rate=0.01, min_stat_bonus=5, max_stat_bonus=12)
-
-                db.session.add_all([common, rare, epic, legendary])
-                db.session.commit()
-                
-                # Create waifu rarities
-                print("Creating WaifuRarity entries...")
-                waifu_common = WaifuRarity(name="Common", description="Common waifus", drop_rate=0.6, min_stat_bonus=1, max_stat_bonus=3)
-                waifu_rare = WaifuRarity(name="Rare", description="Rare waifus", drop_rate=0.3, min_stat_bonus=2, max_stat_bonus=5)
-                waifu_epic = WaifuRarity(name="Epic", description="Epic waifus", drop_rate=0.09, min_stat_bonus=3, max_stat_bonus=8)
-                waifu_legendary = WaifuRarity(name="Legendary", description="Legendary waifus", drop_rate=0.01, min_stat_bonus=5, max_stat_bonus=12)
-
-                db.session.add_all([waifu_common, waifu_rare, waifu_epic, waifu_legendary])
-                db.session.commit()
-                
-                # Create chad classes
-                print("Creating ChadClass entries...")
-                sigma = ChadClass(name="Sigma", description="The lone wolf who follows his own path.", 
-                               base_clout_bonus=10, base_roast_bonus=8, base_cringe_resistance_bonus=7, base_drip_bonus=5)
-                alpha = ChadClass(name="Alpha", description="The classic leader of the pack.", 
-                               base_clout_bonus=7, base_roast_bonus=10, base_cringe_resistance_bonus=5, base_drip_bonus=8)
-                giga = ChadClass(name="Giga", description="Absolute unit of a Chad.", 
-                              base_clout_bonus=8, base_roast_bonus=5, base_cringe_resistance_bonus=10, base_drip_bonus=7)
-
-                db.session.add_all([sigma, alpha, giga])
-                db.session.commit()
-
-                # Create item types
-                print("Creating ItemType entries...")
-                weapon = ItemType(name="Weapon", description="Increases roast power", 
-                                 rarity_id=common.id, slot="weapon", 
-                                 base_clout_bonus=1, base_roast_bonus=3, 
-                                 base_cringe_resistance_bonus=0, base_drip_bonus=1,
-                                 is_character_item=True)
-                                 
-                armor = ItemType(name="Armor", description="Increases cringe resistance", 
-                                rarity_id=common.id, slot="armor", 
-                                base_clout_bonus=1, base_roast_bonus=0, 
-                                base_cringe_resistance_bonus=3, base_drip_bonus=1,
-                                is_character_item=True)
-                                
-                accessory = ItemType(name="Accessory", description="Increases drip factor", 
-                                    rarity_id=rare.id, slot="accessory", 
-                                    base_clout_bonus=2, base_roast_bonus=0, 
-                                    base_cringe_resistance_bonus=0, base_drip_bonus=3,
-                                    is_character_item=True)
-                
-                db.session.add_all([weapon, armor, accessory])
-                db.session.commit()
-                
-                # Create waifu types
-                print("Creating WaifuType entries...")
-                tsundere = WaifuType(name="Tsundere", description="Harsh outside, sweet inside",
-                                   rarity_id=waifu_common.id,
-                                   base_clout_bonus=1, base_roast_bonus=3, 
-                                   base_cringe_resistance_bonus=0, base_drip_bonus=1)
-                                   
-                kuudere = WaifuType(name="Kuudere", description="Cool and collected",
-                                  rarity_id=waifu_common.id,
-                                  base_clout_bonus=1, base_roast_bonus=0, 
-                                  base_cringe_resistance_bonus=3, base_drip_bonus=1)
-                                  
-                dandere = WaifuType(name="Dandere", description="Shy and quiet",
-                                  rarity_id=waifu_common.id,
-                                  base_clout_bonus=0, base_roast_bonus=0, 
-                                  base_cringe_resistance_bonus=3, base_drip_bonus=2)
-                                  
-                deredere = WaifuType(name="Deredere", description="Totally love-struck",
-                                   rarity_id=waifu_rare.id,
-                                   base_clout_bonus=2, base_roast_bonus=0, 
-                                   base_cringe_resistance_bonus=0, base_drip_bonus=3)
-                
-                db.session.add_all([tsundere, kuudere, dandere, deredere])
-                db.session.commit()
-                
-                print("Seed data creation complete.")
-            else:
-                print("Seed data already exists, skipping creation.")
+            # Skip seed data creation for now, just to get the app running
+            print("Skipping seed data creation for initial deployment.")
             
             # Check if admin user exists
             admin = User.query.filter_by(username="admin").first()
             if not admin:
                 print("Creating admin user...")
-                admin = User(
-                    username="admin",
-                    email="admin@chadbattles.fun",
-                    is_admin=True,
-                    is_verified=True,
-                    chadcoin_balance=1000,
-                    created_at=datetime.utcnow()
-                )
-                admin.set_password("admin")  # Should be changed immediately in production
-                db.session.add(admin)
-                db.session.commit()
-                print("Admin user created.")
+                try:
+                    admin = User(
+                        username="admin",
+                        email="admin@chadbattles.fun",
+                        is_admin=True,
+                        chadcoin_balance=1000,
+                        created_at=datetime.utcnow()
+                    )
+                    admin.set_password("admin")  # Should be changed immediately in production
+                    db.session.add(admin)
+                    db.session.commit()
+                    print("Admin user created.")
+                except Exception as e:
+                    print(f"Error creating admin user: {str(e)}")
+                    print("Detailed error information:")
+                    traceback.print_exc()
+                    return False
             else:
                 print("Admin user already exists.")
             
@@ -188,6 +150,8 @@ def setup_deployment_db(env='production'):
             
     except Exception as e:
         print(f"Error initializing database: {str(e)}")
+        print("Detailed error information:")
+        traceback.print_exc()
         print("Database initialization failed!")
         return False
     
@@ -196,4 +160,6 @@ def setup_deployment_db(env='production'):
 if __name__ == "__main__":
     # Determine environment from command line argument if provided
     env = sys.argv[1] if len(sys.argv) > 1 else 'production'
-    setup_deployment_db(env) 
+    success = setup_deployment_db(env)
+    if not success:
+        sys.exit(1)  # Exit with error code for the deployment script to detect 
