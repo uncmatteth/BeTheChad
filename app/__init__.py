@@ -190,14 +190,14 @@ def register_commands(app):
             print("WARNING: This will delete all data in the database!")
             print("Starting forced database initialization...")
             
-            # Drop all tables first
-            with app.app_context():
-                db.drop_all()
-                print("All tables dropped successfully.")
-            
-            # Then initialize
+            # Import the setup script here to avoid circular imports
             from setup_deployment_db import setup_deployment_db
+            
+            # Determine environment
             config_name = app.config['ENV']
+            print(f"Using environment: {config_name}")
+            
+            # Run the setup script
             if setup_deployment_db(config_name):
                 print("Database initialization completed successfully!")
             else:
@@ -206,7 +206,7 @@ def register_commands(app):
                 sys.exit(1)
         except Exception as e:
             import traceback
-            print(f"Error during forced database initialization: {str(e)}")
+            print(f"Error during database initialization: {str(e)}")
             traceback.print_exc()
             import sys
             sys.exit(1)
