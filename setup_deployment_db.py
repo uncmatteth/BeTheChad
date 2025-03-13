@@ -21,6 +21,11 @@ def setup_deployment_db(env='production'):
     """
     print(f"Starting database initialization for {env} environment...")
     
+    # Set a default SQLite database URI if DATABASE_URL is not set
+    if 'DATABASE_URL' not in os.environ:
+        print("DATABASE_URL not found, using SQLite database for deployment")
+        os.environ['DATABASE_URL'] = 'sqlite:///app.db'
+    
     try:
         app = create_app(env)
         
