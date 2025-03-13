@@ -5,7 +5,7 @@ This module provides a model for tracking various metrics about cabals over time
 which can be used for analytics dashboards and trend analysis.
 """
 
-from app import db
+from app.extensions import db
 from datetime import datetime
 import uuid
 
@@ -15,7 +15,7 @@ class CabalAnalytics(db.Model):
     
     Attributes:
         id (str): Unique identifier for the analytics record
-        cabal_id (str): ID of the cabal being tracked
+        cabal_id (int): ID of the cabal being tracked
         timestamp (datetime): When this analytics snapshot was taken
         member_count (int): Number of members in the cabal at this time
         total_power (float): Total power of the cabal at this time
@@ -25,7 +25,7 @@ class CabalAnalytics(db.Model):
         referrals (int): Cumulative referrals at this time
     """
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    cabal_id = db.Column(db.String(36), db.ForeignKey('cabal.id'), nullable=False)
+    cabal_id = db.Column(db.Integer, db.ForeignKey('cabals.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
     # Membership metrics
