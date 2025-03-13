@@ -47,6 +47,7 @@ class User(UserMixin, db.Model):
     chad = db.relationship('Chad', backref='user', uselist=False, lazy=True)
     waifus = db.relationship('Waifu', backref='user', lazy=True)
     items = db.relationship('Item', backref='user', lazy=True)
+    inventory = db.relationship('Inventory', back_populates='user', uselist=False, lazy=True)
     
     # Fix the ambiguous relationships by specifying foreign_keys
     transactions = db.relationship('Transaction', 

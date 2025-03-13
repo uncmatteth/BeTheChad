@@ -30,7 +30,7 @@ def login():
 def logout():
     """Logout the current user."""
     logout_user()
-    flash('You have been logged out.', 'info')
+    flash('You have been logged out.', 'success')
     return redirect(url_for('main.index'))
 
 @auth_bp.route('/register')
@@ -46,22 +46,53 @@ def twitter_login():
     # In a real implementation, this would redirect to Twitter OAuth
     # For now, we'll simulate a successful login with a demo user
     
-    # Check if demo user exists
-    demo_user = User.query.filter_by(x_username='demo_user').first()
+    # Check if demo user exists using raw SQL to bypass ORM validation
+    result = db.session.execute("SELECT id, username, email, password_hash, x_username, chadcoin_balance, is_admin FROM users WHERE x_username = 'demo_user'").fetchone()
     
-    if not demo_user:
-        # Create a demo user
-        demo_user = User(
-            id=1,
-            x_id=str(uuid.uuid4()),
-            x_username='demo_user',
-            x_displayname='Demo User',
-            x_profile_image='https://example.com/profile.jpg',
-            chadcoin_balance=1000,
-            is_admin=True
-        )
-        db.session.add(demo_user)
+    if not result:
+        # Create a demo user with direct SQL
+        db.session.execute("""
+            INSERT INTO users (
+                username, 
+                email, 
+                password_hash, 
+                x_id, 
+                x_username, 
+                x_displayname, 
+                x_profile_image, 
+                chadcoin_balance, 
+                is_admin,
+                created_at,
+                updated_at
+            ) VALUES (
+                'demo_user', 
+                'demo@example.com', 
+                'pbkdf2:sha256:150000$abc123$abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 
+                :x_id, 
+                'demo_user', 
+                'Demo User', 
+                'https://example.com/profile.jpg', 
+                1000, 
+                true,
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+            )
+        """, {'x_id': str(uuid.uuid4())})
         db.session.commit()
+        
+        # Get the newly created user
+        result = db.session.execute("SELECT id, username, email, password_hash, x_username, chadcoin_balance, is_admin FROM users WHERE x_username = 'demo_user'").fetchone()
+    
+    # Manually create a User instance with minimal attributes
+    demo_user = User(
+        id=result[0],
+        username=result[1], 
+        email=result[2], 
+        password_hash=result[3],
+        x_username=result[4],
+        chadcoin_balance=result[5],
+        is_admin=result[6]
+    )
     
     # Log in the demo user
     login_user(demo_user)
