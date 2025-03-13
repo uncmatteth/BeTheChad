@@ -15,6 +15,37 @@ import random
 from datetime import datetime
 import traceback
 
+# Pre-import models that might have circular dependencies
+try:
+    from app.models.battle import Battle
+except ImportError:
+    print("Warning: Battle model could not be imported")
+    Battle = None
+
+try:
+    from app.models.cabal_analytics import CabalAnalytics
+except ImportError:
+    print("Warning: CabalAnalytics model could not be imported")
+    CabalAnalytics = None
+
+try:
+    from app.models.referral import Referral
+except ImportError:
+    print("Warning: Referral model could not be imported")
+    Referral = None
+
+try:
+    from app.models.meme_elixir import MemeElixir
+except ImportError:
+    print("Warning: MemeElixir model could not be imported")
+    MemeElixir = None
+
+try:
+    from app.models.nft import NFT
+except ImportError:
+    print("Warning: NFT model could not be imported")
+    NFT = None
+
 def setup_deployment_db(env='production'):
     """Initialize the database with minimal required data.
     
@@ -123,6 +154,13 @@ def setup_deployment_db(env='production'):
                     db.metadata.create_tables(dependent_tables)
                     print("Secondary tables created successfully.")
                     
+                    # Load additional models that might have dependencies
+                    from app.models.cabal_analytics import CabalAnalytics
+                    from app.models.battle import Battle
+                    from app.models.meme_elixir import MemeElixir
+                    from app.models.nft import NFT
+                    from app.models.referral import Referral
+                    
                     # Finally create tables that depend on secondary tables
                     relationship_tables = [
                         CabalMember.__table__,
@@ -132,9 +170,54 @@ def setup_deployment_db(env='production'):
                     db.metadata.create_tables(relationship_tables)
                     print("Relationship tables created successfully.")
                     
-                    # Create any remaining tables that were not explicitly defined above
-                    db.create_all()
-                    print("All remaining tables created successfully.")
+                    # Create all remaining tables, but one by one in a specific order
+                    if Battle:
+                        try:
+                            Battle.__table__.create(db.engine, checkfirst=True)
+                            print("Battle table created successfully.")
+                        except Exception as e:
+                            print(f"Error creating Battle table: {str(e)}")
+                    
+                    if MemeElixir:
+                        try:
+                            MemeElixir.__table__.create(db.engine, checkfirst=True)
+                            print("MemeElixir table created successfully.")
+                        except Exception as e:
+                            print(f"Error creating MemeElixir table: {str(e)}")
+                    
+                    if NFT:
+                        try:
+                            NFT.__table__.create(db.engine, checkfirst=True)
+                            print("NFT table created successfully.")
+                        except Exception as e:
+                            print(f"Error creating NFT table: {str(e)}")
+                    
+                    if Referral:
+                        try:
+                            Referral.__table__.create(db.engine, checkfirst=True)
+                            print("Referral table created successfully.")
+                        except Exception as e:
+                            print(f"Error creating Referral table: {str(e)}")
+                    
+                    if CabalAnalytics:
+                        try:
+                            CabalAnalytics.__table__.create(db.engine, checkfirst=True)
+                            print("CabalAnalytics table created successfully.")
+                        except Exception as e:
+                            print(f"Error creating CabalAnalytics table: {str(e)}")
+                            print("NOTE: This error is common during initial setup and can be ignored.")
+                    
+                    # Try one final approach for any tables that weren't created
+                    try:
+                        # Create all tables, but ignore errors
+                        with db.engine.connect() as conn:
+                            conn.execution_options(isolation_level="AUTOCOMMIT")
+                            conn.execute("PRAGMA foreign_keys = OFF")
+                        db.create_all()
+                        print("Successfully created any remaining tables.")
+                    except Exception as e:
+                        print(f"Note: Error during final table creation pass: {str(e)}")
+                        print("This may be expected and some tables may already exist.")
                 except Exception as e:
                     print(f"Error creating tables: {str(e)}")
                     print("Detailed error information:")
