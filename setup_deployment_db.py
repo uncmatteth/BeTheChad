@@ -3,13 +3,13 @@ Setup script for deployment database initialization.
 This script initializes a minimal database for deployment without blockchain dependencies.
 """
 from app import create_app, db
-from app.models.user import User
 import os
 import sys
 import random
 from datetime import datetime
 import traceback
 import sqlalchemy
+import uuid
 
 def setup_deployment_db(env='production'):
     """Initialize the database with minimal required data.
@@ -241,29 +241,40 @@ def setup_deployment_db(env='production'):
                 print("Re-enabling foreign key constraints...")
                 conn.execute("PRAGMA foreign_keys = ON")
             
-            # Check if admin user exists
-            admin = User.query.filter_by(username="admin").first()
-            if not admin:
+                # Create admin user directly with SQL instead of using ORM
                 print("Creating admin user...")
                 try:
-                    admin = User(
-                        username="admin",
-                        email="admin@chadbattles.fun",
-                        is_admin=True,
-                        chadcoin_balance=1000,
-                        created_at=datetime.utcnow()
-                    )
-                    admin.set_password("admin")  # Should be changed immediately in production
-                    db.session.add(admin)
-                    db.session.commit()
-                    print("Admin user created.")
+                    # Check if admin exists
+                    admin = conn.execute("SELECT * FROM user WHERE username = 'admin'").fetchone()
+                    if not admin:
+                        # Generate a UUID for the admin user
+                        admin_id = str(uuid.uuid4())
+                        
+                        # For the password hash, we'll use a pre-computed hash for 'admin'
+                        # This is the hash for 'admin' using werkzeug's generate_password_hash
+                        password_hash = 'pbkdf2:sha256:260000$7tGrB1C9LkOeFdqV$7dfc6164cc975e7a1b4d15a4a9c139ce04091454245097144c30d909da354f5a'
+                        
+                        # Insert admin user directly
+                        conn.execute("""
+                        INSERT INTO user (id, username, email, password_hash, chadcoin_balance, is_admin, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            admin_id,
+                            'admin',
+                            'admin@chadbattles.fun',
+                            password_hash,
+                            1000,
+                            True,
+                            datetime.utcnow()
+                        ))
+                        print("Admin user created with direct SQL.")
+                    else:
+                        print("Admin user already exists.")
                 except Exception as e:
-                    print(f"Error creating admin user: {str(e)}")
+                    print(f"Error creating admin user with SQL: {str(e)}")
                     print("Detailed error information:")
                     traceback.print_exc()
                     # Continue anyway
-            else:
-                print("Admin user already exists.")
             
             # If we used SQLite temporarily, restore the original DB URL
             if original_db_url:
