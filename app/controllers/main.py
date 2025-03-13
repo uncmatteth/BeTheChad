@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.chad import Chad
 from app.models.waifu import Waifu
 from app.models.battle import Battle
-from app.models.cabal import Cabal, CabalMember, CabalBattle
+from app.models.cabal import Cabal, CabalMember
 from datetime import datetime, timedelta
 
 main_bp = Blueprint('main', __name__)
