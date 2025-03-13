@@ -32,12 +32,12 @@ pillow==9.4.0
 tweepy==4.13.0
 python-twitter-v2==0.8.1
 
-# Blockchain
-solana==0.29.2
-solders==0.14.5
-construct-typing==0.5.6
-anchorpy==0.14.0
-asyncstdlib==3.10.7
+# Blockchain - commented out problematic packages
+# solana==0.29.2
+# solders==0.14.5
+# construct-typing==0.5.6
+# anchorpy==0.14.0
+# asyncstdlib==3.10.7
 
 # Testing
 pytest==7.2.2
