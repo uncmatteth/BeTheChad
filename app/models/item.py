@@ -34,6 +34,7 @@ class ItemType(db.Model):
     base_roast_bonus = db.Column(db.Integer, default=0)
     base_cringe_resistance_bonus = db.Column(db.Integer, default=0)
     base_drip_bonus = db.Column(db.Integer, default=0)
+    is_character_item = db.Column(db.Boolean, default=True)
     
     # Relationships
     items = db.relationship('Item', backref='item_type', lazy='dynamic')
@@ -53,6 +54,9 @@ class Item(db.Model):
     name = db.Column(db.String(50), nullable=False)
     is_equipped = db.Column(db.Boolean, default=False)
     
+    # Type column for inheritance
+    type = db.Column(db.String(50))
+    
     # Stats
     clout_bonus = db.Column(db.Integer, default=0)
     roast_bonus = db.Column(db.Integer, default=0)
@@ -62,6 +66,11 @@ class Item(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'item'
+    }
     
     def __repr__(self):
         return f'<Item {self.name}>'
@@ -119,4 +128,62 @@ class Item(db.Model):
         self.is_equipped = False
         db.session.commit()
         
-        return True 
+        return True
+
+class WaifuItem(Item):
+    """Item specifically for waifus."""
+    __mapper_args__ = {
+        'polymorphic_identity': 'waifu_item',
+    }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+    @classmethod
+    def create(cls, user_id, item_type_id, name=None):
+        """Factory method to create a new waifu item."""
+        item_type = ItemType.query.get(item_type_id)
+        if not item_type:
+            return None
+            
+        item = cls(
+            user_id=user_id,
+            item_type_id=item_type_id,
+            name=name or item_type.name,
+            clout_bonus=item_type.base_clout_bonus,
+            roast_bonus=item_type.base_roast_bonus,
+            cringe_resistance_bonus=item_type.base_cringe_resistance_bonus,
+            drip_bonus=item_type.base_drip_bonus
+        )
+        db.session.add(item)
+        db.session.commit()
+        return item
+
+class CharacterItem(Item):
+    """Item specifically for chad characters."""
+    __mapper_args__ = {
+        'polymorphic_identity': 'character_item',
+    }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+    @classmethod
+    def create(cls, user_id, item_type_id, name=None):
+        """Factory method to create a new character item."""
+        item_type = ItemType.query.get(item_type_id)
+        if not item_type:
+            return None
+            
+        item = cls(
+            user_id=user_id,
+            item_type_id=item_type_id,
+            name=name or item_type.name,
+            clout_bonus=item_type.base_clout_bonus,
+            roast_bonus=item_type.base_roast_bonus,
+            cringe_resistance_bonus=item_type.base_cringe_resistance_bonus,
+            drip_bonus=item_type.base_drip_bonus
+        )
+        db.session.add(item)
+        db.session.commit()
+        return item 

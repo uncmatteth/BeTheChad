@@ -3,8 +3,14 @@ services:
   - type: web
     name: chad-battles
     env: python
-    buildCommand: pip install -r requirements_minimal.txt && python setup_minimal.py --non-interactive
+    buildCommand: pip install -r requirements_deployment.txt && python setup_deployment_db.py
     startCommand: gunicorn "app:create_app()"
+    # Add health check
+    healthCheckPath: /health
+    # Auto-restart on crash
+    autoDeploy: true
+    # Zero-downtime deployments
+    numInstances: 1
     envVars:
       - key: FLASK_APP
         value: app
@@ -16,6 +22,10 @@ services:
         fromDatabase:
           name: chad-battles-db
           property: connectionString
+      - key: ENABLE_BLOCKCHAIN
+        value: false
+      - key: ENABLE_TWITTER_BOT
+        value: false
       - key: TWITTER_API_KEY
         sync: false
       - key: TWITTER_API_SECRET
@@ -32,7 +42,7 @@ services:
   #   name: twitter-bot
   #   env: python
   #   schedule: "*/5 * * * *"
-  #   buildCommand: pip install -r requirements_minimal.txt
+  #   buildCommand: pip install -r requirements_deployment.txt
   #   startCommand: python twitter_bot.py
   #   envVars:
   #     - key: FLASK_APP
@@ -43,6 +53,10 @@ services:
   #       fromDatabase:
   #         name: chad-battles-db
   #         property: connectionString
+  #     - key: ENABLE_BLOCKCHAIN
+  #       value: false
+  #     - key: ENABLE_TWITTER_BOT
+  #       value: true
   #     - key: TWITTER_API_KEY
   #       sync: false
   #     - key: TWITTER_API_SECRET

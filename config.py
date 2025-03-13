@@ -11,6 +11,10 @@ class Config:
     DEBUG = False
     TESTING = False
     
+    # Feature flags
+    ENABLE_BLOCKCHAIN = os.getenv('ENABLE_BLOCKCHAIN', 'false').lower() == 'true'
+    ENABLE_TWITTER_BOT = os.getenv('ENABLE_TWITTER_BOT', 'false').lower() == 'true'
+    
     # Twitter API settings
     TWITTER_API_KEY = os.getenv('TWITTER_API_KEY')
     TWITTER_API_SECRET = os.getenv('TWITTER_API_SECRET')
@@ -39,6 +43,8 @@ class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv('DEV_DATABASE_URI', 'sqlite:///dev.db')
+    # Enable blockchain in development by default for testing
+    ENABLE_BLOCKCHAIN = os.getenv('ENABLE_BLOCKCHAIN', 'true').lower() == 'true'
 
 
 class TestingConfig(Config):
@@ -46,6 +52,9 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URI', 'sqlite:///test.db')
     WTF_CSRF_ENABLED = False  # Disable CSRF protection in tests
+    # Disable features in testing by default
+    ENABLE_BLOCKCHAIN = False
+    ENABLE_TWITTER_BOT = False
 
 
 class ProductionConfig(Config):
@@ -64,6 +73,10 @@ class ProductionConfig(Config):
     
     # Redis cache configuration (when implemented)
     REDIS_URL = os.getenv('REDIS_URL')
+    
+    # For production, explicitly get feature flags from environment
+    ENABLE_BLOCKCHAIN = os.getenv('ENABLE_BLOCKCHAIN', 'false').lower() == 'true'
+    ENABLE_TWITTER_BOT = os.getenv('ENABLE_TWITTER_BOT', 'false').lower() == 'true'
 
 
 # Configuration dictionary mapping

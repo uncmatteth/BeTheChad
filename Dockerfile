@@ -10,14 +10,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements_deployment.txt .
+RUN pip install --no-cache-dir -r requirements_deployment.txt
 
 # Copy application code
 COPY . .
 
 # Run the setup script
-RUN python setup_minimal.py --non-interactive
+RUN python setup_deployment_db.py
 
 # Create non-root user
 RUN useradd -m chadbattles && \
@@ -32,7 +32,9 @@ RUN mkdir -p app/static/img/{chad,waifu,item,elixir}
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    FLASK_APP=app
+    FLASK_APP=app \
+    ENABLE_BLOCKCHAIN=false \
+    ENABLE_TWITTER_BOT=false
 
 # Expose port
 EXPOSE 5000

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from app.extensions import db, migrate, login_manager, cache
 from config import config_by_name
 from app.utils.scheduler import init_scheduler
@@ -41,6 +41,26 @@ def create_app(config_name='development'):
     
     # Register error handlers
     register_error_handlers(app)
+    
+    # Add health check route
+    @app.route('/health')
+    def health_check():
+        try:
+            # Test DB connection
+            db.session.execute('SELECT 1')
+            return jsonify({
+                "status": "healthy",
+                "database": "connected",
+                "feature_flags": {
+                    "blockchain": app.config.get('ENABLE_BLOCKCHAIN', False),
+                    "twitter_bot": app.config.get('ENABLE_TWITTER_BOT', False)
+                }
+            })
+        except Exception as e:
+            return jsonify({
+                "status": "unhealthy",
+                "error": str(e)
+            }), 500
     
     with app.app_context():
         # Initialize scheduler for background tasks
