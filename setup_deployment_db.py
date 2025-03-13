@@ -30,10 +30,52 @@ def setup_deployment_db(env='production'):
         app = create_app(env)
         
         with app.app_context():
-            print("Creating database tables...")
-            # Create tables
-            db.create_all()
-            print("Tables created successfully.")
+            # Create tables in a specific order to avoid foreign key problems
+            print("Creating database tables in dependency order...")
+            
+            # Use inspector to check if we need to create tables
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            
+            # If tables already exist, skip table creation
+            if not inspector.get_table_names():
+                # Create tables in dependency order instead of using db.create_all()
+                # First, create parent tables that don't depend on others
+                tables_to_create = [
+                    User.__table__,
+                    ItemRarity.__table__,
+                    ItemType.__table__,
+                    WaifuRarity.__table__,
+                    WaifuType.__table__,
+                    ChadClass.__table__
+                ]
+                db.metadata.create_tables(tables_to_create)
+                print("Base tables created successfully.")
+                
+                # Then create tables that depend on the parent tables
+                dependent_tables = [
+                    Chad.__table__,
+                    Waifu.__table__,
+                    Cabal.__table__,
+                    Item.__table__
+                ]
+                db.metadata.create_tables(dependent_tables)
+                print("Secondary tables created successfully.")
+                
+                # Finally create tables that depend on secondary tables
+                relationship_tables = [
+                    CabalMember.__table__,
+                    WaifuItem.__table__,
+                    CharacterItem.__table__
+                ]
+                db.metadata.create_tables(relationship_tables)
+                print("Relationship tables created successfully.")
+                
+                # Create any remaining tables that were not explicitly defined above
+                db.create_all()
+                print("All remaining tables created successfully.")
+            else:
+                print("Tables already exist, skipping table creation.")
             
             # Check if we need to add seed data
             if ItemRarity.query.count() == 0:
@@ -142,25 +184,16 @@ def setup_deployment_db(env='production'):
             else:
                 print("Admin user already exists.")
             
-            print("Database initialization complete!")
-            return True
+            print("Database initialization completed successfully!")
             
     except Exception as e:
         print(f"Error initializing database: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        print("Database initialization failed!")
         return False
+    
+    return True
 
 if __name__ == "__main__":
-    # Get environment from command line if provided
-    env = 'production'
-    if len(sys.argv) > 1:
-        env = sys.argv[1]
-    
-    success = setup_deployment_db(env)
-    
-    if not success:
-        print("Database initialization failed!")
-        sys.exit(1)
-    else:
-        print("Database initialization completed successfully!") 
+    # Determine environment from command line argument if provided
+    env = sys.argv[1] if len(sys.argv) > 1 else 'production'
+    setup_deployment_db(env) 
