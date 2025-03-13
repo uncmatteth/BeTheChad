@@ -3,7 +3,7 @@ services:
   - type: web
     name: chad-battles
     env: python
-    buildCommand: pip install -r requirements_deployment.txt && flask init-db
+    buildCommand: pip install -r requirements_deployment.txt && pip install psycopg2-binary==2.9.1 && python -m flask init-db-force
     startCommand: gunicorn "app:create_app()"
     # Add health check
     healthCheckPath: /health
