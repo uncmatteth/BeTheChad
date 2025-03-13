@@ -59,8 +59,8 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     """Production configuration."""
-    # Use DATABASE_URL for Render PostgreSQL or fall back to PROD_DATABASE_URI
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', os.getenv('PROD_DATABASE_URI'))
+    # Use DATABASE_URL for Render PostgreSQL or fall back to PROD_DATABASE_URI or SQLite
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', os.getenv('PROD_DATABASE_URI', 'sqlite:///app.db'))
     
     # Handle Render's postgres:// vs postgresql:// URL format
     if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
