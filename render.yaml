@@ -3,7 +3,13 @@ services:
   - type: web
     name: chad-battles
     env: python
-    buildCommand: pip install -r requirements_deployment.txt && pip install psycopg2-binary==2.9.1 && python -m flask init-db-force
+    buildCommand: >
+      apt-get update && 
+      apt-get install -y libpq-dev postgresql-client &&
+      pip install -r requirements_deployment.txt &&
+      export FLASK_APP=app &&
+      export DATABASE_URL=sqlite:///temp.db &&
+      python -m flask init-db-force
     startCommand: gunicorn "app:create_app()"
     # Add health check
     healthCheckPath: /health
@@ -45,7 +51,10 @@ services:
     name: twitter-bot
     env: python
     schedule: "*/5 * * * *"
-    buildCommand: pip install -r requirements_deployment.txt
+    buildCommand: >
+      apt-get update && 
+      apt-get install -y libpq-dev postgresql-client &&
+      pip install -r requirements_deployment.txt
     startCommand: python twitter_bot.py
     envVars:
       - key: FLASK_APP

@@ -66,6 +66,18 @@ class ProductionConfig(Config):
     if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://', 1)
     
+    # Log the database URL (safely, without credentials)
+    if SQLALCHEMY_DATABASE_URI:
+        db_url = SQLALCHEMY_DATABASE_URI
+        if '@' in db_url:
+            protocol_and_creds = db_url.split('@')[0].split('://')
+            masked_url = f"{protocol_and_creds[0]}://****:****@{db_url.split('@')[1]}"
+            print(f"Using database URL: {masked_url}")
+        else:
+            print(f"Using database URL: {db_url}")
+    else:
+        print("WARNING: No database URL configured!")
+    
     # Add these for production-specific environment
     ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL')
     ELASTICSEARCH_USERNAME = os.getenv('ELASTICSEARCH_USERNAME')
