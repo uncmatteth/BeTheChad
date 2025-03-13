@@ -3,7 +3,7 @@ services:
   - type: web
     name: chad-battles
     env: python
-    buildCommand: pip install -r requirements_deployment.txt && python setup_deployment_db.py
+    buildCommand: pip install -r requirements_deployment.txt && flask init-db
     startCommand: gunicorn "app:create_app()"
     # Add health check
     healthCheckPath: /health
