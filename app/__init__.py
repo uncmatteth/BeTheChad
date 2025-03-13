@@ -1,8 +1,33 @@
+"""
+Flask application package.
+"""
 import os
 from flask import Flask, render_template, jsonify
-from app.extensions import db, migrate, login_manager, cache
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_login import LoginManager
 from config import config_by_name
+import logging
+from logging.handlers import RotatingFileHandler
+from werkzeug.middleware.proxy_fix import ProxyFix
+from app.extensions import db, migrate, login_manager, cache
 from app.utils.scheduler import init_scheduler
+
+# Initialize extensions
+db = SQLAlchemy()
+migrate = Migrate()
+login_manager = LoginManager()
+
+# Import models to ensure they are registered with SQLAlchemy
+from app.models.user import User
+from app.models.chad import Chad, ChadClass
+from app.models.waifu import Waifu, WaifuType, WaifuRarity
+from app.models.item import Item, ItemType, ItemRarity, WaifuItem, CharacterItem
+from app.models.cabal import Cabal, CabalMember
+from app.models.battle import Battle
+from app.models.meme_elixir import MemeElixir
+from app.models.transaction import Transaction
+from app.models.nft import NFT
 
 def create_app(config_name='development'):
     """
@@ -14,10 +39,13 @@ def create_app(config_name='development'):
     Returns:
         Flask app instance
     """
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
     
     # Load the config based on environment
     app.config.from_object(config_by_name[config_name])
+    
+    # Fix for proxy headers when behind a reverse proxy
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     
     # Configure caching based on environment
     if config_name == 'production':
@@ -34,13 +62,31 @@ def create_app(config_name='development'):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
     cache.init_app(app)
+    
+    # Set up logging
+    if not app.debug and not app.testing:
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+        file_handler = RotatingFileHandler('logs/chadbattles.log', maxBytes=10240, backupCount=10)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('Chad Battles startup')
     
     # Register blueprints
     register_blueprints(app)
     
     # Register error handlers
     register_error_handlers(app)
+    
+    # Register CLI commands
+    register_commands(app)
     
     # Add health check route
     @app.route('/health')
@@ -113,6 +159,57 @@ def register_blueprints(app):
     app.register_blueprint(music, url_prefix='/music')
     
     return None
+
+def register_commands(app):
+    """Register Flask CLI commands."""
+    
+    @app.cli.command("init-db")
+    def init_db_command():
+        """Initialize the database with minimal required data."""
+        try:
+            from setup_deployment_db import setup_deployment_db
+            config_name = app.config['ENV']
+            print(f"Starting database initialization in {config_name} mode...")
+            if setup_deployment_db(config_name):
+                print("Database initialization completed successfully!")
+            else:
+                print("Database initialization failed!")
+                import sys
+                sys.exit(1)
+        except Exception as e:
+            import traceback
+            print(f"Error during database initialization: {str(e)}")
+            traceback.print_exc()
+            import sys
+            sys.exit(1)
+            
+    @app.cli.command("init-db-force")
+    def init_db_force_command():
+        """Force initialize the database by dropping all tables first."""
+        try:
+            print("WARNING: This will delete all data in the database!")
+            print("Starting forced database initialization...")
+            
+            # Drop all tables first
+            with app.app_context():
+                db.drop_all()
+                print("All tables dropped successfully.")
+            
+            # Then initialize
+            from setup_deployment_db import setup_deployment_db
+            config_name = app.config['ENV']
+            if setup_deployment_db(config_name):
+                print("Database initialization completed successfully!")
+            else:
+                print("Database initialization failed!")
+                import sys
+                sys.exit(1)
+        except Exception as e:
+            import traceback
+            print(f"Error during forced database initialization: {str(e)}")
+            traceback.print_exc()
+            import sys
+            sys.exit(1)
 
 # Register models
 from app.models import user, chad, waifu, item, cabal, battle, meme_elixir, transaction, nft 
