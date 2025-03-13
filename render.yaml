@@ -11,6 +11,7 @@ services:
     autoDeploy: true
     # Zero-downtime deployments
     numInstances: 1
+    # Enable more logging for debugging
     envVars:
       - key: FLASK_APP
         value: app
@@ -36,6 +37,8 @@ services:
         sync: false
       - key: TWITTER_BEARER_TOKEN
         sync: false
+      - key: LOG_LEVEL
+        value: DEBUG
 
   # Twitter bot cron job - commenting out for initial deployment
   # - type: cron
