@@ -1,21 +1,51 @@
-# Chad Battles - Temporary Landing Page
+# Chad Battles
 
-This is a temporary landing page for the Chad Battles game while the full application is being developed and debugged.
+A blockchain-enabled battle game where users create Chads, join Cabals, and compete in epic battles.
 
 ## Current Status
 
-The full application deployment is experiencing some code issues that need to be resolved. This landing page serves as a placeholder to:
+The application is now successfully deployed on Render.com and is operational.
 
-1. Secure the domain
-2. Provide basic information about the game
-3. Allow users to join a waitlist
+- ✅ Core functionality: User accounts, Chads, Cabals, and Battles
+- ✅ Database: PostgreSQL with proper initialization
+- ✅ Twitter Integration: Login and bot functionality
+- ✅ Rendering: All templates working correctly
 
-## Next Steps
+For detailed deployment status and progress, see [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md).
 
-1. Debug the Python application code (specifically the `WaifuItem` class issue)
-2. Set up proper database connections
-3. Complete the full deployment once the codebase is fixed
+## Features
+
+- **Character Creation**: Create and customize your Chad characters
+- **Cabals**: Join or create your own Cabal to battle with others
+- **Battles**: Engage in epic battles with other Cabals
+- **Inventory System**: Collect and equip items to boost your Chad's stats
+- **Twitter Integration**: Login with Twitter and interact with the game via Twitter
+
+## Getting Started
+
+### For Users
+
+1. Visit [ChadBattles.fun](https://chadbattles.fun)
+2. Login with your Twitter account
+3. Create your first Chad character
+4. Join a Cabal or create your own
+5. Start battling!
+
+### For Developers
+
+1. Clone this repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Set up the environment variables (see `.env.example`)
+4. Initialize the database: `flask init-db`
+5. Run the development server: `flask run`
+
+## Documentation
+
+- [Deployment Guide](DEPLOYMENT.md)
+- [Fixed Deployment Guide](FIXED_DEPLOYMENT_GUIDE.md)
+- [Deployment Status](DEPLOYMENT_STATUS.md)
+- [API Documentation](docs/api.md)
 
 ## Contact
 
-For more information, contact: info@chadbattles.fun 
+For more information, contact: admin@chadbattles.fun 
