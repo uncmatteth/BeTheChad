@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Battles{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Battles</h1>
+    <div class="card">
+        <div class="card-body">
+            <p>View recent battles or challenge other players to battle!</p>
+            <a href="{{ url_for('battle.history') }}" class="btn btn-primary">Battle History</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
