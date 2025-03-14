@@ -13,6 +13,9 @@ The application is now successfully deployed on Render.com and is operational.
 - ✅ Music Player: 104 tracks with fully functional controls
 
 For detailed deployment status and progress, see [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md).
+
+For a comprehensive list of current issues, see [ISSUE_TRACKING.md](ISSUE_TRACKING.md).
+
 For music player verification status, see [MUSIC_PLAYER_VERIFICATION.md](MUSIC_PLAYER_VERIFICATION.md).
 
 ## Features
@@ -46,9 +49,11 @@ For music player verification status, see [MUSIC_PLAYER_VERIFICATION.md](MUSIC_P
 
 ## Documentation
 
-- [Deployment Guide](DEPLOYMENT.md)
-- [Fixed Deployment Guide](FIXED_DEPLOYMENT_GUIDE.md)
-- [Deployment Status](DEPLOYMENT_STATUS.md)
+- [README.md](README.md) - Overview of the project
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment instructions
+- [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md) - Current deployment status
+- [ISSUE_TRACKING.md](ISSUE_TRACKING.md) - Comprehensive list of current issues
+- [FIXED_DEPLOYMENT_GUIDE.md](FIXED_DEPLOYMENT_GUIDE.md) - Updated deployment guide
 - [API Documentation](docs/api.md)
 - [Music Player Information](MUSIC_PLAYER_README.md)
 - [Music Player Verification](MUSIC_PLAYER_VERIFICATION.md)
