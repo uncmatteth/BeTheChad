@@ -10,6 +10,8 @@ from app.utils.twitter_api import (
     get_user_profile, get_user_tweets, analyze_tweets, 
     calculate_clout, post_reply
 )
+import json
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -206,14 +208,14 @@ def handle_create_character(tweet_id, username):
         return False
 
 def handle_fight_request(tweet_id, username, opponent_name):
-    """Handle a fight request"""
+    """Handle a fight request by immediately starting the battle"""
     try:
         # Check if both users have characters
         initiator = User.query.filter_by(x_username=username).first()
         opponent = User.query.filter_by(x_username=opponent_name).first()
         
         if not initiator or not initiator.chad:
-            reply = f"@{username} You need to create a character first with 'CREATE CHARACTER @RollMasterChad'"
+            reply = f"@{username} You need to create a character first with 'MAKE ME A CHAD @RollMasterChad'"
             post_reply(reply, tweet_id)
             return False
         
@@ -222,15 +224,17 @@ def handle_fight_request(tweet_id, username, opponent_name):
             post_reply(reply, tweet_id)
             return False
         
-        # Check if there's already a pending battle
-        existing_battle = Battle.query.filter_by(
-            initiator_id=initiator.chad.id, 
-            opponent_id=opponent.chad.id,
-            status='pending'
+        # Check if there's already a pending or active battle
+        existing_battle = Battle.query.filter(
+            db.or_(
+                db.and_(Battle.initiator_id==initiator.chad.id, Battle.opponent_id==opponent.chad.id),
+                db.and_(Battle.initiator_id==opponent.chad.id, Battle.opponent_id==initiator.chad.id)
+            ),
+            Battle.status.in_(['pending', 'in_progress'])
         ).first()
         
         if existing_battle:
-            reply = f"@{username} You already have a pending battle with @{opponent_name}!"
+            reply = f"@{username} There's already an active battle between you and @{opponent_name}!"
             post_reply(reply, tweet_id)
             return False
         
@@ -238,18 +242,33 @@ def handle_fight_request(tweet_id, username, opponent_name):
         battle = Battle(
             initiator_id=initiator.chad.id,
             opponent_id=opponent.chad.id,
-            status='pending',
-            challenge_tweet_id=tweet_id
+            initiator_chad_id=initiator.chad.id,
+            opponent_chad_id=opponent.chad.id,
+            status='in_progress',  # Start immediately instead of 'pending'
+            challenge_tweet_id=tweet_id,
+            started_at=datetime.utcnow()
         )
         db.session.add(battle)
         db.session.commit()
         
-        # Send a challenge response
+        # Initialize battle log
+        battle.battle_log = json.dumps([{
+            "turn": 0,
+            "timestamp": datetime.utcnow().isoformat(),
+            "event": "battle_started",
+            "description": f"Battle between {initiator.chad.name} and {opponent.chad.name} has begun!"
+        }])
+        db.session.commit()
+        
+        # Perform automatic battle simulation
+        battle_result = simulate_battle(battle)
+        
+        # Send battle notification and results
         reply = (
-            f"🔥 BATTLE CHALLENGE! 🔥\n\n"
-            f"@{opponent_name}, @{username} is challenging you to a Chad Battle!\n\n"
-            f"Reply with 'ACCEPT BATTLE @RollMasterChad' to fight or ignore to decline.\n"
-            f"The winner might claim one of the loser's waifus as a prize!"
+            f"⚔️ BATTLE STARTED! ⚔️\n\n"
+            f"@{username} has challenged @{opponent_name} to a Chad Battle!\n\n"
+            f"{battle_result}\n\n"
+            f"Type CHECK STATS @RollMasterChad to see your updated stats!"
         )
         post_reply(reply, tweet_id)
         
@@ -259,6 +278,86 @@ def handle_fight_request(tweet_id, username, opponent_name):
         reply = f"@{username} Sorry, there was an error processing your battle challenge. Please try again later."
         post_reply(reply, tweet_id)
         return False
+
+def simulate_battle(battle):
+    """Simulate a battle automatically"""
+    try:
+        # Get the participants
+        initiator_chad = battle.initiator_chad
+        opponent_chad = battle.opponent_chad
+        
+        # Basic simulation based on stats
+        initiator_stats = initiator_chad.get_total_stats()
+        opponent_stats = opponent_chad.get_total_stats()
+        
+        initiator_power = sum(initiator_stats.values())
+        opponent_power = sum(opponent_stats.values())
+        
+        # Add some randomness (60% stats, 40% luck)
+        initiator_roll = (initiator_power * 0.6) + (random.random() * initiator_power * 0.4)
+        opponent_roll = (opponent_power * 0.6) + (random.random() * opponent_power * 0.4)
+        
+        # Determine winner
+        if initiator_roll > opponent_roll:
+            winner = initiator_chad
+            loser = opponent_chad
+            battle.winner_id = initiator_chad.user_id
+            battle.loser_id = opponent_chad.user_id
+        else:
+            winner = opponent_chad
+            loser = initiator_chad
+            battle.winner_id = opponent_chad.user_id
+            battle.loser_id = initiator_chad.user_id
+        
+        # Update battle status
+        battle.status = 'completed'
+        battle.completed_at = datetime.utcnow()
+        
+        # Add final battle log entry
+        log = json.loads(battle.battle_log) if battle.battle_log else []
+        log.append({
+            "turn": 1,
+            "timestamp": datetime.utcnow().isoformat(),
+            "event": "battle_ended",
+            "description": f"{winner.name} defeated {loser.name}!"
+        })
+        battle.battle_log = json.dumps(log)
+        
+        # Award XP
+        winner_xp = random.randint(50, 100)
+        loser_xp = random.randint(10, 30)
+        
+        winner.add_xp(winner_xp)
+        loser.add_xp(loser_xp)
+        
+        # Award Chadcoin
+        from app.models.transaction import Transaction
+        winner_reward = random.randint(100, 200)
+        winner.user.add_chadcoin(winner_reward)
+        
+        # Record transaction
+        Transaction.record_chadcoin_transaction(
+            user_id=winner.user_id,
+            amount=winner_reward,
+            description=f"Battle reward for defeating {loser.name}",
+            related_entity=('chad', winner.id)
+        )
+        
+        db.session.commit()
+        
+        # Generate battle summary
+        return (
+            f"🔥 {winner.name} has defeated {loser.name}! 🔥\n"
+            f"\n"
+            f"📊 BATTLE STATS:\n"
+            f"• {winner.name}: {winner_xp} XP gained, {winner_reward} Chadcoin earned\n"
+            f"• {loser.name}: {loser_xp} XP gained (for effort)\n"
+            f"\n"
+            f"The battle was fierce, but {winner.name}'s superior {max(winner.get_total_stats().items(), key=lambda x: x[1])[0].replace('_', ' ')} won the day!"
+        )
+    except Exception as e:
+        logger.error(f"Error simulating battle {battle.id}: {str(e)}")
+        return "The battle couldn't be completed due to technical difficulties. Both Chads walked away unharmed."
 
 def handle_accept_fight(tweet_id, username):
     """Handle accepting a fight"""

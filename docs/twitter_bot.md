@@ -12,13 +12,12 @@ The Chad Battles Twitter Bot (`@RollMasterChad`) serves three main purposes:
 
 ## Command Functionality
 
-Users can interact with the Chad Battles game directly through Twitter by mentioning `@RollMasterChad` with specific commands:
+Users can interact with the Chad Battles game directly through Twitter by including specific commands and mentioning `@RollMasterChad`:
 
 | Command | Description |
 |---------|-------------|
-| `CREATE CHARACTER @RollMasterChad` | Create a new Chad character based on your Twitter profile |
-| `CHALLENGE @username TO BATTLE @RollMasterChad` | Challenge another user to a battle |
-| `ACCEPT BATTLE @RollMasterChad` | Accept a battle challenge |
+| `MAKE ME A CHAD @RollMasterChad` | Create a new Chad character based on your Twitter profile |
+| `CHALLENGE @username TO BATTLE @RollMasterChad` | Challenge another user to an immediate battle |
 | `CHECK STATS @RollMasterChad` | View your character's stats |
 | `JOIN CABAL [cabal_name] @RollMasterChad` | Join an existing cabal |
 | `CREATE CABAL [cabal_name] @RollMasterChad` | Create a new cabal |
@@ -29,6 +28,17 @@ Additional cabal-related commands:
 - `BATTLE CABAL [cabal_name] @RollMasterChad`
 - `VOTE REMOVE CABAL LEADER @RollMasterChad`
 - `JOIN NEXT CABAL BATTLE @RollMasterChad`
+
+## Battle System
+
+The battle system is designed for fast-paced gameplay:
+
+1. When a player challenges another player, the battle starts immediately
+2. No acceptance is required - battles are simulated automatically
+3. Results are posted instantly with statistics about XP and rewards
+4. Both players gain XP, but the winner receives more XP and Chadcoin
+
+This design keeps the game moving quickly and ensures players always get immediate feedback when they participate in battles.
 
 ## Automated Tweets
 
