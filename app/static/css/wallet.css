@@ -8,12 +8,12 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .wallet-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
 .wallet-card-header {
@@ -375,4 +375,71 @@
         margin: 30% auto;
         padding: 20px;
     }
+}
+
+/* Wallet Icon Styles */
+.wallet-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto;
+    color: white;
+}
+
+.wallet-icon-sm {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.wallet-icon-sm::before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 16px;
+}
+
+.wallet-icon-container.phantom,
+.wallet-icon-sm.phantom {
+    background: linear-gradient(135deg, #ab9ff2, #5a32e6);
+}
+
+.wallet-icon-sm.phantom::before {
+    content: "\f6e2"; /* ghost icon */
+}
+
+.wallet-icon-container.solflare,
+.wallet-icon-sm.solflare {
+    background: linear-gradient(135deg, #ffaa22, #ff4a1c);
+}
+
+.wallet-icon-sm.solflare::before {
+    content: "\f185"; /* sun icon */
+}
+
+.wallet-icon-container.slope,
+.wallet-icon-sm.slope {
+    background: linear-gradient(135deg, #3cba54, #1a73e8);
+}
+
+.wallet-icon-sm.slope::before {
+    content: "\f201"; /* chart line icon */
+}
+
+.wallet-icon-container.magiceden,
+.wallet-icon-sm.magiceden {
+    background: linear-gradient(135deg, #f953c6, #b91d73);
+}
+
+.wallet-icon-sm.magiceden::before {
+    content: "\f7f7"; /* hat wizard icon */
 } 

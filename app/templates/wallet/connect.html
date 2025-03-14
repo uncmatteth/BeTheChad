@@ -23,7 +23,9 @@
                         <div class="col-md-6">
                             <div class="card wallet-card h-100 border hover-shadow">
                                 <div class="card-body text-center py-4">
-                                    <img src="{{ url_for('static', filename='img/wallets/placeholder.png') }}" alt="Phantom" class="wallet-logo mb-3" width="64">
+                                    <div class="wallet-icon-container phantom mb-3">
+                                        <i class="fas fa-ghost fa-3x"></i>
+                                    </div>
                                     <h5>Phantom</h5>
                                     <p class="text-muted mb-4">The friendly Solana wallet with dApp browser</p>
                                     <button class="btn btn-primary wallet-connect-btn" data-wallet-type="phantom">
@@ -37,7 +39,9 @@
                         <div class="col-md-6">
                             <div class="card wallet-card h-100 border hover-shadow">
                                 <div class="card-body text-center py-4">
-                                    <img src="{{ url_for('static', filename='img/wallets/placeholder.png') }}" alt="Solflare" class="wallet-logo mb-3" width="64">
+                                    <div class="wallet-icon-container solflare mb-3">
+                                        <i class="fas fa-sun fa-3x"></i>
+                                    </div>
                                     <h5>Solflare</h5>
                                     <p class="text-muted mb-4">Non-custodial Solana wallet with staking</p>
                                     <button class="btn btn-primary wallet-connect-btn" data-wallet-type="solflare">
@@ -51,7 +55,9 @@
                         <div class="col-md-6">
                             <div class="card wallet-card h-100 border hover-shadow">
                                 <div class="card-body text-center py-4">
-                                    <img src="{{ url_for('static', filename='img/wallets/placeholder.png') }}" alt="Slope" class="wallet-logo mb-3" width="64">
+                                    <div class="wallet-icon-container slope mb-3">
+                                        <i class="fas fa-chart-line fa-3x"></i>
+                                    </div>
                                     <h5>Slope</h5>
                                     <p class="text-muted mb-4">Cross-platform Solana wallet with DEX</p>
                                     <button class="btn btn-primary wallet-connect-btn" data-wallet-type="slope">
@@ -65,7 +71,9 @@
                         <div class="col-md-6">
                             <div class="card wallet-card h-100 border hover-shadow">
                                 <div class="card-body text-center py-4">
-                                    <img src="{{ url_for('static', filename='img/wallets/placeholder.png') }}" alt="Magic Eden" class="wallet-logo mb-3" width="64">
+                                    <div class="wallet-icon-container magiceden mb-3">
+                                        <i class="fas fa-hat-wizard fa-3x"></i>
+                                    </div>
                                     <h5>Magic Eden</h5>
                                     <p class="text-muted mb-4">NFT marketplace with integrated wallet</p>
                                     <button class="btn btn-primary wallet-connect-btn" data-wallet-type="magiceden">
@@ -214,4 +222,44 @@
         });
     });
 </script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .wallet-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .wallet-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .wallet-icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto;
+        color: white;
+    }
+    
+    .wallet-icon-container.phantom {
+        background: linear-gradient(135deg, #ab9ff2, #5a32e6);
+    }
+    
+    .wallet-icon-container.solflare {
+        background: linear-gradient(135deg, #ffaa22, #ff4a1c);
+    }
+    
+    .wallet-icon-container.slope {
+        background: linear-gradient(135deg, #3cba54, #1a73e8);
+    }
+    
+    .wallet-icon-container.magiceden {
+        background: linear-gradient(135deg, #f953c6, #b91d73);
+    }
+</style>
 {% endblock %} 
