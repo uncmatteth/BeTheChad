@@ -17,7 +17,7 @@ Users can interact with the Chad Battles game directly through Twitter by includ
 | Command | Description |
 |---------|-------------|
 | `MAKE ME A CHAD @RollMasterChad` | Create a new Chad character based on your Twitter profile |
-| `CHALLENGE @username TO BATTLE @RollMasterChad` | Challenge another user to an immediate battle |
+| `I'm going to CRUSH @username! CHALLENGE TO BATTLE @RollMasterChad` | Challenge another user to an immediate battle |
 | `CHECK STATS @RollMasterChad` | View your character's stats |
 | `JOIN CABAL [cabal_name] @RollMasterChad` | Join an existing cabal |
 | `CREATE CABAL [cabal_name] @RollMasterChad` | Create a new cabal |

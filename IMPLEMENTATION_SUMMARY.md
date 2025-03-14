@@ -72,12 +72,12 @@ This document provides an overview of the Chad Battles implementation, highlight
 ## Twitter Bot
 
 The Twitter bot monitors mentions and processes commands:
-- `@ChadBot create character`: Creates a new Chad character.
-- `@ChadBot stats`: Checks the player's Chad stats.
-- `@ChadBot fight @username`: Challenges another player to a battle.
-- `@ChadBot accept`: Accepts a battle challenge.
-- `@ChadBot create cabal name`: Creates a new cabal.
-- `@ChadBot join cabal name`: Joins an existing cabal.
+- `MAKE ME A CHAD @RollMasterChad`: Creates a new Chad character.
+- `CHECK STATS @RollMasterChad`: Checks the player's Chad stats.
+- `I'm going to CRUSH @username! CHALLENGE TO BATTLE @RollMasterChad`: Challenges another player to a battle.
+- `I ACCEPT THE BATTLE @RollMasterChad`: Accepts a battle challenge.
+- `CREATE CABAL name @RollMasterChad`: Creates a new cabal.
+- `JOIN CABAL name @RollMasterChad`: Joins an existing cabal.
 
 ## Future Enhancements
 

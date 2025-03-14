@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 # Command patterns
 CREATE_CHARACTER_PATTERN = re.compile(r'CREATE\s+CHARACTER', re.IGNORECASE)
-FIGHT_REQUEST_PATTERN = re.compile(r'CHALLENGE\s+@(\w+)\s+TO\s+BATTLE', re.IGNORECASE)
-ACCEPT_FIGHT_PATTERN = re.compile(r'ACCEPT\s+BATTLE', re.IGNORECASE)
+FIGHT_REQUEST_PATTERN = re.compile(r'.*@(\w+).*CHALLENGE\s+TO\s+BATTLE', re.IGNORECASE)
+ACCEPT_FIGHT_PATTERN = re.compile(r'.*ACCEPT\s+.*BATTLE', re.IGNORECASE)
 CHECK_STATS_PATTERN = re.compile(r'CHECK\s+STATS', re.IGNORECASE)
 JOIN_CABAL_PATTERN = re.compile(r'JOIN\s+CABAL\s+([A-Za-z0-9_\s]+)', re.IGNORECASE)
 CREATE_CABAL_PATTERN = re.compile(r'CREATE\s+CABAL\s+([A-Za-z0-9_\s]+)', re.IGNORECASE)
@@ -738,8 +738,8 @@ def handle_help(tweet_id, username):
 
 • CREATE CHARACTER @RollMasterChad - Create a new character
 • CHECK STATS @RollMasterChad - Check your character's stats
-• CHALLENGE @opponent TO BATTLE @RollMasterChad - Challenge someone to battle
-• ACCEPT BATTLE @RollMasterChad - Accept a battle challenge
+• I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad - Challenge someone to battle
+• I ACCEPT THE BATTLE @RollMasterChad - Accept a battle challenge
 
 Cabal Commands:
 • CREATE CABAL name @RollMasterChad - Create a new cabal

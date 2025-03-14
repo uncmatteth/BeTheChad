@@ -20,6 +20,8 @@ Last Updated: March 14, 2025
 - [x] Updated index.html with correct "MAKE ME A CHAD @RollMasterChad" format 
 - [x] Updated how_to_play.html with correct command format
 - [x] Updated twitter_bot.md documentation with correct command format
+- [x] Updated battle commands in all documentation to never start with @ (e.g., "I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad")
+- [x] Updated regex patterns in bot_commands.py to match the new battle command format
 - [ ] Check any other templates or documentation files for incorrect command formats
 
 ### 3. Navigation & Server Errors

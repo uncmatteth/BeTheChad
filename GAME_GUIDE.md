@@ -53,8 +53,8 @@ You control your Chad by tweeting specific commands. All commands must include t
 
 | Command | Example Tweet | Description |
 |---------|--------------|-------------|
-| battle @user | "CHALLENGE @username TO BATTLE @RollMasterChad" | Initiates a battle |
-| accept | "I ACCEPT THE CHALLENGE @RollMasterChad" | Accepts a battle |
+| battle @user | "I'm going to CRUSH @username! CHALLENGE TO BATTLE @RollMasterChad" | Initiates a battle |
+| accept | "I ACCEPT THE BATTLE @RollMasterChad" | Accepts a battle |
 | attack | "I USE SAVAGE ROAST @RollMasterChad" | Standard attack in battle |
 | special | "I USE SIGMA MOVE @RollMasterChad" | Special move (costs energy) |
 | flee | "I WANT TO FLEE @RollMasterChad" | Attempt to escape battle (may fail) |
