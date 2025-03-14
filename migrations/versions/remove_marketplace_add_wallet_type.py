@@ -18,12 +18,12 @@ depends_on = None
 
 def upgrade():
     """Apply migration upgrades."""
-    # Add wallet_type column to user table if it doesn't exist
+    # Add wallet_type column to users table if it doesn't exist
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
-    user_columns = [col['name'] for col in inspector.get_columns('user')]
-    if 'wallet_type' not in user_columns:
-        op.add_column('user', sa.Column('wallet_type', sa.String(20), nullable=True))
+    users_columns = [col['name'] for col in inspector.get_columns('users')]
+    if 'wallet_type' not in users_columns:
+        op.add_column('users', sa.Column('wallet_type', sa.String(20), nullable=True))
     
     # Check if NFTs table exists
     if 'nfts' in inspector.get_table_names():
@@ -69,8 +69,8 @@ def downgrade():
             with op.batch_alter_table('nfts', schema=None) as batch_op:
                 batch_op.create_index('ix_nfts_is_listed', ['is_listed'], unique=False)
     
-    # Check if user table and wallet_type column exist before dropping
-    if 'user' in inspector.get_table_names():
-        user_columns = [col['name'] for col in inspector.get_columns('user')]
-        if 'wallet_type' in user_columns:
-            op.drop_column('user', 'wallet_type') 
+    # Check if users table and wallet_type column exist before dropping
+    if 'users' in inspector.get_table_names():
+        users_columns = [col['name'] for col in inspector.get_columns('users')]
+        if 'wallet_type' in users_columns:
+            op.drop_column('users', 'wallet_type') 
