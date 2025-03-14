@@ -14,36 +14,47 @@ def get_tracks():
     # Get music directory from the static folder
     music_dir = os.path.join(current_app.static_folder, 'music')
     
-    # Get all MP3 files from the music folder
-    try:
-        current_app.logger.info(f"Scanning music directory: {music_dir}")
-        if not os.path.exists(music_dir):
-            current_app.logger.warning(f"Music directory doesn't exist: {music_dir}")
-            return jsonify([])
+    # Add potential additional music folders to check
+    music_folders = [
+        music_dir,  # Default location in static folder
+        os.environ.get('CHAD_MUSIC_DIR', '')  # Optional environment variable for custom location
+    ]
+    
+    # Track the total number of files processed
+    total_files = 0
+    valid_music_files = 0
+    
+    current_app.logger.info(f"Scanning music directories")
+    
+    for folder in music_folders:
+        if not folder or not os.path.exists(folder) or not os.path.isdir(folder):
+            continue
             
-        for filename in os.listdir(music_dir):
-            if filename.endswith('.mp3'):
-                file_path = os.path.join(music_dir, filename)
-                file_size = os.path.getsize(file_path)
-                
-                # Skip placeholder files (less than 1MB)
-                if file_size < 100 * 1024:  # Skip files smaller than 100KB
-                    current_app.logger.warning(f"Skipping likely placeholder file: {filename} (size: {file_size} bytes)")
-                    continue
-                    
-                # Create a track object
-                track = {
-                    'title': os.path.splitext(filename)[0].replace('_', ' '),
-                    'path': f'/static/music/{filename}',
-                    'filename': filename,
-                    'size': file_size
-                }
-                tracks.append(track)
-                current_app.logger.debug(f"Added track: {track['title']} ({file_size} bytes)")
+        current_app.logger.info(f"Checking music directory: {folder}")
         
-        current_app.logger.info(f"Found {len(tracks)} valid music tracks")
-    except Exception as e:
-        current_app.logger.error(f"Error reading music directory: {e}")
+        try:
+            # Get all MP3 files from the folder
+            for filename in os.listdir(folder):
+                total_files += 1
+                if filename.endswith('.mp3'):
+                    file_path = os.path.join(folder, filename)
+                    file_size = os.path.getsize(file_path)
+                    
+                    # Create a track object - no longer skipping small files
+                    # as we want to include all music files
+                    track = {
+                        'title': os.path.splitext(filename)[0].replace('_', ' '),
+                        'path': f'/static/music/{filename}' if folder == music_dir else f'/music/custom/{os.path.basename(filename)}',
+                        'filename': filename,
+                        'size': file_size
+                    }
+                    tracks.append(track)
+                    valid_music_files += 1
+                    current_app.logger.debug(f"Added track: {track['title']} ({file_size} bytes)")
+        except Exception as e:
+            current_app.logger.error(f"Error reading music directory {folder}: {e}")
+    
+    current_app.logger.info(f"Processed total of {total_files} files, found {valid_music_files} valid music files")
         
     return jsonify(tracks)
 
@@ -53,8 +64,13 @@ def stream_music(filename):
     try:
         music_dir = os.path.join(current_app.static_folder, 'music')
         if not os.path.exists(os.path.join(music_dir, filename)):
-            current_app.logger.error(f"Music file not found: {filename}")
-            return jsonify({"error": "File not found"}), 404
+            # Try alternative music directory from environment variable
+            alt_music_dir = os.environ.get('CHAD_MUSIC_DIR')
+            if alt_music_dir and os.path.exists(os.path.join(alt_music_dir, filename)):
+                return send_from_directory(alt_music_dir, filename)
+            else:
+                current_app.logger.error(f"Music file not found: {filename}")
+                return jsonify({"error": "File not found"}), 404
             
         current_app.logger.info(f"Streaming music file: {filename}")
         return send_from_directory(music_dir, filename)
@@ -62,57 +78,76 @@ def stream_music(filename):
         current_app.logger.error(f"Error streaming music file: {e}")
         return jsonify({"error": "File not found"}), 404
 
+@music.route('/custom/<filename>')
+def stream_custom_music(filename):
+    """Stream a music file from the custom directory"""
+    try:
+        custom_music_dir = os.environ.get('CHAD_MUSIC_DIR')
+        if not custom_music_dir or not os.path.exists(os.path.join(custom_music_dir, filename)):
+            current_app.logger.error(f"Custom music file not found: {filename}")
+            return jsonify({"error": "File not found"}), 404
+            
+        current_app.logger.info(f"Streaming custom music file: {filename}")
+        return send_from_directory(custom_music_dir, filename)
+    except Exception as e:
+        current_app.logger.error(f"Error streaming custom music file: {e}")
+        return jsonify({"error": "File not found"}), 404
+
 @music.route('/list')
 def list_music():
     """Return a list of all available music files"""
-    music_dir = os.path.join(current_app.static_folder, 'music')
     music_files = []
     
-    # Make sure the directory exists
-    if not os.path.exists(music_dir):
-        os.makedirs(music_dir)
-        current_app.logger.info(f"Created music directory: {music_dir}")
+    # Get music directory from the static folder
+    music_dir = os.path.join(current_app.static_folder, 'music')
     
-    # Get all MP3 files
-    try:
-        current_app.logger.info(f"Scanning music directory for /list: {music_dir}")
-        file_count = 0
-        valid_count = 0
+    # Add potential additional music folders to check
+    music_folders = [
+        music_dir,  # Default location in static folder
+        os.environ.get('CHAD_MUSIC_DIR', '')  # Optional environment variable for custom location
+    ]
+    
+    # Track the total number of files processed
+    total_files = 0
+    valid_music_files = 0
+    
+    for folder in music_folders:
+        if not folder or not os.path.exists(folder) or not os.path.isdir(folder):
+            continue
+            
+        current_app.logger.info(f"Checking music directory: {folder}")
         
-        for filename in os.listdir(music_dir):
-            file_count += 1
-            if filename.lower().endswith('.mp3'):
-                file_path = os.path.join(music_dir, filename)
-                file_size = os.path.getsize(file_path)
-                
-                # Skip very small files that are likely placeholders
-                if file_size < 100 * 1024:  # Skip files smaller than 100KB
-                    current_app.logger.warning(f"Skipping likely placeholder file: {filename} (size: {file_size} bytes)")
-                    continue
-                
-                # Create a music file object
-                music_files.append({
-                    'title': os.path.splitext(filename)[0].replace('_', ' '),
-                    'path': f'/static/music/{filename}',
-                    'filename': filename,
-                    'size': file_size
-                })
-                valid_count += 1
-                current_app.logger.debug(f"Added music file: {filename} ({file_size} bytes)")
-        
-        current_app.logger.info(f"Total files: {file_count}, Valid music files: {valid_count}")
-    except Exception as e:
-        current_app.logger.error(f"Error reading music directory: {e}")
+        try:
+            # Get all MP3 files from the folder
+            for filename in os.listdir(folder):
+                total_files += 1
+                if filename.lower().endswith('.mp3'):
+                    file_path = os.path.join(folder, filename)
+                    file_size = os.path.getsize(file_path)
+                    
+                    # Create a music file object - no longer skipping small files
+                    music_files.append({
+                        'title': os.path.splitext(filename)[0].replace('_', ' '),
+                        'path': f'/static/music/{filename}' if folder == music_dir else f'/music/custom/{os.path.basename(filename)}',
+                        'filename': filename,
+                        'size': file_size
+                    })
+                    valid_music_files += 1
+                    current_app.logger.debug(f"Added music file: {filename} ({file_size} bytes)")
+        except Exception as e:
+            current_app.logger.error(f"Error reading music directory {folder}: {e}")
+    
+    current_app.logger.info(f"Total files scanned: {total_files}, Valid music files: {valid_music_files}")
     
     # Add debug information to response if requested
     if request.args.get('debug') == '1':
         return jsonify({
             'music_files': music_files,
             'debug': {
-                'music_dir': music_dir,
-                'dir_exists': os.path.exists(music_dir),
-                'total_files': file_count if 'file_count' in locals() else 'unknown',
-                'valid_files': valid_count if 'valid_count' in locals() else 'unknown'
+                'music_dirs': [d for d in music_folders if d],
+                'dirs_exist': [os.path.exists(d) for d in music_folders if d],
+                'total_files': total_files,
+                'valid_files': valid_music_files
             }
         })
     
@@ -138,32 +173,45 @@ def player():
 def debug_music():
     """Debug endpoint to check music system status"""
     music_dir = os.path.join(current_app.static_folder, 'music')
+    custom_dir = os.environ.get('CHAD_MUSIC_DIR', '')
     
     # Collect debug information
     debug_info = {
-        'music_directory': {
-            'path': music_dir,
-            'exists': os.path.exists(music_dir),
-            'is_dir': os.path.isdir(music_dir) if os.path.exists(music_dir) else False,
-            'permission': 'readable' if os.access(music_dir, os.R_OK) else 'not readable' if os.path.exists(music_dir) else 'n/a'
-        },
+        'music_directories': [
+            {
+                'path': music_dir,
+                'exists': os.path.exists(music_dir),
+                'is_dir': os.path.isdir(music_dir) if os.path.exists(music_dir) else False,
+                'permission': 'readable' if os.access(music_dir, os.R_OK) else 'not readable' if os.path.exists(music_dir) else 'n/a',
+                'file_count': len([f for f in os.listdir(music_dir) if f.lower().endswith('.mp3')]) if os.path.exists(music_dir) and os.path.isdir(music_dir) else 0
+            }
+        ],
         'files': []
     }
     
-    # Check each file
+    # Add custom directory if set
+    if custom_dir:
+        debug_info['music_directories'].append({
+            'path': custom_dir,
+            'exists': os.path.exists(custom_dir),
+            'is_dir': os.path.isdir(custom_dir) if os.path.exists(custom_dir) else False,
+            'permission': 'readable' if os.access(custom_dir, os.R_OK) else 'not readable' if os.path.exists(custom_dir) else 'n/a',
+            'file_count': len([f for f in os.listdir(custom_dir) if f.lower().endswith('.mp3')]) if os.path.exists(custom_dir) and os.path.isdir(custom_dir) else 0
+        })
+    
+    # Check each file in the default music directory
     if os.path.exists(music_dir) and os.path.isdir(music_dir):
         for filename in os.listdir(music_dir):
             file_path = os.path.join(music_dir, filename)
-            file_size = os.path.getsize(file_path) if os.path.isfile(file_path) else 0
-            
-            debug_info['files'].append({
-                'name': filename,
-                'size': file_size,
-                'size_readable': f"{file_size / 1024:.2f} KB" if file_size < 1024 * 1024 else f"{file_size / (1024 * 1024):.2f} MB",
-                'is_mp3': filename.lower().endswith('.mp3'),
-                'valid_size': file_size > 100 * 1024,  # True if > 100KB
-                'path': f'/static/music/{filename}' if filename.lower().endswith('.mp3') else None
-            })
+            if os.path.isfile(file_path) and filename.lower().endswith('.mp3'):
+                file_size = os.path.getsize(file_path)
+                
+                debug_info['files'].append({
+                    'name': filename,
+                    'size': file_size,
+                    'size_readable': f"{file_size / 1024:.2f} KB" if file_size < 1024 * 1024 else f"{file_size / (1024 * 1024):.2f} MB",
+                    'path': f'/static/music/{filename}'
+                })
     
     # Get request information
     debug_info['request'] = {
