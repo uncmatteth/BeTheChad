@@ -1,7 +1,7 @@
 """Model relationship fixes
 
 Revision ID: a5b9cd271e41
-Revises: inventory_nft_revision
+Revises: add_chad_avatar_fields
 Create Date: 2023-03-12 10:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'a5b9cd271e41'
-down_revision = 'inventory_nft_revision'  # This migration follows the inventory and NFT migration
+down_revision = 'add_chad_avatar_fields'  # This migration follows the chad avatar fields migration
 branch_labels = None
 depends_on = None
 
