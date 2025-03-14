@@ -8,6 +8,7 @@ Create Date: 2023-08-01 12:00:00.000000
 from alembic import op
 import sqlalchemy as sa
 from datetime import datetime
+from sqlalchemy.engine.reflection import Inspector
 
 # revision identifiers, used by Alembic.
 revision = 'inventory_nft_revision'
@@ -27,9 +28,11 @@ def upgrade():
         sa.UniqueConstraint('user_id', name='uq_inventory_user_id')
     )
     
-    # Update NFTs table structure
-    # First drop the old NFTs table if it exists
-    op.drop_table('nfts')
+    # Check if NFTs table exists before trying to drop it
+    conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+    if 'nfts' in inspector.get_table_names():
+        op.drop_table('nfts')
     
     # Create new NFTs table
     op.create_table(
