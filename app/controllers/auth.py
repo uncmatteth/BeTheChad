@@ -10,6 +10,7 @@ from datetime import datetime
 import os
 import tweepy
 import uuid
+import logging
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -43,62 +44,139 @@ def register():
 @auth_bp.route('/twitter-login')
 def twitter_login():
     """Initiate Twitter login."""
-    # In a real implementation, this would redirect to Twitter OAuth
-    # For now, we'll simulate a successful login with a demo user
-    
-    # Check if demo user exists using raw SQL to bypass ORM validation
-    result = db.session.execute("SELECT id, username, email, password_hash, x_username, chadcoin_balance, is_admin FROM users WHERE x_username = 'demo_user'").fetchone()
-    
-    if not result:
-        # Create a demo user with direct SQL
-        db.session.execute("""
-            INSERT INTO users (
-                username, 
-                email, 
-                password_hash, 
-                x_id, 
-                x_username, 
-                x_displayname, 
-                x_profile_image, 
-                chadcoin_balance, 
-                is_admin,
-                created_at,
-                updated_at
-            ) VALUES (
-                'demo_user', 
-                'demo@example.com', 
-                'pbkdf2:sha256:150000$abc123$abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 
-                :x_id, 
-                'demo_user', 
-                'Demo User', 
-                'https://example.com/profile.jpg', 
-                1000, 
-                true,
-                CURRENT_TIMESTAMP,
-                CURRENT_TIMESTAMP
-            )
-        """, {'x_id': str(uuid.uuid4())})
-        db.session.commit()
+    try:
+        # In a real implementation, this would redirect to Twitter OAuth
+        # For now, we'll simulate a successful login with a demo user
         
-        # Get the newly created user
-        result = db.session.execute("SELECT id, username, email, password_hash, x_username, chadcoin_balance, is_admin FROM users WHERE x_username = 'demo_user'").fetchone()
-    
-    # Manually create a User instance with minimal attributes
-    demo_user = User(
-        id=result[0],
-        username=result[1], 
-        email=result[2], 
-        password_hash=result[3],
-        x_username=result[4],
-        chadcoin_balance=result[5],
-        is_admin=result[6]
-    )
-    
-    # Log in the demo user
-    login_user(demo_user)
-    flash('You have been logged in as a demo user.', 'success')
-    
-    return redirect(url_for('main.dashboard'))
+        # Check if we're using SQLite or PostgreSQL
+        db_url = current_app.config['SQLALCHEMY_DATABASE_URI']
+        is_sqlite = 'sqlite' in db_url
+        is_postgresql = 'postgresql' in db_url
+        
+        current_app.logger.info(f"Database URL type: {'SQLite' if is_sqlite else 'PostgreSQL' if is_postgresql else 'Unknown'}")
+        
+        # Check if the users table exists
+        try:
+            # Check if demo user exists using raw SQL to bypass ORM validation
+            if is_sqlite:
+                # SQLite query
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'").fetchone()
+                if result[0] == 0:
+                    # Table doesn't exist yet, create it
+                    current_app.logger.warning("Users table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS users (
+                            id INTEGER PRIMARY KEY,
+                            username TEXT UNIQUE NOT NULL,
+                            email TEXT UNIQUE NOT NULL,
+                            password_hash TEXT,
+                            x_id TEXT UNIQUE,
+                            x_username TEXT UNIQUE,
+                            x_displayname TEXT,
+                            x_profile_image TEXT,
+                            chadcoin_balance INTEGER DEFAULT 100,
+                            is_admin BOOLEAN DEFAULT FALSE,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """)
+                    db.session.commit()
+            elif is_postgresql:
+                # PostgreSQL query
+                result = db.session.execute("SELECT to_regclass('public.users')").fetchone()
+                if result[0] is None:
+                    # Table doesn't exist yet, create it
+                    current_app.logger.warning("Users table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS users (
+                            id SERIAL PRIMARY KEY,
+                            username VARCHAR(64) UNIQUE NOT NULL,
+                            email VARCHAR(120) UNIQUE NOT NULL,
+                            password_hash VARCHAR(128),
+                            x_id VARCHAR(64) UNIQUE,
+                            x_username VARCHAR(64) UNIQUE,
+                            x_displayname VARCHAR(64),
+                            x_profile_image VARCHAR(255),
+                            chadcoin_balance INTEGER DEFAULT 100,
+                            is_admin BOOLEAN DEFAULT FALSE,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """)
+                    db.session.commit()
+            
+            # Check if demo user exists
+            result = db.session.execute("SELECT id, username, email, password_hash, x_username, chadcoin_balance, is_admin FROM users WHERE x_username = 'demo_user'").fetchone()
+            
+            if not result:
+                # Create a demo user with direct SQL
+                current_app.logger.info("Creating demo user...")
+                
+                # Different syntax for SQLite vs PostgreSQL for BOOLEAN type
+                is_admin_value = "1" if is_sqlite else "TRUE"
+                timestamp_value = "CURRENT_TIMESTAMP" if is_postgresql else "datetime('now')"
+                
+                query = f"""
+                    INSERT INTO users (
+                        username, 
+                        email, 
+                        password_hash, 
+                        x_id, 
+                        x_username, 
+                        x_displayname, 
+                        x_profile_image, 
+                        chadcoin_balance, 
+                        is_admin,
+                        created_at,
+                        updated_at
+                    ) VALUES (
+                        'demo_user', 
+                        'demo@example.com', 
+                        'pbkdf2:sha256:150000$abc123$abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 
+                        :x_id, 
+                        'demo_user', 
+                        'Demo User', 
+                        'https://example.com/profile.jpg', 
+                        1000, 
+                        {is_admin_value},
+                        {timestamp_value},
+                        {timestamp_value}
+                    )
+                """
+                
+                db.session.execute(query, {'x_id': str(uuid.uuid4())})
+                db.session.commit()
+                
+                # Get the newly created user
+                result = db.session.execute("SELECT id, username, email, password_hash, x_username, chadcoin_balance, is_admin FROM users WHERE x_username = 'demo_user'").fetchone()
+            
+            # Manually create a User instance with minimal attributes
+            current_app.logger.info(f"Logging in demo user with id: {result[0]}")
+            demo_user = User(
+                id=result[0],
+                username=result[1], 
+                email=result[2], 
+                password_hash=result[3],
+                x_username=result[4],
+                chadcoin_balance=result[5],
+                is_admin=result[6]
+            )
+            
+            # Log in the demo user
+            login_user(demo_user)
+            flash('You have been logged in as a demo user.', 'success')
+            
+            return redirect(url_for('main.dashboard'))
+            
+        except Exception as e:
+            current_app.logger.error(f"Error during database operations: {str(e)}")
+            flash(f"Login error: Database issue. Please contact support.", 'danger')
+            return redirect(url_for('auth.login'))
+            
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error in twitter_login: {str(e)}")
+        flash(f"Login error: {str(e)}", 'danger')
+        return redirect(url_for('auth.login'))
 
 @auth_bp.route('/connect-wallet', methods=['POST'])
 @login_required
