@@ -48,6 +48,40 @@ class Chad(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    @property
+    def equipped_items(self):
+        """Get all equipped items for this Chad."""
+        try:
+            from app.models.item import Item
+            from sqlalchemy.orm import Query
+            
+            # Return a query object that can be used with .all(), .first(), etc.
+            return Query(Item, db.session()).filter(Item.chad_id == self.id, Item.is_equipped == True)
+        except Exception as e:
+            # Log error but return empty query
+            from flask import current_app
+            current_app.logger.error(f"Error getting equipped items for Chad {self.id}: {str(e)}")
+            # Return an empty list-like object
+            from sqlalchemy.orm.collections import InstrumentedList
+            return InstrumentedList()
+    
+    @property
+    def equipped_waifus(self):
+        """Get all equipped waifus for this Chad."""
+        try:
+            from app.models.waifu import Waifu
+            from sqlalchemy.orm import Query
+            
+            # Return a query object that can be used with .all(), .first(), etc.
+            return Query(Waifu, db.session()).filter(Waifu.chad_id == self.id, Waifu.is_equipped == True)
+        except Exception as e:
+            # Log error but return empty query
+            from flask import current_app
+            current_app.logger.error(f"Error getting equipped waifus for Chad {self.id}: {str(e)}")
+            # Return an empty list-like object
+            from sqlalchemy.orm.collections import InstrumentedList
+            return InstrumentedList()
+    
     def __repr__(self):
         return f'<Chad {self.name} (Level {self.level})>'
     

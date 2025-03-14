@@ -223,6 +223,142 @@ def twitter_login():
                     """)
                     db.session.commit()
                 
+                # Check if waifus table exists
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='waifus'").fetchone()
+                if result[0] == 0:
+                    # Create waifu_rarities table first if it doesn't exist
+                    rarity_result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='waifu_rarities'").fetchone()
+                    if rarity_result[0] == 0:
+                        current_app.logger.warning("waifu_rarities table not found in SQLite database, creating it...")
+                        db.session.execute("""
+                            CREATE TABLE IF NOT EXISTS waifu_rarities (
+                                id INTEGER PRIMARY KEY,
+                                name VARCHAR(50) UNIQUE NOT NULL,
+                                description TEXT NOT NULL,
+                                drop_rate FLOAT DEFAULT 0.0,
+                                min_stat_bonus INTEGER DEFAULT 1,
+                                max_stat_bonus INTEGER DEFAULT 5
+                            )
+                        """)
+                        # Insert default rarities
+                        db.session.execute("""
+                            INSERT INTO waifu_rarities (name, description, drop_rate, min_stat_bonus, max_stat_bonus)
+                            VALUES 
+                                ('Common', 'Common waifus with minimal bonuses', 0.6, 1, 3),
+                                ('Rare', 'Rare waifus with decent bonuses', 0.3, 2, 5),
+                                ('Epic', 'Epic waifus with strong bonuses', 0.08, 3, 7),
+                                ('Legendary', 'Legendary waifus with powerful bonuses', 0.02, 5, 10)
+                        """)
+                        db.session.commit()
+
+                    # Create waifu_types table if it doesn't exist
+                    types_result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='waifu_types'").fetchone()
+                    if types_result[0] == 0:
+                        current_app.logger.warning("waifu_types table not found in SQLite database, creating it...")
+                        db.session.execute("""
+                            CREATE TABLE IF NOT EXISTS waifu_types (
+                                id INTEGER PRIMARY KEY,
+                                name VARCHAR(50) UNIQUE NOT NULL,
+                                description TEXT NOT NULL,
+                                rarity_id INTEGER NOT NULL,
+                                base_clout_bonus INTEGER DEFAULT 0,
+                                base_roast_bonus INTEGER DEFAULT 0,
+                                base_cringe_resistance_bonus INTEGER DEFAULT 0,
+                                base_drip_bonus INTEGER DEFAULT 0,
+                                FOREIGN KEY (rarity_id) REFERENCES waifu_rarities (id)
+                            )
+                        """)
+                        # Insert default types
+                        db.session.execute("""
+                            INSERT INTO waifu_types (name, description, rarity_id, base_clout_bonus, base_roast_bonus, base_cringe_resistance_bonus, base_drip_bonus)
+                            VALUES 
+                                ('Tsundere', 'Cold on the outside, warm on the inside', 2, 1, 3, 1, 1),
+                                ('Childhood Friend', 'Known you since forever', 1, 2, 1, 2, 1),
+                                ('Gamer Girl', 'Loves video games and tech', 2, 1, 2, 2, 1)
+                        """)
+                        db.session.commit()
+                    
+                    # Create waifus table
+                    current_app.logger.warning("waifus table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS waifus (
+                            id INTEGER PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            chad_id INTEGER,
+                            waifu_type_id INTEGER NOT NULL,
+                            name VARCHAR(50) NOT NULL,
+                            is_equipped BOOLEAN DEFAULT 0,
+                            level INTEGER DEFAULT 1,
+                            xp INTEGER DEFAULT 0,
+                            clout_bonus INTEGER DEFAULT 0,
+                            roast_bonus INTEGER DEFAULT 0,
+                            cringe_resistance_bonus INTEGER DEFAULT 0,
+                            drip_bonus INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users (id),
+                            FOREIGN KEY (chad_id) REFERENCES chads (id),
+                            FOREIGN KEY (waifu_type_id) REFERENCES waifu_types (id)
+                        )
+                    """)
+                    db.session.commit()
+                
+                # Check if item_rarities table exists
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='item_rarities'").fetchone()
+                if result[0] == 0:
+                    # Create item_rarities table
+                    current_app.logger.warning("item_rarities table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS item_rarities (
+                            id INTEGER PRIMARY KEY,
+                            name VARCHAR(50) UNIQUE NOT NULL,
+                            description TEXT NOT NULL,
+                            drop_rate FLOAT DEFAULT 0.0,
+                            min_stat_bonus INTEGER DEFAULT 1,
+                            max_stat_bonus INTEGER DEFAULT 5
+                        )
+                    """)
+                    # Insert default rarities
+                    db.session.execute("""
+                        INSERT INTO item_rarities (name, description, drop_rate, min_stat_bonus, max_stat_bonus)
+                        VALUES 
+                            ('Common', 'Common items with minimal bonuses', 0.6, 1, 3),
+                            ('Rare', 'Rare items with decent bonuses', 0.3, 2, 5),
+                            ('Epic', 'Epic items with strong bonuses', 0.08, 3, 7),
+                            ('Legendary', 'Legendary items with powerful bonuses', 0.02, 5, 10)
+                    """)
+                    db.session.commit()
+                
+                # Check if item_types table exists
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='item_types'").fetchone()
+                if result[0] == 0:
+                    # Create item_types table
+                    current_app.logger.warning("item_types table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS item_types (
+                            id INTEGER PRIMARY KEY,
+                            name VARCHAR(50) UNIQUE NOT NULL,
+                            description TEXT NOT NULL,
+                            rarity_id INTEGER NOT NULL,
+                            slot VARCHAR(50) NOT NULL,
+                            base_clout_bonus INTEGER DEFAULT 0,
+                            base_roast_bonus INTEGER DEFAULT 0,
+                            base_cringe_resistance_bonus INTEGER DEFAULT 0,
+                            base_drip_bonus INTEGER DEFAULT 0,
+                            is_character_item BOOLEAN DEFAULT 1,
+                            FOREIGN KEY (rarity_id) REFERENCES item_rarities (id)
+                        )
+                    """)
+                    # Insert default types
+                    db.session.execute("""
+                        INSERT INTO item_types (name, description, rarity_id, slot, base_clout_bonus, base_roast_bonus, base_cringe_resistance_bonus, base_drip_bonus, is_character_item)
+                        VALUES 
+                            ('Snapback Cap', 'A stylish cap for your Chad', 1, 'head', 1, 0, 0, 2, 1),
+                            ('Designer Shades', 'Luxury sunglasses', 2, 'accessory', 2, 0, 1, 3, 1),
+                            ('Gold Chain', 'Bling for your neck', 2, 'neck', 3, 0, 0, 2, 1)
+                    """)
+                    db.session.commit()
+            
             elif is_postgresql:
                 # PostgreSQL query to check if users table exists
                 result = db.session.execute("SELECT to_regclass('public.users')").fetchone()
@@ -381,6 +517,142 @@ def twitter_login():
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             FOREIGN KEY (user_id) REFERENCES users (id)
                         )
+                    """)
+                    db.session.commit()
+                
+                # Check if waifus table exists
+                result = db.session.execute("SELECT to_regclass('public.waifus')").fetchone()
+                if result[0] is None:
+                    # Create waifu_rarities table first if it doesn't exist
+                    rarity_result = db.session.execute("SELECT to_regclass('public.waifu_rarities')").fetchone()
+                    if rarity_result[0] is None:
+                        current_app.logger.warning("waifu_rarities table not found in PostgreSQL database, creating it...")
+                        db.session.execute("""
+                            CREATE TABLE IF NOT EXISTS waifu_rarities (
+                                id SERIAL PRIMARY KEY,
+                                name VARCHAR(50) UNIQUE NOT NULL,
+                                description TEXT NOT NULL,
+                                drop_rate FLOAT DEFAULT 0.0,
+                                min_stat_bonus INTEGER DEFAULT 1,
+                                max_stat_bonus INTEGER DEFAULT 5
+                            )
+                        """)
+                        # Insert default rarities
+                        db.session.execute("""
+                            INSERT INTO waifu_rarities (name, description, drop_rate, min_stat_bonus, max_stat_bonus)
+                            VALUES 
+                                ('Common', 'Common waifus with minimal bonuses', 0.6, 1, 3),
+                                ('Rare', 'Rare waifus with decent bonuses', 0.3, 2, 5),
+                                ('Epic', 'Epic waifus with strong bonuses', 0.08, 3, 7),
+                                ('Legendary', 'Legendary waifus with powerful bonuses', 0.02, 5, 10)
+                        """)
+                        db.session.commit()
+
+                    # Create waifu_types table if it doesn't exist
+                    types_result = db.session.execute("SELECT to_regclass('public.waifu_types')").fetchone()
+                    if types_result[0] is None:
+                        current_app.logger.warning("waifu_types table not found in PostgreSQL database, creating it...")
+                        db.session.execute("""
+                            CREATE TABLE IF NOT EXISTS waifu_types (
+                                id SERIAL PRIMARY KEY,
+                                name VARCHAR(50) UNIQUE NOT NULL,
+                                description TEXT NOT NULL,
+                                rarity_id INTEGER NOT NULL,
+                                base_clout_bonus INTEGER DEFAULT 0,
+                                base_roast_bonus INTEGER DEFAULT 0,
+                                base_cringe_resistance_bonus INTEGER DEFAULT 0,
+                                base_drip_bonus INTEGER DEFAULT 0,
+                                FOREIGN KEY (rarity_id) REFERENCES waifu_rarities (id)
+                            )
+                        """)
+                        # Insert default types
+                        db.session.execute("""
+                            INSERT INTO waifu_types (name, description, rarity_id, base_clout_bonus, base_roast_bonus, base_cringe_resistance_bonus, base_drip_bonus)
+                            VALUES 
+                                ('Tsundere', 'Cold on the outside, warm on the inside', 2, 1, 3, 1, 1),
+                                ('Childhood Friend', 'Known you since forever', 1, 2, 1, 2, 1),
+                                ('Gamer Girl', 'Loves video games and tech', 2, 1, 2, 2, 1)
+                        """)
+                        db.session.commit()
+                    
+                    # Create waifus table
+                    current_app.logger.warning("waifus table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS waifus (
+                            id SERIAL PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            chad_id INTEGER,
+                            waifu_type_id INTEGER NOT NULL,
+                            name VARCHAR(50) NOT NULL,
+                            is_equipped BOOLEAN DEFAULT FALSE,
+                            level INTEGER DEFAULT 1,
+                            xp INTEGER DEFAULT 0,
+                            clout_bonus INTEGER DEFAULT 0,
+                            roast_bonus INTEGER DEFAULT 0,
+                            cringe_resistance_bonus INTEGER DEFAULT 0,
+                            drip_bonus INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users (id),
+                            FOREIGN KEY (chad_id) REFERENCES chads (id),
+                            FOREIGN KEY (waifu_type_id) REFERENCES waifu_types (id)
+                        )
+                    """)
+                    db.session.commit()
+                
+                # Check if item_rarities table exists
+                result = db.session.execute("SELECT to_regclass('public.item_rarities')").fetchone()
+                if result[0] is None:
+                    # Create item_rarities table
+                    current_app.logger.warning("item_rarities table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS item_rarities (
+                            id SERIAL PRIMARY KEY,
+                            name VARCHAR(50) UNIQUE NOT NULL,
+                            description TEXT NOT NULL,
+                            drop_rate FLOAT DEFAULT 0.0,
+                            min_stat_bonus INTEGER DEFAULT 1,
+                            max_stat_bonus INTEGER DEFAULT 5
+                        )
+                    """)
+                    # Insert default rarities
+                    db.session.execute("""
+                        INSERT INTO item_rarities (name, description, drop_rate, min_stat_bonus, max_stat_bonus)
+                        VALUES 
+                            ('Common', 'Common items with minimal bonuses', 0.6, 1, 3),
+                            ('Rare', 'Rare items with decent bonuses', 0.3, 2, 5),
+                            ('Epic', 'Epic items with strong bonuses', 0.08, 3, 7),
+                            ('Legendary', 'Legendary items with powerful bonuses', 0.02, 5, 10)
+                    """)
+                    db.session.commit()
+                
+                # Check if item_types table exists
+                result = db.session.execute("SELECT to_regclass('public.item_types')").fetchone()
+                if result[0] is None:
+                    # Create item_types table
+                    current_app.logger.warning("item_types table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS item_types (
+                            id SERIAL PRIMARY KEY,
+                            name VARCHAR(50) UNIQUE NOT NULL,
+                            description TEXT NOT NULL,
+                            rarity_id INTEGER NOT NULL,
+                            slot VARCHAR(50) NOT NULL,
+                            base_clout_bonus INTEGER DEFAULT 0,
+                            base_roast_bonus INTEGER DEFAULT 0,
+                            base_cringe_resistance_bonus INTEGER DEFAULT 0,
+                            base_drip_bonus INTEGER DEFAULT 0,
+                            is_character_item BOOLEAN DEFAULT TRUE,
+                            FOREIGN KEY (rarity_id) REFERENCES item_rarities (id)
+                        )
+                    """)
+                    # Insert default types
+                    db.session.execute("""
+                        INSERT INTO item_types (name, description, rarity_id, slot, base_clout_bonus, base_roast_bonus, base_cringe_resistance_bonus, base_drip_bonus, is_character_item)
+                        VALUES 
+                            ('Snapback Cap', 'A stylish cap for your Chad', 1, 'head', 1, 0, 0, 2, TRUE),
+                            ('Designer Shades', 'Luxury sunglasses', 2, 'accessory', 2, 0, 1, 3, TRUE),
+                            ('Gold Chain', 'Bling for your neck', 2, 'neck', 3, 0, 0, 2, TRUE)
                     """)
                     db.session.commit()
             
