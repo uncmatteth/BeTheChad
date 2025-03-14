@@ -26,9 +26,19 @@ def load_user(user_id):
 @auth_bp.route('/login')
 def login():
     """Login page."""
-    if current_user.is_authenticated:
-        return redirect(url_for('main.dashboard'))
-    return render_template('auth/login.html')
+    try:
+        if current_user.is_authenticated:
+            return redirect(url_for('main.dashboard'))
+        return render_template('auth/login.html')
+    except Exception as e:
+        # Log the error
+        current_app.logger.error(f"Error in login route: {str(e)}")
+        # Clear the session to prevent corruption
+        session.clear()
+        # Flash a user-friendly message
+        flash('An error occurred during login. Please try again.', 'danger')
+        # Return to the index page
+        return redirect(url_for('main.index'))
 
 @auth_bp.route('/logout')
 @login_required

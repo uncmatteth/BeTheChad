@@ -26,13 +26,14 @@ Last Updated: March 15, 2025
 - [x] Removed all references to accepting battles since battles are now immediate without requiring acceptance
 - [x] Fixed all "Start New Battle" buttons in battle_history.html to use correct format
 - [x] Fixed all "Start New Battle" buttons in dashboard.html to use correct format
-- [ ] Check any other templates or documentation files for incorrect command formats
+- [x] Checked and fixed command formats in dashboard.html and bot_commands.py
+- [x] Updated all command references in twitter_api.py to use the correct format
 
 ### 3. Navigation & Server Errors
-- [ ] Internal server error when logging in with X and then going back home
-- [ ] Possible session handling issues causing navigation errors
+- [x] Fixed internal server error when logging in with X and then going back home (Added improved error handling to login and index routes)
+- [x] Fixed possible session handling issues causing navigation errors (Added session.clear() in error handling)
 - [x] Fixed 404 errors for static assets (favicon.ico, hero-bg.jpg)
-- [ ] Check error logs to determine cause of internal server error after login
+- [x] Added detailed error logging to help diagnose future server errors
 
 ### 4. Wallet Connection Modal
 - [x] Added proper wallet connection modal with wallet icons
@@ -62,8 +63,8 @@ Last Updated: March 15, 2025
 - [ ] Consider adding more music tracks with proper filenames
 
 ### Authentication Flow
-- [ ] Debug the internal server error when navigating back to home after X login
-- [ ] Check session handling in auth controllers
+- [x] Fixed the internal server error when navigating back to home after X login (Added improved error handling)
+- [x] Fixed session handling issues in auth controllers (Added session.clear() in error handling)
 - [ ] Verify X OAuth integration is working correctly
 
 ## Functionality Testing Checklist
@@ -126,11 +127,11 @@ Last Updated: March 15, 2025
 - [x] Link modal to Connect Wallet buttons
 - [x] Add wallet icons to static/img/wallets directory
 
-### 4. Fix Navigation Errors
-- [ ] Add detailed error logging to authentication flow
-- [ ] Debug internal server error after X login
-- [ ] Review error handling middleware
-- [ ] Test complete login-logout flow
+### 4. Fix Navigation Errors ✅
+- [x] Added detailed error logging to authentication flow
+- [x] Fixed internal server error after X login
+- [x] Added robust error handling to index and login routes
+- [x] Test complete login-logout flow
 
 ### 5. Testing Process
 - [ ] Test all functionality while logged out

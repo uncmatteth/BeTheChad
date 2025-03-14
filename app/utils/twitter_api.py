@@ -562,8 +562,8 @@ def generate_reply_to_stats_tweet(mention):
     # Common questions or comments and their responses
     responses = {
         'how do i': [
-            f"@{user_screen_name} Just mention @RollMasterChad with 'CREATE CHARACTER' to get started! Check out our commands with 'HELP @RollMasterChad'. Simple enough even for a beta to understand!",
-            f"@{user_screen_name} Even a virgin NPC could figure it out! Tweet 'CREATE CHARACTER @RollMasterChad' and let the chadness begin!"
+            f"@{user_screen_name} Just tweet 'MAKE ME A CHAD @RollMasterChad' to get started! Check out the available commands with 'HELP @RollMasterChad'. Simple enough even for a beta to understand!",
+            f"@{user_screen_name} Even a virgin NPC could figure it out! Tweet 'MAKE ME A CHAD @RollMasterChad' and let the chadness begin!"
         ],
         'when will': [
             f"@{user_screen_name} Soon™ bro, patience is a Chad virtue. The grindset never stops, and neither does our development.",
@@ -587,7 +587,7 @@ def generate_reply_to_stats_tweet(mention):
     default_responses = [
         f"@{user_screen_name} That's what a true Chad would say! Keep the sigma grindset going!",
         f"@{user_screen_name} Based take. Join the battle and prove your Chad status!",
-        f"@{user_screen_name} Virgin comment vs Chad response. Tweet 'CREATE CHARACTER @RollMasterChad' to join!",
+        f"@{user_screen_name} Virgin comment vs Chad response. Tweet 'MAKE ME A CHAD @RollMasterChad' to join!",
         f"@{user_screen_name} Nice try, but your Cringe Resistance needs to be higher for that take.",
         f"@{user_screen_name} Real Chads don't ask questions, they just dominate. Join now and show us what you've got!"
     ]
@@ -700,17 +700,17 @@ def generate_promotional_tweet():
     
     # List of promotional tweet templates
     promo_templates = [
-        "🎮 WANNA BE A CHAD? 🎮\n\nJust mention @RollMasterChad with 'CREATE CHARACTER' to get started! Your Twitter profile will be transformed into a unique Chad for battle. Collect waifus, join cabals, and dominate! #ChadBattles",
+        "🎮 WANNA BE A CHAD? 🎮\n\nTweet 'MAKE ME A CHAD @RollMasterChad' to get started! Your Twitter profile will be transformed into a unique Chad for battle. Collect waifus, join cabals, and dominate! #ChadBattles",
         
-        "⚔️ HOW TO START CHAD BATTLES ⚔️\n\n1. Tweet 'CREATE CHARACTER @RollMasterChad'\n2. Get your character stats based on your Twitter\n3. Challenge others with 'CHALLENGE @username TO BATTLE @RollMasterChad'\n\nIt's that simple! #GamingOnTwitter",
+        "⚔️ HOW TO START CHAD BATTLES ⚔️\n\n1. Tweet 'MAKE ME A CHAD @RollMasterChad'\n2. Get your character stats based on your Twitter\n3. Challenge others with 'I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad'\n\nIt's that simple! #GamingOnTwitter",
         
-        "👑 BECOME THE ULTIMATE CHAD 👑\n\nJoin thousands of players in Chad Battles!\n\n- Collect rare waifus\n- Form powerful cabals\n- Battle other Chads\n- Mint NFTs\n\nStart by tweeting 'CREATE CHARACTER @RollMasterChad' #ChadBattles",
+        "👑 BECOME THE ULTIMATE CHAD 👑\n\nJoin thousands of players in Chad Battles!\n\n- Collect rare waifus\n- Form powerful cabals\n- Battle other Chads\n- Mint NFTs\n\nStart by tweeting 'MAKE ME A CHAD @RollMasterChad' #ChadBattles",
         
-        "🔥 NEW TO CHAD BATTLES? 🔥\n\nHere's how to start your chad journey:\n\n1️⃣ Tweet 'CREATE CHARACTER @RollMasterChad'\n2️⃣ Collect waifus & items\n3️⃣ Challenge others to battles\n4️⃣ Join or create a cabal\n\nBecome the ultimate chad! #GamersUnite",
+        "🔥 NEW TO CHAD BATTLES? 🔥\n\nHere's how to start your chad journey:\n\n1️⃣ Tweet 'MAKE ME A CHAD @RollMasterChad'\n2️⃣ Collect waifus & items\n3️⃣ Challenge others to battles\n4️⃣ Join or create a cabal\n\nBecome the ultimate chad! #GamersUnite",
         
-        "💪 TIRED OF BEING A BETA? 💪\n\nStart your sigma grindset in #ChadBattles!\n\nTweet 'CREATE CHARACTER @RollMasterChad' to transform your profile into a powerful Chad! Battle others, collect waifus, and dominate the leaderboards!",
+        "💪 TIRED OF BEING A BETA? 💪\n\nStart your sigma grindset in #ChadBattles!\n\nTweet 'MAKE ME A CHAD @RollMasterChad' to transform your profile into a powerful Chad! Battle others, collect waifus, and dominate the leaderboards!",
         
-        "🏆 CHAD BATTLES COMMANDS 🏆\n\nHere are some basic commands:\n\n'CREATE CHARACTER @RollMasterChad'\n'CHECK STATS @RollMasterChad'\n'HELP @RollMasterChad'\n\nReady to prove your chad status? #TwitterGaming"
+        "🏆 CHAD BATTLES COMMANDS 🏆\n\nHere are some basic commands:\n\n'MAKE ME A CHAD @RollMasterChad'\n'CHECK STATS @RollMasterChad'\n'HELP @RollMasterChad'\n\nReady to prove your chad status? #TwitterGaming"
     ]
     
     # Randomly select a template

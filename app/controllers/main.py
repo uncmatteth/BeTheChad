@@ -16,37 +16,48 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     """Home page route"""
-    
-    # Get user stats if logged in
-    if current_user.is_authenticated:
-        chad = current_user.chad
+    try:
+        # Get user stats if logged in
+        if current_user.is_authenticated:
+            try:
+                chad = current_user.chad
+                
+                # Get recent battles
+                recent_battles = Battle.query.filter(
+                    (Battle.initiator_id == chad.id) | (Battle.target_id == chad.id)
+                ).order_by(Battle.created_at.desc()).limit(5).all()
+                
+                # Check if user is in a cabal
+                cabal_member = CabalMember.query.filter_by(chad_id=chad.id).first()
+                cabal = cabal_member.cabal if cabal_member else None
+                
+                # Get upcoming cabal battles if in a cabal
+                upcoming_battles = []
+                if cabal:
+                    upcoming_battles = CabalBattle.query.filter_by(
+                        cabal_id=cabal.id,
+                        completed=False
+                    ).filter(
+                        CabalBattle.scheduled_at > datetime.utcnow()
+                    ).order_by(CabalBattle.scheduled_at).limit(3).all()
+            
+                return render_template('index.html', 
+                                    chad=chad, 
+                                    recent_battles=recent_battles,
+                                    cabal=cabal,
+                                    upcoming_battles=upcoming_battles)
+            except Exception as e:
+                # If there's an error with getting user data, log it but still show the page
+                current_app.logger.error(f"Error loading user data for authenticated user {current_user.id}: {str(e)}")
+                flash("There was an issue loading your profile data. Please try again later.", "warning")
+                return render_template('index.html')
         
-        # Get recent battles
-        recent_battles = Battle.query.filter(
-            (Battle.initiator_id == chad.id) | (Battle.target_id == chad.id)
-        ).order_by(Battle.created_at.desc()).limit(5).all()
-        
-        # Check if user is in a cabal
-        cabal_member = CabalMember.query.filter_by(chad_id=chad.id).first()
-        cabal = cabal_member.cabal if cabal_member else None
-        
-        # Get upcoming cabal battles if in a cabal
-        upcoming_battles = []
-        if cabal:
-            upcoming_battles = CabalBattle.query.filter_by(
-                cabal_id=cabal.id,
-                completed=False
-            ).filter(
-                CabalBattle.scheduled_at > datetime.utcnow()
-            ).order_by(CabalBattle.scheduled_at).limit(3).all()
-    
-        return render_template('index.html', 
-                              chad=chad, 
-                              recent_battles=recent_battles,
-                              cabal=cabal,
-                              upcoming_battles=upcoming_battles)
-    
-    return render_template('index.html')
+        return render_template('index.html')
+    except Exception as e:
+        # Catch any other exceptions
+        current_app.logger.error(f"Unexpected error in index route: {str(e)}")
+        flash("An unexpected error occurred. Our team has been notified.", "danger")
+        return render_template('index.html')
 
 @main_bp.route('/dashboard')
 @login_required

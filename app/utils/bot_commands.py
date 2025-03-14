@@ -200,7 +200,7 @@ def handle_create_character(tweet_id, username):
         return True
     except Exception as e:
         logger.error(f"Error creating character for {username}: {str(e)}")
-        reply = f"@{username} You need to create a character first with 'CREATE CHARACTER @RollMasterChad'"
+        reply = f"@{username} You need to create a character first. Tweet CREATE CHARACTER @RollMasterChad to get started."
         post_reply(reply, tweet_id)
         return False
 
@@ -212,7 +212,7 @@ def handle_fight_request(tweet_id, username, opponent_name):
         opponent = User.query.filter_by(x_username=opponent_name).first()
         
         if not initiator or not initiator.chad:
-            reply = f"@{username} You need to create a character first with 'MAKE ME A CHAD @RollMasterChad'"
+            reply = f"@{username} You need to create a character first. Tweet MAKE ME A CHAD @RollMasterChad to get started."
             post_reply(reply, tweet_id)
             return False
         
@@ -265,7 +265,7 @@ def handle_fight_request(tweet_id, username, opponent_name):
             f"⚔️ BATTLE STARTED! ⚔️\n\n"
             f"@{username} has challenged @{opponent_name} to a Chad Battle!\n\n"
             f"{battle_result}\n\n"
-            f"Type CHECK STATS @RollMasterChad to see your updated stats!"
+            f"Check your progress by tweeting CHECK STATS @RollMasterChad to see your updated stats!"
         )
         post_reply(reply, tweet_id)
         
@@ -361,7 +361,7 @@ def handle_check_stats(tweet_id, username):
     try:
         user = User.query.filter_by(x_username=username).first()
         if not user or not user.chad:
-            reply = f"@{username} You need to create a character first with 'CREATE CHARACTER @RollMasterChad'"
+            reply = f"@{username} You need to create a character first. Tweet CHECK STATS @RollMasterChad to get started."
             post_reply(reply, tweet_id)
             return False
         
@@ -410,7 +410,7 @@ def handle_join_cabal(tweet_id, username, cabal_name):
         user = User.query.filter_by(twitter_handle=username).first()
         
         if not user or not user.chad:
-            return f"@{username} You need to create a character first. Use CREATE CHARACTER @RollMasterChad to get started."
+            return f"@{username} You need to create a character first. Tweet CREATE CHARACTER @RollMasterChad to get started."
         
         # Check if user is already in a cabal
         if user.chad.cabal_membership:
@@ -441,7 +441,7 @@ def handle_create_cabal(tweet_id, username, cabal_name):
         user = User.query.filter_by(twitter_handle=username).first()
         
         if not user or not user.chad:
-            return f"@{username} You need to create a character first. Use CREATE CHARACTER @RollMasterChad to get started."
+            return f"@{username} You need to create a character first. Tweet CREATE CHARACTER @RollMasterChad to get started."
         
         # Check if user is already in a cabal
         if user.chad.cabal_membership:
@@ -500,7 +500,7 @@ def handle_appoint_officer(tweet_id, username, officer_name, officer_type):
         leader_user = User.query.filter_by(twitter_handle=username).first()
         
         if not leader_user or not leader_user.chad:
-            return f"@{username} You need to create a character first. Use CREATE CHARACTER @RollMasterChad to get started."
+            return f"@{username} You need to create a character first. Tweet CREATE CHARACTER @RollMasterChad to get started."
         
         # Check if user is a cabal leader
         cabal = Cabal.query.filter_by(leader_id=leader_user.chad.id).first()
@@ -545,7 +545,7 @@ def handle_schedule_battle(tweet_id, username, opponent_cabal_name):
         leader_user = User.query.filter_by(twitter_handle=username).first()
         
         if not leader_user or not leader_user.chad:
-            return f"@{username} You need to create a character first. Use CREATE CHARACTER @RollMasterChad to get started."
+            return f"@{username} You need to create a character first. Tweet CREATE CHARACTER @RollMasterChad to get started."
         
         # Check if user is a cabal leader
         cabal = Cabal.query.filter_by(leader_id=leader_user.chad.id).first()
@@ -595,7 +595,7 @@ def handle_vote_remove_leader(tweet_id, username):
         voter_user = User.query.filter_by(twitter_handle=username).first()
         
         if not voter_user or not voter_user.chad:
-            return f"@{username} You need to create a character first. Use CREATE CHARACTER @RollMasterChad to get started."
+            return f"@{username} You need to create a character first. Tweet VOTE REMOVE CABAL LEADER @RollMasterChad to get started."
         
         # Check if voter is in a cabal
         cabal_member = CabalMember.query.filter_by(chad_id=voter_user.chad.id).first()
@@ -643,7 +643,7 @@ def handle_opt_in_battle(tweet_id, username):
         user = User.query.filter_by(twitter_handle=username).first()
         
         if not user or not user.chad:
-            return f"@{username} You need to create a character first. Use CREATE CHARACTER @RollMasterChad to get started."
+            return f"@{username} You need to create a character first. Tweet JOIN NEXT CABAL BATTLE @RollMasterChad to get started."
         
         # Check if user is in a cabal
         cabal_member = CabalMember.query.filter_by(chad_id=user.chad.id).first()
