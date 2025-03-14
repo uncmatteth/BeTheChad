@@ -146,6 +146,7 @@ def register_blueprints(app):
     from app.controllers.inventory import inventory_bp
     from app.controllers.wallet import wallet_bp
     from app.controllers.nft import nft_bp
+    from app.controllers.squad import squad_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -159,6 +160,7 @@ def register_blueprints(app):
     app.register_blueprint(inventory_bp, url_prefix='/inventory')
     app.register_blueprint(wallet_bp, url_prefix='/wallet')
     app.register_blueprint(nft_bp, url_prefix='/nft')
+    app.register_blueprint(squad_bp)
     
     # Register music blueprint
     from app.routes.music import music

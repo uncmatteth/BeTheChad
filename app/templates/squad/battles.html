@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block title %}Squad Battles - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="pixel-font">Squad Battles</h1>
+        <p>Battle together with your squad members against other squads.</p>
+        <a href="{{ url_for('squad.index') }}" class="btn btn-sm btn-pixel">Back to Squad</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Squad Battles</span>
+                <a href="#" class="btn btn-sm btn-pixel" onclick="alert('Squad battles are coming soon!'); return false;">Challenge a Squad</a>
+            </div>
+            <div class="card-body">
+                <div class="text-center py-5">
+                    <p>Squad battles are coming soon!</p>
+                    <p class="text-muted">Battle as a team with your squad members to earn bigger rewards.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">Upcoming Squad Battles</div>
+            <div class="card-body">
+                <div class="text-center py-4">
+                    <p>No upcoming battles scheduled.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">Battle History</div>
+            <div class="card-body">
+                <div class="text-center py-4">
+                    <p>No past battles yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
