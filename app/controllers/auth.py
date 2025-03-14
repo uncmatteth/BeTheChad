@@ -17,7 +17,11 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 @login_manager.user_loader
 def load_user(user_id):
     """Load a user by ID."""
-    return User.query.get(int(user_id))
+    try:
+        return User.query.get(int(user_id))
+    except Exception as e:
+        current_app.logger.error(f"Error loading user {user_id}: {str(e)}")
+        return None
 
 @auth_bp.route('/login')
 def login():
@@ -62,22 +66,28 @@ def twitter_login():
                 # SQLite query
                 result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'").fetchone()
                 if result[0] == 0:
-                    # Table doesn't exist yet, create it
+                    # Table doesn't exist yet, create it with ALL columns from the User model
                     current_app.logger.warning("Users table not found in SQLite database, creating it...")
                     db.session.execute("""
                         CREATE TABLE IF NOT EXISTS users (
                             id INTEGER PRIMARY KEY,
-                            username TEXT UNIQUE NOT NULL,
-                            email TEXT UNIQUE NOT NULL,
-                            password_hash TEXT,
-                            x_id TEXT UNIQUE,
-                            x_username TEXT UNIQUE,
-                            x_displayname TEXT,
-                            x_profile_image TEXT,
+                            username VARCHAR(64) UNIQUE NOT NULL,
+                            email VARCHAR(120) UNIQUE NOT NULL,
+                            password_hash VARCHAR(128),
+                            display_name VARCHAR(64),
+                            bio VARCHAR(500),
+                            avatar_url VARCHAR(255),
                             chadcoin_balance INTEGER DEFAULT 100,
-                            is_admin BOOLEAN DEFAULT FALSE,
+                            wallet_address VARCHAR(255) UNIQUE,
+                            wallet_type VARCHAR(50),
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            last_login TIMESTAMP,
+                            x_id VARCHAR(64) UNIQUE,
+                            x_username VARCHAR(64) UNIQUE,
+                            x_displayname VARCHAR(64),
+                            x_profile_image VARCHAR(255),
+                            is_admin BOOLEAN DEFAULT 0
                         )
                     """)
                     db.session.commit()
@@ -85,7 +95,7 @@ def twitter_login():
                 # PostgreSQL query
                 result = db.session.execute("SELECT to_regclass('public.users')").fetchone()
                 if result[0] is None:
-                    # Table doesn't exist yet, create it
+                    # Table doesn't exist yet, create it with ALL columns from the User model
                     current_app.logger.warning("Users table not found in PostgreSQL database, creating it...")
                     db.session.execute("""
                         CREATE TABLE IF NOT EXISTS users (
@@ -93,23 +103,34 @@ def twitter_login():
                             username VARCHAR(64) UNIQUE NOT NULL,
                             email VARCHAR(120) UNIQUE NOT NULL,
                             password_hash VARCHAR(128),
+                            display_name VARCHAR(64),
+                            bio VARCHAR(500),
+                            avatar_url VARCHAR(255),
+                            chadcoin_balance INTEGER DEFAULT 100,
+                            wallet_address VARCHAR(255) UNIQUE,
+                            wallet_type VARCHAR(50),
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            last_login TIMESTAMP,
                             x_id VARCHAR(64) UNIQUE,
                             x_username VARCHAR(64) UNIQUE,
                             x_displayname VARCHAR(64),
                             x_profile_image VARCHAR(255),
-                            chadcoin_balance INTEGER DEFAULT 100,
-                            is_admin BOOLEAN DEFAULT FALSE,
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            is_admin BOOLEAN DEFAULT TRUE
                         )
                     """)
                     db.session.commit()
             
-            # Check if demo user exists
-            result = db.session.execute("SELECT id, username, email, password_hash, x_username, chadcoin_balance, is_admin FROM users WHERE x_username = 'demo_user'").fetchone()
+            # Check if demo user exists - include all fields we'll need
+            result = db.session.execute("""
+                SELECT id, username, email, password_hash, display_name, bio, avatar_url, 
+                       chadcoin_balance, wallet_address, wallet_type, x_username, x_id, 
+                       x_displayname, x_profile_image, is_admin 
+                FROM users WHERE x_username = 'demo_user'
+            """).fetchone()
             
             if not result:
-                # Create a demo user with direct SQL
+                # Create a demo user with direct SQL - include all fields
                 current_app.logger.info("Creating demo user...")
                 
                 # Different syntax for SQLite vs PostgreSQL for BOOLEAN type
@@ -120,24 +141,34 @@ def twitter_login():
                     INSERT INTO users (
                         username, 
                         email, 
-                        password_hash, 
+                        password_hash,
+                        display_name,
+                        bio,
+                        avatar_url, 
+                        chadcoin_balance,
+                        wallet_address,
+                        wallet_type,
                         x_id, 
                         x_username, 
                         x_displayname, 
                         x_profile_image, 
-                        chadcoin_balance, 
                         is_admin,
                         created_at,
                         updated_at
                     ) VALUES (
                         'demo_user', 
                         'demo@example.com', 
-                        'pbkdf2:sha256:150000$abc123$abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 
+                        'pbkdf2:sha256:150000$abc123$abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+                        'Demo User',
+                        'This is a demo user for Chad Battles.',
+                        'https://example.com/avatar.jpg', 
+                        1000,
+                        NULL,
+                        NULL, 
                         :x_id, 
                         'demo_user', 
                         'Demo User', 
                         'https://example.com/profile.jpg', 
-                        1000, 
                         {is_admin_value},
                         {timestamp_value},
                         {timestamp_value}
@@ -147,19 +178,32 @@ def twitter_login():
                 db.session.execute(query, {'x_id': str(uuid.uuid4())})
                 db.session.commit()
                 
-                # Get the newly created user
-                result = db.session.execute("SELECT id, username, email, password_hash, x_username, chadcoin_balance, is_admin FROM users WHERE x_username = 'demo_user'").fetchone()
+                # Get the newly created user with all fields
+                result = db.session.execute("""
+                    SELECT id, username, email, password_hash, display_name, bio, avatar_url, 
+                           chadcoin_balance, wallet_address, wallet_type, x_username, x_id, 
+                           x_displayname, x_profile_image, is_admin 
+                    FROM users WHERE x_username = 'demo_user'
+                """).fetchone()
             
-            # Manually create a User instance with minimal attributes
+            # Manually create a User instance with all required attributes
             current_app.logger.info(f"Logging in demo user with id: {result[0]}")
             demo_user = User(
                 id=result[0],
                 username=result[1], 
                 email=result[2], 
                 password_hash=result[3],
-                x_username=result[4],
-                chadcoin_balance=result[5],
-                is_admin=result[6]
+                display_name=result[4],
+                bio=result[5],
+                avatar_url=result[6],
+                chadcoin_balance=result[7],
+                wallet_address=result[8],
+                wallet_type=result[9],
+                x_username=result[10],
+                x_id=result[11],
+                x_displayname=result[12],
+                x_profile_image=result[13],
+                is_admin=result[14]
             )
             
             # Log in the demo user
@@ -170,11 +214,15 @@ def twitter_login():
             
         except Exception as e:
             current_app.logger.error(f"Error during database operations: {str(e)}")
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             flash(f"Login error: Database issue. Please contact support.", 'danger')
             return redirect(url_for('auth.login'))
             
     except Exception as e:
         current_app.logger.error(f"Unexpected error in twitter_login: {str(e)}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
         flash(f"Login error: {str(e)}", 'danger')
         return redirect(url_for('auth.login'))
 

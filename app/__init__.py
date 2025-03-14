@@ -27,7 +27,13 @@ from app.models.nft import NFT
 @login_manager.user_loader
 def load_user(user_id):
     """Load a user by ID."""
-    return User.query.get(int(user_id))
+    try:
+        return User.query.get(int(user_id))
+    except Exception as e:
+        # Log the error but don't crash
+        current_app = app or create_app()
+        current_app.logger.error(f"Error loading user {user_id}: {str(e)}")
+        return None
 
 def create_app(config_name='development'):
     """
