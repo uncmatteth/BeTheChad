@@ -25,15 +25,6 @@ venv/
 env/
 ENV/
 
-# Music files (large files that shouldn't be in git)
-*.mp3
-*.wav
-*.ogg
-*.flac
-
-# But include sample music for testing
-!sample_music/*.mp3
-
 # Backup directories
 backup_*/
 
