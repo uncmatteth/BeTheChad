@@ -1,7 +1,7 @@
 """Add tweet_tracker table
 
 Revision ID: 2023_11_15_tweet_tracker
-Revises: <!-- previous migration id -->
+Revises: 2023_12_15_nft_update
 Create Date: 2023-11-15 12:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from datetime import datetime
 
 # revision identifiers, used by Alembic.
 revision = '2023_11_15_tweet_tracker'
-down_revision = None  # Replace with the ID of the previous migration
+down_revision = '2023_12_15_nft_update'  # Chain from the NFT model update
 branch_labels = None
 depends_on = None
 
