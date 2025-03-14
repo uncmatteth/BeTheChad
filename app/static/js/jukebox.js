@@ -9,10 +9,30 @@ document.addEventListener('DOMContentLoaded', function() {
     let musicFiles = [];
     let currentTrackIndex = -1;
     let isPlaying = false;
-    let audio = new Audio();
+    let audio = document.getElementById('chad-jukebox-audio') || new Audio();
     
-    // Initialize UI
-    initJukeboxUI();
+    // Check if we already have a jukebox on the page
+    const existingJukebox = document.getElementById('chad-jukebox');
+    
+    // Initialize UI only if there isn't already a jukebox
+    if (!existingJukebox) {
+        initJukeboxUI();
+    } else {
+        // Use existing UI elements
+        const playBtn = document.getElementById('play-pause-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        
+        // Add event listeners to existing controls
+        if (playBtn) playBtn.addEventListener('click', togglePlay);
+        if (nextBtn) nextBtn.addEventListener('click', playNextTrack);
+        if (prevBtn) prevBtn.addEventListener('click', playPrevTrack);
+        if (volumeSlider) volumeSlider.addEventListener('input', setVolume);
+        
+        // Add event listener for when a song ends
+        audio.addEventListener('ended', playNextTrack);
+    }
     
     // Load music files
     loadMusicFiles();
@@ -77,14 +97,34 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isPlaying) {
             audio.pause();
             isPlaying = false;
-            document.getElementById('jukebox-play').textContent = '▶';
+            
+            // Update UI - check which button exists
+            const playBtn = document.getElementById('jukebox-play');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            
+            if (playBtn) {
+                playBtn.textContent = '▶';
+            }
+            if (playPauseBtn) {
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
         } else {
             if (currentTrackIndex === -1) {
                 playNextTrack();
             } else {
                 audio.play();
                 isPlaying = true;
-                document.getElementById('jukebox-play').textContent = '⏸';
+                
+                // Update UI - check which button exists
+                const playBtn = document.getElementById('jukebox-play');
+                const playPauseBtn = document.getElementById('play-pause-btn');
+                
+                if (playBtn) {
+                    playBtn.textContent = '⏸';
+                }
+                if (playPauseBtn) {
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                }
             }
         }
     }
@@ -130,13 +170,40 @@ document.addEventListener('DOMContentLoaded', function() {
     function playTrack(track) {
         // Update the audio source
         audio.src = track.path;
-        audio.volume = parseFloat(document.getElementById('jukebox-volume').value);
+        
+        // Get volume from correct volume control
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeControl = document.getElementById('jukebox-volume');
+        
+        if (volumeSlider) {
+            audio.volume = parseFloat(volumeSlider.value) / 100;
+        } else if (volumeControl) {
+            audio.volume = parseFloat(volumeControl.value);
+        } else {
+            audio.volume = 0.7; // Default volume
+        }
+        
+        // Update track info if element exists
+        const trackInfo = document.getElementById('track-info');
+        if (trackInfo) {
+            trackInfo.textContent = track.title || 'Unknown Track';
+        }
         
         // Play the track
         audio.play()
             .then(() => {
                 isPlaying = true;
-                document.getElementById('jukebox-play').textContent = '⏸';
+                
+                // Update UI - check which button exists
+                const playBtn = document.getElementById('jukebox-play');
+                const playPauseBtn = document.getElementById('play-pause-btn');
+                
+                if (playBtn) {
+                    playBtn.textContent = '⏸';
+                }
+                if (playPauseBtn) {
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                }
             })
             .catch(error => {
                 console.error('Error playing track:', error);
@@ -147,7 +214,14 @@ document.addEventListener('DOMContentLoaded', function() {
      * Set the volume
      */
     function setVolume() {
-        const volumeValue = document.getElementById('jukebox-volume').value;
-        audio.volume = parseFloat(volumeValue);
+        // Get volume from correct volume control
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeControl = document.getElementById('jukebox-volume');
+        
+        if (volumeSlider) {
+            audio.volume = parseFloat(volumeSlider.value) / 100;
+        } else if (volumeControl) {
+            audio.volume = parseFloat(volumeControl.value);
+        }
     }
 }); 

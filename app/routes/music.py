@@ -69,16 +69,14 @@ def list_music():
 def player():
     """Return HTML for embedding the music player"""
     return '''
-    <div id="jukebox-container"></div>
+    <div id="embedded-jukebox-container"></div>
     <script src="/static/js/jukebox.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            initJukebox('jukebox-container');
+            // Only initialize if no existing player
+            if (!document.getElementById('chad-jukebox')) {
+                initJukebox('embedded-jukebox-container');
+            }
         });
     </script>
-    '''
-
-@music.route('/demo')
-def demo():
-    """Show a demo page for the music player"""
-    return render_template('music_demo.html') 
+    ''' 
