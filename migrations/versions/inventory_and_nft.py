@@ -18,19 +18,65 @@ depends_on = None
 
 
 def upgrade():
-    # Create inventories table
-    op.create_table(
-        'inventories',
-        sa.Column('id', sa.Integer(), primary_key=True),
-        sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
-        sa.Column('created_at', sa.DateTime(), default=datetime.utcnow),
-        sa.Column('updated_at', sa.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow),
-        sa.UniqueConstraint('user_id', name='uq_inventory_user_id')
-    )
-    
-    # Check if NFTs table exists before trying to drop it
+    # Create users table if it doesn't exist
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
+    
+    if 'users' not in inspector.get_table_names():
+        op.create_table(
+            'users',
+            sa.Column('id', sa.Integer(), primary_key=True),
+            sa.Column('username', sa.String(50), unique=True, nullable=False),
+            sa.Column('email', sa.String(120), unique=True, nullable=False),
+            sa.Column('created_at', sa.DateTime(), default=datetime.utcnow),
+            sa.Column('updated_at', sa.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
+        )
+
+    # Create chads table if it doesn't exist
+    if 'chads' not in inspector.get_table_names():
+        op.create_table(
+            'chads',
+            sa.Column('id', sa.Integer(), primary_key=True),
+            sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
+            sa.Column('name', sa.String(50), nullable=False),
+            sa.Column('created_at', sa.DateTime(), default=datetime.utcnow),
+            sa.Column('updated_at', sa.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
+        )
+
+    # Create waifus table if it doesn't exist
+    if 'waifus' not in inspector.get_table_names():
+        op.create_table(
+            'waifus',
+            sa.Column('id', sa.Integer(), primary_key=True),
+            sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
+            sa.Column('name', sa.String(50), nullable=False),
+            sa.Column('created_at', sa.DateTime(), default=datetime.utcnow),
+            sa.Column('updated_at', sa.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
+        )
+
+    # Create items table if it doesn't exist
+    if 'items' not in inspector.get_table_names():
+        op.create_table(
+            'items',
+            sa.Column('id', sa.Integer(), primary_key=True),
+            sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
+            sa.Column('name', sa.String(50), nullable=False),
+            sa.Column('created_at', sa.DateTime(), default=datetime.utcnow),
+            sa.Column('updated_at', sa.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
+        )
+
+    # Create inventories table if it doesn't exist
+    if 'inventories' not in inspector.get_table_names():
+        op.create_table(
+            'inventories',
+            sa.Column('id', sa.Integer(), primary_key=True),
+            sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
+            sa.Column('created_at', sa.DateTime(), default=datetime.utcnow),
+            sa.Column('updated_at', sa.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow),
+            sa.UniqueConstraint('user_id', name='uq_inventory_user_id')
+        )
+    
+    # Check if NFTs table exists before trying to drop it
     if 'nfts' in inspector.get_table_names():
         op.drop_table('nfts')
     
@@ -59,20 +105,17 @@ def upgrade():
     op.create_index('idx_nfts_entity_type', 'nfts', ['entity_type'])
     op.create_index('idx_nfts_user_entity', 'nfts', ['user_id', 'entity_type'])
     
-    # Add is_minted column to Chad model
-    op.add_column('chads', sa.Column('is_minted', sa.Boolean(), default=False))
-    
-    # Add is_minted column to Waifu model if it doesn't exist
-    op.add_column('waifus', sa.Column('is_minted', sa.Boolean(), default=False))
-    
-    # Add is_minted column to Item model if it doesn't exist
-    op.add_column('items', sa.Column('is_minted', sa.Boolean(), default=False))
-    
-    # Add is_equipped column to Waifu model if it doesn't exist
-    op.add_column('waifus', sa.Column('is_equipped', sa.Boolean(), default=False))
-    
-    # Add wallet_type column to User model
-    op.add_column('users', sa.Column('wallet_type', sa.String(50), nullable=True))
+    # Add columns to existing tables with checks
+    for table, columns in [
+        ('chads', [('is_minted', sa.Boolean(), False)]),
+        ('waifus', [('is_minted', sa.Boolean(), False), ('is_equipped', sa.Boolean(), False)]),
+        ('items', [('is_minted', sa.Boolean(), False)]),
+        ('users', [('wallet_type', sa.String(50), True)])
+    ]:
+        table_columns = [col['name'] for col in inspector.get_columns(table)]
+        for col_name, col_type, nullable in columns:
+            if col_name not in table_columns:
+                op.add_column(table, sa.Column(col_name, col_type, nullable=nullable))
     
     # Create index for inventory searching
     op.create_index('idx_items_user_equipped', 'items', ['user_id', 'is_equipped'])
@@ -80,22 +123,37 @@ def upgrade():
 
 
 def downgrade():
-    # Remove inventory and NFT-related columns
-    op.drop_index('idx_items_user_equipped')
-    op.drop_index('idx_waifus_user_equipped')
+    """Remove all created tables and columns in reverse order."""
+    conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
     
-    op.drop_column('users', 'wallet_type')
+    # Drop indexes first
+    if 'items' in inspector.get_table_names():
+        op.drop_index('idx_items_user_equipped')
+    if 'waifus' in inspector.get_table_names():
+        op.drop_index('idx_waifus_user_equipped')
     
-    op.drop_column('waifus', 'is_equipped')
-    op.drop_column('items', 'is_minted')
-    op.drop_column('waifus', 'is_minted')
-    op.drop_column('chads', 'is_minted')
+    # Drop columns from existing tables
+    for table, columns in [
+        ('users', ['wallet_type']),
+        ('waifus', ['is_equipped', 'is_minted']),
+        ('items', ['is_minted']),
+        ('chads', ['is_minted'])
+    ]:
+        if table in inspector.get_table_names():
+            table_columns = [col['name'] for col in inspector.get_columns(table)]
+            for col_name in columns:
+                if col_name in table_columns:
+                    op.drop_column(table, col_name)
     
-    op.drop_index('idx_nfts_user_entity')
-    op.drop_index('idx_nfts_entity_type')
-    op.drop_index('idx_nfts_user_id')
+    # Drop NFTs table and its indexes
+    if 'nfts' in inspector.get_table_names():
+        op.drop_index('idx_nfts_user_entity')
+        op.drop_index('idx_nfts_entity_type')
+        op.drop_index('idx_nfts_user_id')
+        op.drop_table('nfts')
     
-    op.drop_table('nfts')
-    op.drop_table('inventories')
-    
-    # Recreate the original NFTs table (omitted for brevity - in real scenario would recreate original schema) 
+    # Drop other tables in reverse order
+    for table in ['inventories', 'items', 'waifus', 'chads', 'users']:
+        if table in inspector.get_table_names():
+            op.drop_table(table) 
