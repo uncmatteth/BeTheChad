@@ -7,6 +7,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from app.models.transaction import Transaction, TransactionType
+from sqlalchemy import Index
 
 class User(UserMixin, db.Model):
     """User model for storing user account data."""
@@ -54,6 +55,15 @@ class User(UserMixin, db.Model):
                                   foreign_keys='Transaction.user_id',
                                   backref='user', 
                                   lazy=True)
+    
+    # Indexes for efficient queries
+    __table_args__ = (
+        Index('idx_user_username', username),
+        Index('idx_user_email', email),
+        Index('idx_user_x_id', 'x_id'),
+        Index('idx_user_wallet', wallet_address),
+        Index('idx_user_created_at', 'created_at'),
+    )
     
     def __repr__(self):
         return f'<User {self.username}>'

@@ -10,6 +10,7 @@ from app.models.waifu import Waifu
 from app.models.battle import Battle
 from app.models.cabal import Cabal, CabalMember
 from datetime import datetime, timedelta
+from app.utils.bot_commands import simulate_battle
 
 main_bp = Blueprint('main', __name__)
 
@@ -213,9 +214,10 @@ def accept_battle(battle_id):
     battle.status = 'in_progress'
     db.session.commit()
     
-    # TODO: Trigger battle simulation in background task
+    # Simulate the battle immediately
+    battle_summary = simulate_battle(battle)
     
-    flash("You've accepted the battle challenge!", "success")
+    flash("Battle simulated successfully!", "success")
     return redirect(url_for('main.battle_detail', battle_id=battle.id))
 
 @main_bp.route('/decline-battle/<int:battle_id>', methods=['POST'])
