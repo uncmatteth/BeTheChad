@@ -174,6 +174,13 @@ Remember to:
 - Consider impacts on related code areas
 - Deliver only complete, functional, tested code
 
+### Environment-Specific Notes
+- PowerShell commands:
+  - Do not use `&&` for command chaining (not supported)
+  - Use separate commands or PowerShell-specific syntax
+  - Example: Instead of `command1 && command2`, run commands separately
+  - For complex operations, consider creating PowerShell scripts
+
 ## Reference
 This checklist consolidates tasks from:
 - Previous PROJECT_STATUS.md
