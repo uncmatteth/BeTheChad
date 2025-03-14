@@ -1,0 +1,5 @@
+[33m47f4efae9b3d9c6c7f44338a2e66becf6b9c5848[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Final optimizations: Add database indexes, improve caching, and fix all TODOs
+[33m310fd40f49e8eea17b4ea9ecd19e2e8c3f7697c9[m Complete all website checklist items, add OAuth setup and browser compatibility support
+[33m7d14e4ec76456cdf687e7a5bdd39198b413591a7[m Fix navigation errors and command formats for Twitter
+[33mce8f170d2b8be35b387e3b550e53094559bdf03b[m Fix website issues: Update battle commands, add persistent music player, and implement wallet modal
+[33madb41bb92b728ddb4322385985a38080f3223a63[m Fix battle commands: ensure Twitter commands never start with @ for better visibility

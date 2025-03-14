@@ -65,10 +65,18 @@ def twitter_login():
         
         if api_key and api_secret:
             try:
+                # Get the current hostname - try to detect if we're on the custom domain
+                server_name = request.headers.get('Host', '').split(':')[0]
+                is_custom_domain = 'chadbattles.fun' in server_name
+                
+                # Create callback URL based on current hostname
+                # This ensures we redirect back to the same domain the user is currently on
+                callback_url = url_for('auth.twitter_callback', _external=True)
+                
                 # Create OAuth handler with callback
                 auth = tweepy.OAuth1UserHandler(
                     api_key, api_secret,
-                    callback=url_for('auth.twitter_callback', _external=True)
+                    callback=callback_url
                 )
                 
                 # Get request token
@@ -76,6 +84,9 @@ def twitter_login():
                 
                 # Store request token in session for verification in callback
                 session['request_token'] = auth.request_token
+                
+                # Log callback URL for debugging
+                current_app.logger.info(f"Using callback URL: {callback_url}")
                 
                 # Redirect to Twitter authorization URL
                 return redirect(redirect_url)
