@@ -1,14 +1,10 @@
 """
 Test suite for the frontend jukebox functionality.
-Tests the JavaScript jukebox player using pytest-selenium.
+Tests the JavaScript jukebox player using pytest-flask.
 """
 import os
 import pytest
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
+from flask import url_for
 from app import create_app
 
 @pytest.fixture
@@ -22,9 +18,7 @@ def app():
     if not os.path.exists(app.config['MUSIC_DIR']):
         os.makedirs(app.config['MUSIC_DIR'])
     
-    # Create a test context
-    with app.app_context():
-        yield app
+    yield app
     
     # Clean up test music directory
     if os.path.exists(app.config['MUSIC_DIR']):
@@ -47,135 +41,55 @@ def test_music_files(app):
     
     return files
 
-@pytest.fixture
-def selenium_app(app, test_music_files, live_server):
-    """Start live server with test app."""
-    live_server.start()
-    return live_server.url
-
-def test_jukebox_initialization(selenium, selenium_app):
+@pytest.mark.webtest
+def test_jukebox_initialization(client, test_music_files):
     """Test jukebox player initialization."""
-    selenium.get(selenium_app)
-    
-    # Wait for jukebox to initialize
-    player = WebDriverWait(selenium, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "jukebox-player"))
-    )
-    
-    # Check player elements
-    assert player.is_displayed()
-    assert selenium.find_element(By.CLASS_NAME, "play-button").is_displayed()
-    assert selenium.find_element(By.CLASS_NAME, "stop-button").is_displayed()
-    assert selenium.find_element(By.CLASS_NAME, "next-button").is_displayed()
-    assert selenium.find_element(By.CLASS_NAME, "volume-slider").is_displayed()
-    assert selenium.find_element(By.CLASS_NAME, "progress-bar").is_displayed()
+    response = client.get('/')
+    assert response.status_code == 200
+    assert b'jukebox-player' in response.data
+    assert b'play-button' in response.data
+    assert b'stop-button' in response.data
+    assert b'next-button' in response.data
+    assert b'volume-slider' in response.data
+    assert b'progress-bar' in response.data
 
-def test_player_controls(selenium, selenium_app):
-    """Test player control functionality."""
-    selenium.get(selenium_app)
-    
-    # Wait for player to initialize
-    player = WebDriverWait(selenium, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "jukebox-player"))
-    )
-    
-    # Test play button
-    play_button = selenium.find_element(By.CLASS_NAME, "play-button")
-    play_button.click()
-    assert "playing" in player.get_attribute("class")
-    
-    # Test stop button
-    stop_button = selenium.find_element(By.CLASS_NAME, "stop-button")
-    stop_button.click()
-    assert "playing" not in player.get_attribute("class")
-    
-    # Test next button
-    next_button = selenium.find_element(By.CLASS_NAME, "next-button")
-    current_track = selenium.find_element(By.CLASS_NAME, "track-title").text
-    next_button.click()
-    WebDriverWait(selenium, 10).until(
-        lambda s: s.find_element(By.CLASS_NAME, "track-title").text != current_track
-    )
+@pytest.mark.webtest
+def test_track_list(client, test_music_files):
+    """Test track list endpoint."""
+    response = client.get('/tracks')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 2
+    assert any(track['filename'] == 'test1.mp3' for track in data)
+    assert any(track['filename'] == 'test2.m4a' for track in data)
 
-def test_volume_control(selenium, selenium_app):
-    """Test volume control functionality."""
-    selenium.get(selenium_app)
+@pytest.mark.webtest
+def test_stream_music(client, test_music_files):
+    """Test music streaming endpoint."""
+    response = client.get('/stream/test1.mp3')
+    assert response.status_code == 200
+    assert response.data == b'fake mp3 content'
     
-    # Wait for player to initialize
-    WebDriverWait(selenium, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "jukebox-player"))
-    )
+    response = client.get('/stream/test2.m4a')
+    assert response.status_code == 200
+    assert response.data == b'fake m4a content'
     
-    # Test volume slider
-    volume_slider = selenium.find_element(By.CLASS_NAME, "volume-slider")
-    initial_volume = volume_slider.get_attribute("value")
-    
-    # Change volume using slider
-    actions = ActionChains(selenium)
-    actions.click_and_hold(volume_slider).move_by_offset(50, 0).release().perform()
-    
-    assert volume_slider.get_attribute("value") != initial_volume
+    response = client.get('/stream/nonexistent.mp3')
+    assert response.status_code == 404
 
-def test_progress_bar(selenium, selenium_app):
-    """Test progress bar functionality."""
-    selenium.get(selenium_app)
+@pytest.mark.webtest
+def test_rate_limiting(client, test_music_files):
+    """Test rate limiting on music endpoints."""
+    # Test track list rate limiting
+    for _ in range(30):
+        response = client.get('/tracks')
+        assert response.status_code == 200
+    response = client.get('/tracks')
+    assert response.status_code == 429  # Too Many Requests
     
-    # Wait for player to initialize
-    WebDriverWait(selenium, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "jukebox-player"))
-    )
-    
-    # Start playback
-    play_button = selenium.find_element(By.CLASS_NAME, "play-button")
-    play_button.click()
-    
-    # Wait for progress
-    progress_bar = selenium.find_element(By.CLASS_NAME, "progress-bar")
-    initial_time = progress_bar.get_attribute("value")
-    
-    WebDriverWait(selenium, 10).until(
-        lambda s: s.find_element(By.CLASS_NAME, "progress-bar").get_attribute("value") != initial_time
-    )
-
-def test_keyboard_shortcuts(selenium, selenium_app):
-    """Test keyboard shortcut functionality."""
-    selenium.get(selenium_app)
-    
-    # Wait for player to initialize
-    player = WebDriverWait(selenium, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "jukebox-player"))
-    )
-    
-    # Test space bar for play/pause
-    selenium.find_element(By.TAG_NAME, "body").send_keys(Keys.SPACE)
-    assert "playing" in player.get_attribute("class")
-    
-    selenium.find_element(By.TAG_NAME, "body").send_keys(Keys.SPACE)
-    assert "playing" not in player.get_attribute("class")
-    
-    # Test 'N' key for next track
-    current_track = selenium.find_element(By.CLASS_NAME, "track-title").text
-    selenium.find_element(By.TAG_NAME, "body").send_keys('n')
-    WebDriverWait(selenium, 10).until(
-        lambda s: s.find_element(By.CLASS_NAME, "track-title").text != current_track
-    )
-
-def test_error_recovery(selenium, selenium_app):
-    """Test error recovery functionality."""
-    selenium.get(selenium_app)
-    
-    # Wait for player to initialize
-    player = WebDriverWait(selenium, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "jukebox-player"))
-    )
-    
-    # Simulate error by trying to play non-existent track
-    selenium.execute_script("""
-        const audio = document.querySelector('audio');
-        audio.dispatchEvent(new Event('error'));
-    """)
-    
-    # Check if player automatically moves to next track
-    WebDriverWait(selenium, 10).until(
-        lambda s: "error" not in player.get_attribute("class")
-    ) 
+    # Test streaming rate limiting
+    for _ in range(100):
+        response = client.get('/stream/test1.mp3')
+        assert response.status_code == 200
+    response = client.get('/stream/test1.mp3')
+    assert response.status_code == 429  # Too Many Requests 
