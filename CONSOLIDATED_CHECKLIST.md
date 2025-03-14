@@ -180,6 +180,10 @@ Remember to:
   - Use separate commands or PowerShell-specific syntax
   - Example: Instead of `command1 && command2`, run commands separately
   - For complex operations, consider creating PowerShell scripts
+- Admin Privileges:
+  - When encountering permission issues, ask user to run with admin privileges
+  - This is preferable to using `--user` flag for installations
+  - Helps avoid path and permission complications
 
 ## Reference
 This checklist consolidates tasks from:

@@ -9,7 +9,7 @@ from config import config_by_name
 import logging
 from logging.handlers import RotatingFileHandler
 from werkzeug.middleware.proxy_fix import ProxyFix
-from app.extensions import db, migrate, login_manager, cache
+from app.extensions import db, migrate, login_manager, cache, limiter, compress
 from app.utils.scheduler import init_scheduler
 
 # Import models to ensure they are registered with SQLAlchemy
@@ -53,6 +53,21 @@ def create_app(config_name='development'):
     # Fix for proxy headers when behind a reverse proxy
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     
+    # Configure compression
+    app.config['COMPRESS_MIMETYPES'] = [
+        'text/html',
+        'text/css',
+        'text/xml',
+        'application/json',
+        'application/javascript',
+        'application/x-javascript',
+        'application/xml',
+        'application/xml+rss',
+        'text/javascript'
+    ]
+    app.config['COMPRESS_LEVEL'] = 6  # Default level, good balance between speed and compression
+    app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress responses > 500 bytes
+    
     # Configure caching based on environment
     if config_name == 'production':
         app.config['CACHE_TYPE'] = 'RedisCache'
@@ -70,6 +85,8 @@ def create_app(config_name='development'):
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     cache.init_app(app)
+    limiter.init_app(app)
+    compress.init_app(app)
     
     # Set up logging
     if not app.debug and not app.testing:

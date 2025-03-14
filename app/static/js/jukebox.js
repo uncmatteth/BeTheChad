@@ -1,175 +1,277 @@
 /**
- * Simple Jukebox Music Player
- * Plays MP3 files randomly with basic controls
- * Persists between page loads using localStorage
+ * Enhanced Jukebox Music Player
+ * Plays MP3 and M4A files with advanced controls
  */
-// Store the current instance for global access
-let jukeboxInstance = null;
-
 class Jukebox {
     constructor(containerId, musicFiles = []) {
         this.container = document.getElementById(containerId);
         this.musicFiles = musicFiles;
         this.currentTrack = null;
         this.isPlaying = false;
-        this.audio = document.getElementById('chad-jukebox-audio') || new Audio();
+        this.audio = new Audio();
         this.currentTrackIndex = -1;
-        this.volume = localStorage.getItem('jukebox_volume') ? parseFloat(localStorage.getItem('jukebox_volume')) : 0.4;
-        this.trackInfoElement = document.getElementById('track-info');
-        this.playPauseBtn = document.getElementById('play-pause-btn');
-        this.prevBtn = document.getElementById('prev-btn');
-        this.nextBtn = document.getElementById('next-btn');
-        this.volumeSlider = document.getElementById('volume-slider');
-        this.playerToggle = document.getElementById('player-toggle');
-        this.playerControls = document.getElementById('player-controls');
+        this.volume = localStorage.getItem('jukebox_volume') || 0.7;
         
-        console.log('Jukebox initialized with', musicFiles.length, 'music files');
-        if (musicFiles.length > 0) {
-            console.log('First few music files:', 
-                musicFiles.slice(0, 3).map(file => file.title).join(', '), 
-                '...');
-        }
+        // Set initial volume
+        this.audio.volume = this.volume;
         
-        this.setupAudioEvents();
-        this.setupControlEvents();
-        this.restorePlayerState();
-    }
-    
-    setupAudioEvents() {
-        // Set up event listener for when a song ends
+        // Set up event listeners
         this.audio.addEventListener('ended', () => this.playNextRandom());
+        this.audio.addEventListener('timeupdate', () => this.updateProgress());
+        this.audio.addEventListener('error', (e) => this.handleError(e));
         
-        // Add error listener to debug audio loading issues
-        this.audio.addEventListener('error', (e) => {
-            console.error('Audio error:', e);
-            console.error('Error code:', this.audio.error ? this.audio.error.code : 'unknown');
-            console.error('Current audio src:', this.audio.src);
-            this.trackInfoElement.textContent = 'Error loading track - trying next...';
-            
-            // Try the next track automatically
-            setTimeout(() => this.playNextRandom(), 2000);
+        // Create the player if container exists
+        if (this.container) {
+            this.createPlayer();
+            this.loadState();
+        } else {
+            console.error(`Container with ID ${containerId} not found`);
+        }
+    }
+    
+    createPlayer() {
+        // Create player UI with volume control and progress bar
+        this.container.innerHTML = `
+            <div class="jukebox-player" id="chad-jukebox">
+                <div class="jukebox-title">Chad Battles Jukebox</div>
+                <div class="jukebox-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-time">
+                        <span class="current-time">0:00</span>
+                        <span class="total-time">0:00</span>
+                    </div>
+                </div>
+                <div class="jukebox-controls">
+                    <button id="jukebox-play" class="jukebox-btn">▶ Play</button>
+                    <button id="jukebox-stop" class="jukebox-btn">■ Stop</button>
+                    <button id="jukebox-next" class="jukebox-btn">⏭ Next</button>
+                    <div class="volume-control">
+                        <span class="volume-icon">🔊</span>
+                        <input type="range" id="volume-slider" min="0" max="100" value="${this.volume * 100}">
+                    </div>
+                </div>
+                <div id="jukebox-now-playing" class="jukebox-now-playing">Select a track to begin</div>
+            </div>
+        `;
+        
+        // Add enhanced styling
+        const style = document.createElement('style');
+        style.textContent = `
+            .jukebox-player {
+                background-color: #333;
+                border-radius: 10px;
+                padding: 15px;
+                color: white;
+                font-family: Arial, sans-serif;
+                width: 300px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .jukebox-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 15px;
+                text-align: center;
+            }
+            .jukebox-progress {
+                margin-bottom: 15px;
+            }
+            .progress-bar {
+                background-color: #555;
+                height: 6px;
+                border-radius: 3px;
+                cursor: pointer;
+                position: relative;
+            }
+            .progress-fill {
+                background-color: #4CAF50;
+                height: 100%;
+                border-radius: 3px;
+                width: 0%;
+                transition: width 0.1s;
+            }
+            .progress-time {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                margin-top: 5px;
+            }
+            .jukebox-controls {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            .jukebox-btn {
+                background-color: #555;
+                border: none;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            .jukebox-btn:hover {
+                background-color: #777;
+            }
+            .volume-control {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .volume-icon {
+                font-size: 16px;
+                cursor: pointer;
+            }
+            #volume-slider {
+                width: 80px;
+                height: 4px;
+            }
+            .jukebox-now-playing {
+                font-size: 14px;
+                text-align: center;
+                font-style: italic;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding: 5px;
+                background-color: #444;
+                border-radius: 5px;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease-in;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add event listeners
+        document.getElementById('jukebox-play').addEventListener('click', () => this.play());
+        document.getElementById('jukebox-stop').addEventListener('click', () => this.stop());
+        document.getElementById('jukebox-next').addEventListener('click', () => this.playNextRandom());
+        
+        // Volume control
+        const volumeSlider = document.getElementById('volume-slider');
+        volumeSlider.addEventListener('input', (e) => {
+            this.setVolume(e.target.value / 100);
         });
         
-        // Add load start listener to show loading status
-        this.audio.addEventListener('loadstart', () => {
-            console.log('Audio track loading started');
-            if (this.trackInfoElement) {
-                this.trackInfoElement.textContent = 'Loading track...';
+        // Progress bar
+        const progressBar = this.container.querySelector('.progress-bar');
+        progressBar.addEventListener('click', (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            this.seekTo(pos);
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            switch(e.key) {
+                case ' ':
+                    e.preventDefault();
+                    this.play();
+                    break;
+                case 'n':
+                    this.playNextRandom();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    this.setVolume(Math.min(1, this.volume + 0.1));
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    this.setVolume(Math.max(0, this.volume - 0.1));
+                    break;
             }
         });
-        
-        // Add canplaythrough listener to know when audio is ready
-        this.audio.addEventListener('canplaythrough', () => {
-            console.log('Audio track loaded and can play through');
-        });
-        
-        // Save current time periodically for state persistence
-        this.audio.addEventListener('timeupdate', () => {
-            if (this.audio.currentTime > 0 && this.currentTrackIndex >= 0) {
-                localStorage.setItem('jukebox_currentTime', this.audio.currentTime);
-            }
-        });
     }
     
-    setupControlEvents() {
-        // Set up play/pause button
-        if (this.playPauseBtn) {
-            this.playPauseBtn.addEventListener('click', () => this.togglePlay());
-        }
-        
-        // Set up next button
-        if (this.nextBtn) {
-            this.nextBtn.addEventListener('click', () => this.playNextRandom());
-        }
-        
-        // Set up previous button
-        if (this.prevBtn) {
-            this.prevBtn.addEventListener('click', () => this.playPrevious());
-        }
-        
-        // Set up volume slider
-        if (this.volumeSlider) {
-            this.volumeSlider.value = this.volume * 100; // Set initial volume slider position
-            this.volumeSlider.addEventListener('input', (e) => {
-                const volume = e.target.value / 100;
-                this.setVolume(volume);
-                localStorage.setItem('jukebox_volume', volume);
-            });
-        }
-        
-        // Set up player toggle
-        if (this.playerToggle) {
-            this.playerToggle.addEventListener('click', () => this.togglePlayerVisibility());
-        }
-        
-        // Close player button
-        const closePlayer = document.getElementById('close-player');
-        if (closePlayer) {
-            closePlayer.addEventListener('click', () => this.togglePlayerVisibility());
-        }
-        
-        // Handle page unload to save state
-        window.addEventListener('beforeunload', () => this.savePlayerState());
+    setVolume(value) {
+        this.volume = Math.max(0, Math.min(1, value));
+        this.audio.volume = this.volume;
+        document.getElementById('volume-slider').value = this.volume * 100;
+        localStorage.setItem('jukebox_volume', this.volume);
     }
     
-    togglePlayerVisibility() {
-        if (this.playerControls) {
-            this.playerControls.classList.toggle('active');
-            localStorage.setItem('jukebox_visible', this.playerControls.classList.contains('active'));
+    seekTo(position) {
+        if (this.audio.duration) {
+            this.audio.currentTime = position * this.audio.duration;
         }
     }
     
-    loadMusicFiles() {
-        // This function can be used to load music files from the server
-        if (this.musicFiles.length === 0) {
-            console.warn('No music files provided, player may not work');
-            if (this.trackInfoElement) {
-                this.trackInfoElement.textContent = 'No music files available';
+    updateProgress() {
+        if (!this.audio.duration) return;
+        
+        const progressFill = this.container.querySelector('.progress-fill');
+        const currentTime = this.container.querySelector('.current-time');
+        const totalTime = this.container.querySelector('.total-time');
+        
+        const progress = (this.audio.currentTime / this.audio.duration) * 100;
+        progressFill.style.width = `${progress}%`;
+        
+        currentTime.textContent = this.formatTime(this.audio.currentTime);
+        totalTime.textContent = this.formatTime(this.audio.duration);
+    }
+    
+    formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    
+    handleError(error) {
+        console.error('Audio playback error:', error);
+        const nowPlaying = document.getElementById('jukebox-now-playing');
+        nowPlaying.textContent = 'Error playing track. Trying next...';
+        setTimeout(() => this.playNextRandom(), 2000);
+    }
+    
+    loadState() {
+        const savedState = localStorage.getItem('jukebox_state');
+        if (savedState) {
+            const state = JSON.parse(savedState);
+            if (state.currentTrackIndex >= 0 && state.currentTrackIndex < this.musicFiles.length) {
+                this.currentTrackIndex = state.currentTrackIndex;
+                this.currentTrack = this.musicFiles[this.currentTrackIndex];
+                this.audio.src = this.currentTrack.path;
+                if (state.currentTime) {
+                    this.audio.currentTime = state.currentTime;
+                }
+                document.getElementById('jukebox-now-playing').textContent = 
+                    `Now playing: ${this.currentTrack.title}`;
             }
         }
     }
     
-    togglePlay() {
+    saveState() {
+        const state = {
+            currentTrackIndex: this.currentTrackIndex,
+            currentTime: this.audio.currentTime
+        };
+        localStorage.setItem('jukebox_state', JSON.stringify(state));
+    }
+    
+    play() {
         if (!this.isPlaying) {
             if (this.currentTrackIndex === -1) {
-                // Load the previously playing track if available
-                const savedIndex = localStorage.getItem('jukebox_trackIndex');
-                if (savedIndex !== null && this.musicFiles.length > 0) {
-                    this.playTrack(parseInt(savedIndex, 10) % this.musicFiles.length);
-                } else {
-                    this.playNextRandom();
-                }
+                this.playNextRandom();
             } else {
                 this.audio.play()
                     .then(() => {
-                        console.log('Playback resumed successfully');
+                        this.isPlaying = true;
+                        document.getElementById('jukebox-play').textContent = '⏸ Pause';
                     })
-                    .catch(error => {
-                        console.error('Error resuming playback:', error);
-                    });
-                this.isPlaying = true;
-                this.updatePlayPauseButton(true);
-                localStorage.setItem('jukebox_playing', 'true');
+                    .catch(error => this.handleError(error));
             }
         } else {
-            // If already playing, this acts as pause
             this.audio.pause();
             this.isPlaying = false;
-            this.updatePlayPauseButton(false);
-            localStorage.setItem('jukebox_playing', 'false');
-        }
-    }
-    
-    updatePlayPauseButton(isPlaying) {
-        if (this.playPauseBtn) {
-            const icon = this.playPauseBtn.querySelector('i');
-            if (icon) {
-                if (isPlaying) {
-                    icon.className = 'fas fa-pause';
-                } else {
-                    icon.className = 'fas fa-play';
-                }
-            }
+            document.getElementById('jukebox-play').textContent = '▶ Play';
         }
     }
     
@@ -177,217 +279,74 @@ class Jukebox {
         this.audio.pause();
         this.audio.currentTime = 0;
         this.isPlaying = false;
-        this.updatePlayPauseButton(false);
-        if (this.trackInfoElement) {
-            this.trackInfoElement.textContent = 'Music stopped';
-        }
-        localStorage.setItem('jukebox_playing', 'false');
-    }
-    
-    setVolume(volume) {
-        this.volume = volume;
-        this.audio.volume = volume;
-        console.log('Volume set to:', volume);
-    }
-    
-    playPrevious() {
-        if (this.musicFiles.length === 0) return;
-        
-        if (this.currentTrackIndex > 0) {
-            this.currentTrackIndex--;
-        } else {
-            this.currentTrackIndex = this.musicFiles.length - 1;
-        }
-        
-        this.playTrack(this.currentTrackIndex);
+        document.getElementById('jukebox-play').textContent = '▶ Play';
+        document.getElementById('jukebox-now-playing').textContent = 'Music stopped';
+        this.updateProgress();
     }
     
     playNextRandom() {
         if (this.musicFiles.length === 0) {
-            console.warn('No music files available to play');
-            if (this.trackInfoElement) {
-                this.trackInfoElement.textContent = 'No music files available';
-            }
+            document.getElementById('jukebox-now-playing').textContent = 'No music files available';
             return;
         }
         
-        // Choose a random track, but not the same one that's currently playing
         let newIndex;
         if (this.musicFiles.length === 1) {
             newIndex = 0;
         } else {
             do {
                 newIndex = Math.floor(Math.random() * this.musicFiles.length);
-            } while (newIndex === this.currentTrackIndex && this.musicFiles.length > 1);
+            } while (newIndex === this.currentTrackIndex);
         }
         
-        this.playTrack(newIndex);
-    }
-    
-    playTrack(index) {
-        if (index < 0 || index >= this.musicFiles.length) return;
-        
-        this.currentTrackIndex = index;
+        this.currentTrackIndex = newIndex;
         this.currentTrack = this.musicFiles[this.currentTrackIndex];
         
-        console.log('Playing track:', this.currentTrack.title);
-        
-        // Update the audio source
         this.audio.src = this.currentTrack.path;
+        document.getElementById('jukebox-now-playing').textContent = 
+            `Now playing: ${this.currentTrack.title}`;
         
-        // Set the volume
-        this.audio.volume = this.volume;
-        
-        // Update the display
-        if (this.trackInfoElement) {
-            this.trackInfoElement.textContent = `Now playing: ${this.currentTrack.title}`;
-        }
-        
-        // Save current track to localStorage
-        localStorage.setItem('jukebox_trackIndex', this.currentTrackIndex);
-        localStorage.setItem('jukebox_trackPath', this.currentTrack.path);
-        localStorage.setItem('jukebox_trackTitle', this.currentTrack.title);
-        
-        // Play the track
         this.audio.play()
             .then(() => {
-                console.log('Audio playback started successfully');
                 this.isPlaying = true;
-                this.updatePlayPauseButton(true);
-                localStorage.setItem('jukebox_playing', 'true');
+                document.getElementById('jukebox-play').textContent = '⏸ Pause';
+                this.saveState();
             })
-            .catch(error => {
-                console.error('Error playing audio:', error);
-                if (this.trackInfoElement) {
-                    this.trackInfoElement.textContent = `Error playing: ${this.currentTrack.title}`;
-                }
-                // Try the next track automatically
-                setTimeout(() => this.playNextRandom(), 2000);
-            });
+            .catch(error => this.handleError(error));
     }
     
-    // Method to set new music files
     setMusicFiles(musicFiles) {
         this.musicFiles = musicFiles;
-        console.log(`Updated music files. Now have ${musicFiles.length} tracks.`);
-    }
-    
-    // Save player state to localStorage
-    savePlayerState() {
         if (this.isPlaying) {
-            localStorage.setItem('jukebox_playing', 'true');
-            localStorage.setItem('jukebox_currentTime', this.audio.currentTime);
-        } else {
-            localStorage.setItem('jukebox_playing', 'false');
+            this.stop();
         }
-        localStorage.setItem('jukebox_trackIndex', this.currentTrackIndex);
-        if (this.currentTrack) {
-            localStorage.setItem('jukebox_trackPath', this.currentTrack.path);
-            localStorage.setItem('jukebox_trackTitle', this.currentTrack.title);
-        }
-    }
-    
-    // Restore player state from localStorage
-    restorePlayerState() {
-        if (this.musicFiles.length === 0) return;
-        
-        const wasPlaying = localStorage.getItem('jukebox_playing') === 'true';
-        const savedIndex = localStorage.getItem('jukebox_trackIndex');
-        const savedTime = localStorage.getItem('jukebox_currentTime');
-        const isVisible = localStorage.getItem('jukebox_visible') !== 'false';
-        
-        // Set player visibility state
-        if (this.playerControls) {
-            if (isVisible) {
-                this.playerControls.classList.add('active');
-            } else {
-                this.playerControls.classList.remove('active');
-            }
-        }
-        
-        if (savedIndex !== null && this.musicFiles.length > 0) {
-            const trackIndex = parseInt(savedIndex, 10) % this.musicFiles.length;
-            this.currentTrackIndex = trackIndex;
-            this.currentTrack = this.musicFiles[trackIndex];
-            
-            // Set the audio source
-            this.audio.src = this.currentTrack.path;
-            
-            // Set the volume
-            this.audio.volume = this.volume;
-            
-            // Set the current time
-            if (savedTime !== null) {
-                this.audio.currentTime = parseFloat(savedTime);
-            }
-            
-            // Update display
-            if (this.trackInfoElement && this.currentTrack) {
-                this.trackInfoElement.textContent = `Now playing: ${this.currentTrack.title}`;
-            }
-            
-            // If it was playing, resume playback
-            if (wasPlaying) {
-                this.audio.play()
-                    .then(() => {
-                        console.log('Restored playback successfully');
-                        this.isPlaying = true;
-                        this.updatePlayPauseButton(true);
-                    })
-                    .catch(error => {
-                        console.error('Error restoring playback:', error);
-                        this.isPlaying = false;
-                        this.updatePlayPauseButton(false);
-                    });
-            } else {
-                this.isPlaying = false;
-                this.updatePlayPauseButton(false);
-            }
-        }
+        this.currentTrackIndex = -1;
+        localStorage.removeItem('jukebox_state');
     }
 }
 
 // Function to initialize the jukebox with music files from the server
-function initJukebox() {
-    console.log('Initializing jukebox, fetching music from /music/list');
-    
-    // Create an AJAX request to get the music files
-    fetch('/music/list')
+function initJukebox(containerId) {
+    fetch('/music/tracks')
         .then(response => {
-            console.log('Music list response status:', response.status);
             if (!response.ok) {
-                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(data => {
-            console.log('Music files received:', data);
-            if (!Array.isArray(data)) {
-                console.error('Expected array of music files but got:', typeof data);
-                data = [];
-            }
-            
-            jukeboxInstance = new Jukebox('chad-jukebox', data);
-            window.jukebox = jukeboxInstance; // Make it globally accessible
-            
-            // If there are music files, update the track-info element
-            if (data.length > 0) {
-                const trackInfo = document.getElementById('track-info');
-                if (trackInfo) {
-                    trackInfo.textContent = 'Ready to play. Click play to start.';
-                }
-            }
+            const jukebox = new Jukebox(containerId, data);
+            window.jukebox = jukebox;
         })
         .catch(error => {
             console.error('Error loading music files:', error);
-            // Initialize with empty array as fallback
-            jukeboxInstance = new Jukebox('chad-jukebox', []);
-            window.jukebox = jukeboxInstance;
-            
-            // Show error in the track-info element
-            const trackInfo = document.getElementById('track-info');
-            if (trackInfo) {
-                trackInfo.textContent = 'Error loading music. Please try again later.';
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = `
+                    <div class="jukebox-error">
+                        Error loading music player. Please try refreshing the page.
+                    </div>
+                `;
             }
         });
 }
@@ -395,5 +354,5 @@ function initJukebox() {
 // Initialize jukebox when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing jukebox');
-    initJukebox();
+    initJukebox('chad-jukebox');
 }); 

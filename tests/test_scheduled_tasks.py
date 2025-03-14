@@ -105,7 +105,7 @@ class TestScheduledTasks(unittest.TestCase):
     @patch('app.models.cabal.Cabal.query')
     @patch('app.models.cabal.Cabal.calculate_total_power')
     @patch('app.models.cabal.Cabal.update_rank')
-    @patch('app import db')
+    @patch('app.extensions.db.session.commit')
     def test_update_cabal_rankings(self, db_mock, update_rank_mock, 
                                   calculate_power_mock, cabal_query_mock):
         """Test the cabal rankings update function."""
