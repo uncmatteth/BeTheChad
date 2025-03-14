@@ -7,6 +7,8 @@ Flask-WTF==1.1.1
 Flask-Cors==3.0.10
 Flask-RESTful==0.3.10
 Flask-Caching==2.0.2
+Flask-Limiter==3.5.0
+Flask-Compress==1.14
 
 # Database
 SQLAlchemy==2.0.5
@@ -42,6 +44,9 @@ python-twitter-v2==0.8.1
 # Testing
 pytest==7.2.2
 pytest-flask==1.2.0
+pytest-selenium==4.0.1
+pytest-live-server==0.1.1
+selenium==4.11.2
 coverage==7.2.1
 faker==18.3.1
 
