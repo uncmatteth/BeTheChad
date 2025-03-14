@@ -63,7 +63,7 @@ def twitter_login():
         try:
             # Check if demo user exists using raw SQL to bypass ORM validation
             if is_sqlite:
-                # SQLite query
+                # SQLite query to check if users table exists
                 result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'").fetchone()
                 if result[0] == 0:
                     # Table doesn't exist yet, create it with ALL columns from the User model
@@ -91,8 +91,63 @@ def twitter_login():
                         )
                     """)
                     db.session.commit()
+                
+                # Check if chad_classes table exists
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='chad_classes'").fetchone()
+                if result[0] == 0:
+                    # Create chad_classes table
+                    current_app.logger.warning("chad_classes table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS chad_classes (
+                            id INTEGER PRIMARY KEY,
+                            name VARCHAR(50) UNIQUE NOT NULL,
+                            description TEXT NOT NULL,
+                            base_clout_bonus INTEGER DEFAULT 0,
+                            base_roast_bonus INTEGER DEFAULT 0,
+                            base_cringe_resistance_bonus INTEGER DEFAULT 0,
+                            base_drip_bonus INTEGER DEFAULT 0
+                        )
+                    """)
+                    # Insert default chad classes
+                    db.session.execute("""
+                        INSERT INTO chad_classes (name, description, base_clout_bonus, base_roast_bonus, 
+                                              base_cringe_resistance_bonus, base_drip_bonus)
+                        VALUES ('Sigma', 'The lone wolf with exceptional independence', 5, 3, 5, 2),
+                               ('Alpha', 'The natural leader with commanding presence', 4, 4, 3, 4),
+                               ('Gigachad', 'The ultimate form of masculinity', 5, 5, 5, 5)
+                    """)
+                    db.session.commit()
+                
+                # Check if chads table exists
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='chads'").fetchone()
+                if result[0] == 0:
+                    # Create chads table
+                    current_app.logger.warning("chads table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS chads (
+                            id INTEGER PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            class_id INTEGER NOT NULL,
+                            name VARCHAR(50) NOT NULL,
+                            avatar_locked BOOLEAN DEFAULT 0,
+                            level INTEGER DEFAULT 1,
+                            xp INTEGER DEFAULT 0,
+                            clout INTEGER DEFAULT 10,
+                            roast_level INTEGER DEFAULT 10,
+                            cringe_resistance INTEGER DEFAULT 10,
+                            drip_factor INTEGER DEFAULT 10,
+                            battles_won INTEGER DEFAULT 0,
+                            battles_lost INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users (id),
+                            FOREIGN KEY (class_id) REFERENCES chad_classes (id)
+                        )
+                    """)
+                    db.session.commit()
+                
             elif is_postgresql:
-                # PostgreSQL query
+                # PostgreSQL query to check if users table exists
                 result = db.session.execute("SELECT to_regclass('public.users')").fetchone()
                 if result[0] is None:
                     # Table doesn't exist yet, create it with ALL columns from the User model
@@ -117,6 +172,60 @@ def twitter_login():
                             x_displayname VARCHAR(64),
                             x_profile_image VARCHAR(255),
                             is_admin BOOLEAN DEFAULT TRUE
+                        )
+                    """)
+                    db.session.commit()
+                
+                # Check if chad_classes table exists
+                result = db.session.execute("SELECT to_regclass('public.chad_classes')").fetchone()
+                if result[0] is None:
+                    # Create chad_classes table
+                    current_app.logger.warning("chad_classes table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS chad_classes (
+                            id SERIAL PRIMARY KEY,
+                            name VARCHAR(50) UNIQUE NOT NULL,
+                            description TEXT NOT NULL,
+                            base_clout_bonus INTEGER DEFAULT 0,
+                            base_roast_bonus INTEGER DEFAULT 0,
+                            base_cringe_resistance_bonus INTEGER DEFAULT 0,
+                            base_drip_bonus INTEGER DEFAULT 0
+                        )
+                    """)
+                    # Insert default chad classes
+                    db.session.execute("""
+                        INSERT INTO chad_classes (name, description, base_clout_bonus, base_roast_bonus, 
+                                              base_cringe_resistance_bonus, base_drip_bonus)
+                        VALUES ('Sigma', 'The lone wolf with exceptional independence', 5, 3, 5, 2),
+                               ('Alpha', 'The natural leader with commanding presence', 4, 4, 3, 4),
+                               ('Gigachad', 'The ultimate form of masculinity', 5, 5, 5, 5)
+                    """)
+                    db.session.commit()
+                
+                # Check if chads table exists
+                result = db.session.execute("SELECT to_regclass('public.chads')").fetchone()
+                if result[0] is None:
+                    # Create chads table
+                    current_app.logger.warning("chads table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS chads (
+                            id SERIAL PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            class_id INTEGER NOT NULL,
+                            name VARCHAR(50) NOT NULL,
+                            avatar_locked BOOLEAN DEFAULT FALSE,
+                            level INTEGER DEFAULT 1,
+                            xp INTEGER DEFAULT 0,
+                            clout INTEGER DEFAULT 10,
+                            roast_level INTEGER DEFAULT 10,
+                            cringe_resistance INTEGER DEFAULT 10,
+                            drip_factor INTEGER DEFAULT 10,
+                            battles_won INTEGER DEFAULT 0,
+                            battles_lost INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users (id),
+                            FOREIGN KEY (class_id) REFERENCES chad_classes (id)
                         )
                     """)
                     db.session.commit()
@@ -185,6 +294,55 @@ def twitter_login():
                            x_displayname, x_profile_image, is_admin 
                     FROM users WHERE x_username = 'demo_user'
                 """).fetchone()
+            
+            # Get user ID from result
+            user_id = result[0]
+            
+            # Check if user already has a Chad
+            chad_exists = db.session.execute(f"SELECT COUNT(*) FROM chads WHERE user_id = {user_id}").fetchone()[0]
+            
+            # Create a Chad for the user if they don't have one
+            if not chad_exists:
+                current_app.logger.info(f"Creating demo Chad for user {user_id}")
+                
+                # Get the Gigachad class id
+                class_result = db.session.execute("SELECT id FROM chad_classes WHERE name = 'Gigachad'").fetchone()
+                if not class_result:
+                    # If Gigachad class doesn't exist, get any class
+                    class_result = db.session.execute("SELECT id FROM chad_classes LIMIT 1").fetchone()
+                
+                if class_result:
+                    class_id = class_result[0]
+                    
+                    # Create a new Chad for the user
+                    chad_query = f"""
+                        INSERT INTO chads (
+                            user_id,
+                            class_id,
+                            name,
+                            level,
+                            clout,
+                            roast_level,
+                            cringe_resistance,
+                            drip_factor,
+                            created_at,
+                            updated_at
+                        ) VALUES (
+                            {user_id},
+                            {class_id},
+                            'DemoChad',
+                            5,
+                            15,
+                            15,
+                            15,
+                            15,
+                            {timestamp_value},
+                            {timestamp_value}
+                        )
+                    """
+                    db.session.execute(chad_query)
+                    db.session.commit()
+                    current_app.logger.info(f"Created Chad for user {user_id}")
             
             # Manually create a User instance with all required attributes
             current_app.logger.info(f"Logging in demo user with id: {result[0]}")

@@ -52,35 +52,68 @@ def index():
 @login_required
 def dashboard():
     """Render the user dashboard with their character, waifus, and battles."""
-    # Get the user's Chad character
-    chad = current_user.chad
+    try:
+        # Get the user's Chad character
+        chad = current_user.chad
 
-    if not chad:
-        # User has no character yet
-        return render_template('dashboard.html', chad=None)
+        if not chad:
+            # User has no character yet
+            current_app.logger.info(f"User {current_user.id} has no Chad character")
+            return render_template('dashboard.html', chad=None)
 
-    # Get the user's stats (including bonuses from waifus and items)
-    stats = chad.get_total_stats()
-    
-    # Get equipped waifus
-    equipped_waifus = chad.get_equipped_waifus()
-    
-    # Get recent battles
-    battles = Battle.query.filter(
-        (Battle.initiator_id == chad.id) | (Battle.opponent_id == chad.id)
-    ).order_by(Battle.created_at.desc()).limit(5).all()
-    
-    # Get user's squad
-    squad = Squad.query.join(Squad.members).filter_by(chad_id=chad.id).first()
-    
-    return render_template(
-        'dashboard.html',
-        chad=chad,
-        stats=stats,
-        equipped_waifus=equipped_waifus,
-        battles=battles,
-        squad=squad
-    )
+        try:
+            # Get the user's stats (including bonuses from waifus and items)
+            stats = chad.get_total_stats()
+        except Exception as e:
+            current_app.logger.error(f"Error getting stats for Chad {chad.id}: {str(e)}")
+            # Create a simple stats object with default values
+            class DefaultStats:
+                def __init__(self):
+                    self.clout = chad.clout if hasattr(chad, 'clout') else 10
+                    self.roast_level = chad.roast_level if hasattr(chad, 'roast_level') else 10
+                    self.cringe_resistance = chad.cringe_resistance if hasattr(chad, 'cringe_resistance') else 10
+                    self.drip_factor = chad.drip_factor if hasattr(chad, 'drip_factor') else 10
+            stats = DefaultStats()
+        
+        try:
+            # Get equipped waifus
+            equipped_waifus = chad.get_equipped_waifus() if hasattr(chad, 'get_equipped_waifus') else []
+        except Exception as e:
+            current_app.logger.error(f"Error getting equipped waifus for Chad {chad.id}: {str(e)}")
+            equipped_waifus = []
+        
+        try:
+            # Get recent battles
+            from app.models.battle import Battle
+            battles = Battle.query.filter(
+                (Battle.initiator_id == chad.id) | (Battle.opponent_id == chad.id)
+            ).order_by(Battle.created_at.desc()).limit(5).all()
+        except Exception as e:
+            current_app.logger.error(f"Error getting battles for Chad {chad.id}: {str(e)}")
+            battles = []
+        
+        try:
+            # Get user's squad
+            from app.models.squad import Squad
+            squad = Squad.query.join(Squad.members).filter_by(chad_id=chad.id).first()
+        except Exception as e:
+            current_app.logger.error(f"Error getting squad for Chad {chad.id}: {str(e)}")
+            squad = None
+
+        return render_template(
+            'dashboard.html',
+            chad=chad,
+            stats=stats,
+            equipped_waifus=equipped_waifus,
+            battles=battles,
+            squad=squad
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error rendering dashboard: {str(e)}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        flash("There was an error loading your dashboard. The team has been notified.", "danger")
+        return render_template('dashboard.html', chad=None, error=True)
 
 @main_bp.route('/battle-history')
 @login_required
