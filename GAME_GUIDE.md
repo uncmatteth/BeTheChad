@@ -54,7 +54,6 @@ You control your Chad by tweeting specific commands. All commands must include t
 | Command | Example Tweet | Description |
 |---------|--------------|-------------|
 | battle @user | "I'm going to CRUSH @username! CHALLENGE TO BATTLE @RollMasterChad" | Initiates a battle |
-| accept | "I ACCEPT THE BATTLE @RollMasterChad" | Accepts a battle |
 | attack | "I USE SAVAGE ROAST @RollMasterChad" | Standard attack in battle |
 | special | "I USE SIGMA MOVE @RollMasterChad" | Special move (costs energy) |
 | flee | "I WANT TO FLEE @RollMasterChad" | Attempt to escape battle (may fail) |
@@ -75,10 +74,9 @@ Battles in Chad Battles are turn-based encounters between two players.
 ### Battle Flow
 
 1. **Challenge**: One player challenges another with the battle command
-2. **Acceptance**: The challenged player must accept
-3. **Turn-Based Combat**: Players alternate turns using commands
-4. **Victory**: Achieved when opponent's HP reaches 0
-5. **Rewards**: Winner receives Chadcoin and XP
+2. **Immediate Simulation**: Battle is simulated automatically without requiring acceptance
+3. **Results**: Battle results are posted instantly, showing the winner and rewards
+4. **Rewards**: Winner receives Chadcoin and XP, loser gets a smaller amount of XP
 
 ### Battle Strategies
 

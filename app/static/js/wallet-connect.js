@@ -1,19 +1,128 @@
-// Wallet Connection Functionality
+/**
+ * Wallet connection functionality for Chad Battles
+ * Handles connecting to different wallet providers
+ */
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize wallet connection
-    initWalletConnections();
+    // Find wallet-related elements
+    const connectWalletBtn = document.getElementById('connect-wallet-btn');
+    const walletModal = document.getElementById('connectWalletModal');
     
-    // Add event listeners for wallet buttons
-    const connectWalletBtn = document.getElementById('connectWalletBtn');
+    // Initialize the wallet modal if Bootstrap is available
+    let walletModalInstance = null;
+    if (typeof bootstrap !== 'undefined' && walletModal) {
+        walletModalInstance = new bootstrap.Modal(walletModal);
+    }
+    
+    // Add event listener to the connect wallet button if it exists
     if (connectWalletBtn) {
-        connectWalletBtn.addEventListener('click', showWalletModal);
+        connectWalletBtn.addEventListener('click', function() {
+            if (walletModalInstance) {
+                walletModalInstance.show();
+            }
+        });
     }
     
-    const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
-    if (disconnectWalletBtn) {
-        disconnectWalletBtn.addEventListener('click', disconnectWallet);
-    }
+    // Add event listeners to wallet options
+    const walletOptions = document.querySelectorAll('.wallet-option');
+    walletOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const walletType = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+            connectWallet(walletType);
+        });
+    });
 });
+
+// Function to handle wallet connections
+function connectWallet(walletType) {
+    console.log(`Connecting to ${walletType} wallet...`);
+    
+    // Close the modal if it's open
+    const walletModal = document.getElementById('connectWalletModal');
+    if (walletModal) {
+        const modalInstance = bootstrap.Modal.getInstance(walletModal);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+    }
+    
+    // Show connection status to user
+    showConnectionStatus(`Connecting to ${walletType}...`);
+    
+    // Simulate connection process
+    setTimeout(() => {
+        // In a real implementation, this would connect to the actual wallet
+        // For now, we'll just show success and redirect to a demo wallet page
+        const demoAddress = generateDemoAddress(walletType);
+        showConnectionStatus(`Connected to ${walletType}!`);
+        
+        // Redirect to wallet connection handler with demo data
+        submitWalletConnection(walletType, demoAddress);
+    }, 1500);
+}
+
+// Generate a demo wallet address
+function generateDemoAddress(walletType) {
+    const prefix = walletType === 'phantom' ? 'Ph' : 
+                  walletType === 'solflare' ? 'So' : 
+                  walletType === 'metamask' ? 'Me' : 'Ma';
+    const randomPart = Math.random().toString(36).substring(2, 10);
+    return `${prefix}${randomPart}...${randomPart.substring(0, 4)}`;
+}
+
+// Show connection status to the user
+function showConnectionStatus(message) {
+    // Create or update status element
+    let statusEl = document.getElementById('wallet-connection-status');
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'wallet-connection-status';
+        statusEl.className = 'wallet-status-popup';
+        document.body.appendChild(statusEl);
+    }
+    
+    statusEl.textContent = message;
+    statusEl.classList.add('visible');
+    
+    // Hide after a delay
+    setTimeout(() => {
+        statusEl.classList.remove('visible');
+    }, 3000);
+}
+
+// Submit wallet connection to backend
+function submitWalletConnection(walletType, address) {
+    // Create a form to submit the wallet connection
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/wallet/connect';
+    form.style.display = 'none';
+    
+    // Add wallet type
+    const typeInput = document.createElement('input');
+    typeInput.type = 'hidden';
+    typeInput.name = 'wallet_type';
+    typeInput.value = walletType;
+    form.appendChild(typeInput);
+    
+    // Add wallet address
+    const addressInput = document.createElement('input');
+    addressInput.type = 'hidden';
+    addressInput.name = 'wallet_address';
+    addressInput.value = address;
+    form.appendChild(addressInput);
+    
+    // Add demo signature
+    const signatureInput = document.createElement('input');
+    signatureInput.type = 'hidden';
+    signatureInput.name = 'signature';
+    signatureInput.value = 'demo_signature_' + Date.now();
+    form.appendChild(signatureInput);
+    
+    // Submit the form
+    document.body.appendChild(form);
+    form.submit();
+}
 
 // Available wallet types
 const WALLET_TYPES = {
@@ -166,72 +275,6 @@ function showWalletModal() {
     // Show modal
     const walletModal = new bootstrap.Modal(walletModalEl);
     walletModal.show();
-}
-
-// Connect wallet based on type
-async function connectWallet(walletType) {
-    try {
-        let publicKey = null;
-        
-        switch (walletType) {
-            case 'phantom':
-                const phantomProvider = window.solana;
-                if (phantomProvider) {
-                    const { publicKey: phantomKey } = await phantomProvider.connect();
-                    publicKey = phantomKey.toString();
-                }
-                break;
-                
-            case 'solflare':
-                const solflareProvider = window.solflare;
-                if (solflareProvider) {
-                    const { publicKey: solflareKey } = await solflareProvider.connect();
-                    publicKey = solflareKey.toString();
-                }
-                break;
-                
-            case 'metamask':
-                const metamaskProvider = window.ethereum;
-                if (metamaskProvider) {
-                    const accounts = await metamaskProvider.request({ method: 'eth_requestAccounts' });
-                    publicKey = accounts[0];
-                }
-                break;
-                
-            case 'magic_eden':
-                const magicEdenProvider = window.magicEden;
-                if (magicEdenProvider) {
-                    const { publicKey: magicEdenKey } = await magicEdenProvider.connect();
-                    publicKey = magicEdenKey.toString();
-                }
-                break;
-                
-            case 'slope':
-                const slopeProvider = window.Slope;
-                if (slopeProvider) {
-                    const provider = new slopeProvider();
-                    const { publicKey: slopeKey } = await provider.connect();
-                    publicKey = slopeKey.toString();
-                }
-                break;
-        }
-        
-        if (publicKey) {
-            // Save wallet connection to server
-            await saveWalletConnection(publicKey, walletType);
-            
-            // Show success notification
-            showNotification('success', 'Wallet Connected', `Successfully connected your ${WALLET_TYPES[walletType].name} wallet.`);
-            
-            // Refresh the page to update UI
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        }
-    } catch (error) {
-        console.error('Error connecting wallet:', error);
-        showNotification('error', 'Connection Failed', `Failed to connect ${WALLET_TYPES[walletType].name} wallet: ${error.message || 'Unknown error'}`);
-    }
 }
 
 // Disconnect wallet

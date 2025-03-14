@@ -75,7 +75,6 @@ The Twitter bot monitors mentions and processes commands:
 - `MAKE ME A CHAD @RollMasterChad`: Creates a new Chad character.
 - `CHECK STATS @RollMasterChad`: Checks the player's Chad stats.
 - `I'm going to CRUSH @username! CHALLENGE TO BATTLE @RollMasterChad`: Challenges another player to a battle.
-- `I ACCEPT THE BATTLE @RollMasterChad`: Accepts a battle challenge.
 - `CREATE CABAL name @RollMasterChad`: Creates a new cabal.
 - `JOIN CABAL name @RollMasterChad`: Joins an existing cabal.
 

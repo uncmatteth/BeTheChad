@@ -2,7 +2,7 @@
 
 This document lists all identified issues with the Chad Battles website based on user testing and planned fixes.
 
-Last Updated: March 14, 2025
+Last Updated: March 15, 2025
 
 ## Critical Issues
 
@@ -14,6 +14,7 @@ Last Updated: March 14, 2025
 - [x] Debug why the jukebox.js script isn't properly loading the music files from `/music/list` (Added proper DOM initialization and error handling)
 - [x] Added filtering to skip placeholder MP3 files
 - [x] Added new `/music/debug` endpoint for troubleshooting
+- [x] Music player now persists between page loads using localStorage
 - [ ] Test music player functionality in different browsers
 
 ### 2. Twitter Bot Command Format
@@ -22,6 +23,9 @@ Last Updated: March 14, 2025
 - [x] Updated twitter_bot.md documentation with correct command format
 - [x] Updated battle commands in all documentation to never start with @ (e.g., "I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad")
 - [x] Updated regex patterns in bot_commands.py to match the new battle command format
+- [x] Removed all references to accepting battles since battles are now immediate without requiring acceptance
+- [x] Fixed all "Start New Battle" buttons in battle_history.html to use correct format
+- [x] Fixed all "Start New Battle" buttons in dashboard.html to use correct format
 - [ ] Check any other templates or documentation files for incorrect command formats
 
 ### 3. Navigation & Server Errors
@@ -29,6 +33,13 @@ Last Updated: March 14, 2025
 - [ ] Possible session handling issues causing navigation errors
 - [x] Fixed 404 errors for static assets (favicon.ico, hero-bg.jpg)
 - [ ] Check error logs to determine cause of internal server error after login
+
+### 4. Wallet Connection Modal
+- [x] Added proper wallet connection modal with wallet icons
+- [x] Created wallet icons directory and added required wallet logos
+- [x] Implemented wallet-connect.js script with demo functionality
+- [x] Added wallet.css for styling the modal and connection components
+- [x] Updated the dashboard's Connect Wallet button to trigger the modal
 
 ## Specific Issues Found
 
@@ -47,6 +58,7 @@ Last Updated: March 14, 2025
 - [x] Fixed styling issues with the music player at bottom of page
 - [x] Improved font styling and responsiveness of music player
 - [x] Added toggle functionality to show/hide the player
+- [x] Added persistence between page loads using localStorage
 - [ ] Consider adding more music tracks with proper filenames
 
 ### Authentication Flow
@@ -94,7 +106,7 @@ Last Updated: March 14, 2025
 
 ## Implementation Plan
 
-### 1. Fix Music Player
+### 1. Fix Music Player ✅
 - [x] Debug `/music/list` endpoint by adding logging and testing response
 - [x] Verify music files in `app/static/music` have correct permissions and format
 - [x] Fix jukebox.js initialization script
@@ -102,18 +114,25 @@ Last Updated: March 14, 2025
 - [x] Add proper error handling to music player components
 - [ ] Test music player on different browsers
 
-### 2. Update Bot Command Format
+### 2. Update Bot Command Format ✅
 - [x] Update all Twitter command examples site-wide
 - [x] Update all Twitter intent links with correct format
 - [x] Update documentation to reflect new command format
 
-### 3. Fix Navigation Errors
+### 3. Implement Wallet Connection Modal ✅
+- [x] Create wallet connection modal with icons
+- [x] Add wallet.css for styling
+- [x] Create wallet-connect.js for functionality
+- [x] Link modal to Connect Wallet buttons
+- [x] Add wallet icons to static/img/wallets directory
+
+### 4. Fix Navigation Errors
 - [ ] Add detailed error logging to authentication flow
 - [ ] Debug internal server error after X login
 - [ ] Review error handling middleware
 - [ ] Test complete login-logout flow
 
-### 4. Testing Process
+### 5. Testing Process
 - [ ] Test all functionality while logged out
 - [ ] Test all functionality while logged in
 - [ ] Test on multiple browsers (Chrome, Firefox, Safari)
@@ -125,4 +144,12 @@ Last Updated: March 14, 2025
 - Deployment Status: [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md)
 - Twitter Bot Documentation: [docs/twitter_bot.md](docs/twitter_bot.md)
 - Project Assessment: [CHAD_BATTLES_PROJECT_ASSESSMENT.md](CHAD_BATTLES_PROJECT_ASSESSMENT.md)
-- Fix Action Plan: [CHAD_BATTLES_FIX_ACTION_PLAN.md](CHAD_BATTLES_FIX_ACTION_PLAN.md) 
+- Fix Action Plan: [CHAD_BATTLES_FIX_ACTION_PLAN.md](CHAD_BATTLES_FIX_ACTION_PLAN.md)
+
+## Live Site Issues (https://chad-battles-grdu.onrender.com/)
+- [ ] Check if all Twitter command formats are correct
+- [ ] Verify music player works on the live site
+- [ ] Test wallet connection modal on the live site
+- [ ] Check all pages for proper loading and functionality
+- [ ] Test login/logout functionality
+- [ ] Verify battle system works as expected 

@@ -1,6 +1,7 @@
 /**
  * Simple Jukebox Music Player
  * Plays MP3 files randomly with basic controls
+ * Persists between page loads using localStorage
  */
 // Store the current instance for global access
 let jukeboxInstance = null;
@@ -13,7 +14,7 @@ class Jukebox {
         this.isPlaying = false;
         this.audio = document.getElementById('chad-jukebox-audio') || new Audio();
         this.currentTrackIndex = -1;
-        this.volume = 0.4; // Default volume
+        this.volume = localStorage.getItem('jukebox_volume') ? parseFloat(localStorage.getItem('jukebox_volume')) : 0.4;
         this.trackInfoElement = document.getElementById('track-info');
         this.playPauseBtn = document.getElementById('play-pause-btn');
         this.prevBtn = document.getElementById('prev-btn');
@@ -31,6 +32,7 @@ class Jukebox {
         
         this.setupAudioEvents();
         this.setupControlEvents();
+        this.restorePlayerState();
     }
     
     setupAudioEvents() {
@@ -60,6 +62,13 @@ class Jukebox {
         this.audio.addEventListener('canplaythrough', () => {
             console.log('Audio track loaded and can play through');
         });
+        
+        // Save current time periodically for state persistence
+        this.audio.addEventListener('timeupdate', () => {
+            if (this.audio.currentTime > 0 && this.currentTrackIndex >= 0) {
+                localStorage.setItem('jukebox_currentTime', this.audio.currentTime);
+            }
+        });
     }
     
     setupControlEvents() {
@@ -80,9 +89,11 @@ class Jukebox {
         
         // Set up volume slider
         if (this.volumeSlider) {
+            this.volumeSlider.value = this.volume * 100; // Set initial volume slider position
             this.volumeSlider.addEventListener('input', (e) => {
                 const volume = e.target.value / 100;
                 this.setVolume(volume);
+                localStorage.setItem('jukebox_volume', volume);
             });
         }
         
@@ -90,11 +101,21 @@ class Jukebox {
         if (this.playerToggle) {
             this.playerToggle.addEventListener('click', () => this.togglePlayerVisibility());
         }
+        
+        // Close player button
+        const closePlayer = document.getElementById('close-player');
+        if (closePlayer) {
+            closePlayer.addEventListener('click', () => this.togglePlayerVisibility());
+        }
+        
+        // Handle page unload to save state
+        window.addEventListener('beforeunload', () => this.savePlayerState());
     }
     
     togglePlayerVisibility() {
         if (this.playerControls) {
             this.playerControls.classList.toggle('active');
+            localStorage.setItem('jukebox_visible', this.playerControls.classList.contains('active'));
         }
     }
     
@@ -111,7 +132,13 @@ class Jukebox {
     togglePlay() {
         if (!this.isPlaying) {
             if (this.currentTrackIndex === -1) {
-                this.playNextRandom();
+                // Load the previously playing track if available
+                const savedIndex = localStorage.getItem('jukebox_trackIndex');
+                if (savedIndex !== null && this.musicFiles.length > 0) {
+                    this.playTrack(parseInt(savedIndex, 10) % this.musicFiles.length);
+                } else {
+                    this.playNextRandom();
+                }
             } else {
                 this.audio.play()
                     .then(() => {
@@ -122,12 +149,14 @@ class Jukebox {
                     });
                 this.isPlaying = true;
                 this.updatePlayPauseButton(true);
+                localStorage.setItem('jukebox_playing', 'true');
             }
         } else {
             // If already playing, this acts as pause
             this.audio.pause();
             this.isPlaying = false;
             this.updatePlayPauseButton(false);
+            localStorage.setItem('jukebox_playing', 'false');
         }
     }
     
@@ -152,6 +181,7 @@ class Jukebox {
         if (this.trackInfoElement) {
             this.trackInfoElement.textContent = 'Music stopped';
         }
+        localStorage.setItem('jukebox_playing', 'false');
     }
     
     setVolume(volume) {
@@ -213,12 +243,18 @@ class Jukebox {
             this.trackInfoElement.textContent = `Now playing: ${this.currentTrack.title}`;
         }
         
+        // Save current track to localStorage
+        localStorage.setItem('jukebox_trackIndex', this.currentTrackIndex);
+        localStorage.setItem('jukebox_trackPath', this.currentTrack.path);
+        localStorage.setItem('jukebox_trackTitle', this.currentTrack.title);
+        
         // Play the track
         this.audio.play()
             .then(() => {
                 console.log('Audio playback started successfully');
                 this.isPlaying = true;
                 this.updatePlayPauseButton(true);
+                localStorage.setItem('jukebox_playing', 'true');
             })
             .catch(error => {
                 console.error('Error playing audio:', error);
@@ -234,12 +270,80 @@ class Jukebox {
     setMusicFiles(musicFiles) {
         this.musicFiles = musicFiles;
         console.log(`Updated music files. Now have ${musicFiles.length} tracks.`);
-        
-        // If we're already playing, stop the current track
+    }
+    
+    // Save player state to localStorage
+    savePlayerState() {
         if (this.isPlaying) {
-            this.stop();
+            localStorage.setItem('jukebox_playing', 'true');
+            localStorage.setItem('jukebox_currentTime', this.audio.currentTime);
+        } else {
+            localStorage.setItem('jukebox_playing', 'false');
         }
-        this.currentTrackIndex = -1;
+        localStorage.setItem('jukebox_trackIndex', this.currentTrackIndex);
+        if (this.currentTrack) {
+            localStorage.setItem('jukebox_trackPath', this.currentTrack.path);
+            localStorage.setItem('jukebox_trackTitle', this.currentTrack.title);
+        }
+    }
+    
+    // Restore player state from localStorage
+    restorePlayerState() {
+        if (this.musicFiles.length === 0) return;
+        
+        const wasPlaying = localStorage.getItem('jukebox_playing') === 'true';
+        const savedIndex = localStorage.getItem('jukebox_trackIndex');
+        const savedTime = localStorage.getItem('jukebox_currentTime');
+        const isVisible = localStorage.getItem('jukebox_visible') !== 'false';
+        
+        // Set player visibility state
+        if (this.playerControls) {
+            if (isVisible) {
+                this.playerControls.classList.add('active');
+            } else {
+                this.playerControls.classList.remove('active');
+            }
+        }
+        
+        if (savedIndex !== null && this.musicFiles.length > 0) {
+            const trackIndex = parseInt(savedIndex, 10) % this.musicFiles.length;
+            this.currentTrackIndex = trackIndex;
+            this.currentTrack = this.musicFiles[trackIndex];
+            
+            // Set the audio source
+            this.audio.src = this.currentTrack.path;
+            
+            // Set the volume
+            this.audio.volume = this.volume;
+            
+            // Set the current time
+            if (savedTime !== null) {
+                this.audio.currentTime = parseFloat(savedTime);
+            }
+            
+            // Update display
+            if (this.trackInfoElement && this.currentTrack) {
+                this.trackInfoElement.textContent = `Now playing: ${this.currentTrack.title}`;
+            }
+            
+            // If it was playing, resume playback
+            if (wasPlaying) {
+                this.audio.play()
+                    .then(() => {
+                        console.log('Restored playback successfully');
+                        this.isPlaying = true;
+                        this.updatePlayPauseButton(true);
+                    })
+                    .catch(error => {
+                        console.error('Error restoring playback:', error);
+                        this.isPlaying = false;
+                        this.updatePlayPauseButton(false);
+                    });
+            } else {
+                this.isPlaying = false;
+                this.updatePlayPauseButton(false);
+            }
+        }
     }
 }
 

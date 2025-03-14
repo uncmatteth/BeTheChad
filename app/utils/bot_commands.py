@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 # Command patterns
 CREATE_CHARACTER_PATTERN = re.compile(r'CREATE\s+CHARACTER', re.IGNORECASE)
 FIGHT_REQUEST_PATTERN = re.compile(r'.*@(\w+).*CHALLENGE\s+TO\s+BATTLE', re.IGNORECASE)
-ACCEPT_FIGHT_PATTERN = re.compile(r'.*ACCEPT\s+.*BATTLE', re.IGNORECASE)
 CHECK_STATS_PATTERN = re.compile(r'CHECK\s+STATS', re.IGNORECASE)
 JOIN_CABAL_PATTERN = re.compile(r'JOIN\s+CABAL\s+([A-Za-z0-9_\s]+)', re.IGNORECASE)
 CREATE_CABAL_PATTERN = re.compile(r'CREATE\s+CABAL\s+([A-Za-z0-9_\s]+)', re.IGNORECASE)
@@ -42,8 +41,6 @@ def handle_mention(tweet):
             match = FIGHT_REQUEST_PATTERN.search(text)
             opponent_name = match.group(1) if match else None
             return handle_fight_request(tweet_id, user_screen_name, opponent_name)
-        elif ACCEPT_FIGHT_PATTERN.search(text):
-            return handle_accept_fight(tweet_id, user_screen_name)
         elif CHECK_STATS_PATTERN.search(text):
             return handle_check_stats(tweet_id, user_screen_name)
         elif JOIN_CABAL_PATTERN.search(text):
@@ -358,54 +355,6 @@ def simulate_battle(battle):
     except Exception as e:
         logger.error(f"Error simulating battle {battle.id}: {str(e)}")
         return "The battle couldn't be completed due to technical difficulties. Both Chads walked away unharmed."
-
-def handle_accept_fight(tweet_id, username):
-    """Handle accepting a fight"""
-    try:
-        # Get the user
-        user = User.query.filter_by(x_username=username).first()
-        if not user or not user.chad:
-            reply = f"@{username} You need to create a character first with 'CREATE CHARACTER @RollMasterChad'"
-            post_reply(reply, tweet_id)
-            return False
-        
-        # Find pending battles where this user is the opponent
-        pending_battle = Battle.query.filter_by(
-            opponent_id=user.chad.id,
-            status='pending'
-        ).order_by(Battle.created_at.desc()).first()
-        
-        if not pending_battle:
-            reply = f"@{username} You don't have any pending battle challenges!"
-            post_reply(reply, tweet_id)
-            return False
-        
-        # Accept the battle
-        success, message = pending_battle.accept(tweet_id)
-        if not success:
-            reply = f"@{username} {message}"
-            post_reply(reply, tweet_id)
-            return False
-        
-        # Simulate the battle
-        success, result = pending_battle.simulate()
-        if not success:
-            reply = f"@{username} {result}"
-            post_reply(reply, tweet_id)
-            return False
-        
-        # Get the battle summary
-        summary = pending_battle.get_battle_summary()
-        
-        # Send the battle results
-        post_reply(summary, tweet_id)
-        
-        return True
-    except Exception as e:
-        logger.error(f"Error handling fight acceptance from {username}: {str(e)}")
-        reply = f"@{username} Sorry, there was an error processing the battle. Please try again later."
-        post_reply(reply, tweet_id)
-        return False
 
 def handle_check_stats(tweet_id, username):
     """Handle stats check request"""
@@ -739,7 +688,6 @@ def handle_help(tweet_id, username):
 • CREATE CHARACTER @RollMasterChad - Create a new character
 • CHECK STATS @RollMasterChad - Check your character's stats
 • I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad - Challenge someone to battle
-• I ACCEPT THE BATTLE @RollMasterChad - Accept a battle challenge
 
 Cabal Commands:
 • CREATE CABAL name @RollMasterChad - Create a new cabal
