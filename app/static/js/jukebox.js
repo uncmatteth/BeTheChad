@@ -24,6 +24,10 @@ class Jukebox {
         if (this.container) {
             this.createPlayer();
             this.loadState();
+            // Start playing automatically
+            if (this.musicFiles.length > 0) {
+                this.playNextRandom();
+            }
         } else {
             console.error(`Container with ID ${containerId} not found`);
         }
@@ -335,10 +339,12 @@ function initJukebox(containerId) {
             return response.json();
         })
         .then(data => {
+            if (!data || data.length === 0) {
+                throw new Error('No music files available');
+            }
+            console.log('Loaded music tracks:', data);
             const jukebox = new Jukebox(containerId, data);
             window.jukebox = jukebox;
-            // Auto-play a random track when the page loads
-            jukebox.playNextRandom();
         })
         .catch(error => {
             console.error('Error loading music files:', error);

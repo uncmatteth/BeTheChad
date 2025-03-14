@@ -47,13 +47,11 @@ def get_tracks():
     """Return a list of all music tracks"""
     tracks = []
     
-    # Get music directory from the static folder
-    music_dir = os.path.join(current_app.static_folder, 'music')
-    
-    # Add potential additional music folders to check
+    # Define music directories to check
     music_folders = [
-        music_dir,  # Default location in static folder
-        os.environ.get('CHAD_MUSIC_DIR', '')  # Optional environment variable for custom location
+        '/public_html/music',  # Primary location on nameserver
+        os.path.join(current_app.static_folder, 'music'),  # Fallback location
+        os.environ.get('CHAD_MUSIC_DIR', '')  # Optional environment variable location
     ]
     
     # Track the total number of files processed
@@ -64,6 +62,7 @@ def get_tracks():
     
     for folder in music_folders:
         if not folder or not os.path.exists(folder) or not os.path.isdir(folder):
+            current_app.logger.warning(f"Music directory not found or not accessible: {folder}")
             continue
             
         current_app.logger.info(f"Checking music directory: {folder}")
@@ -76,10 +75,10 @@ def get_tracks():
                     file_path = os.path.join(folder, filename)
                     file_size = os.path.getsize(file_path)
                     
-                    # Create a track object
+                    # Create a track object with the correct path
                     track = {
                         'title': os.path.splitext(filename)[0].replace('_', ' '),
-                        'path': f'/static/music/{filename}' if folder == music_dir else f'/music/custom/{os.path.basename(filename)}',
+                        'path': f'/music/{filename}',  # Use direct path since files are in public_html/music
                         'filename': filename,
                         'size': file_size,
                         'type': os.path.splitext(filename)[1][1:].lower()
@@ -92,6 +91,9 @@ def get_tracks():
     
     current_app.logger.info(f"Processed total of {total_files} files, found {valid_music_files} valid music files")
     
+    if not tracks:
+        current_app.logger.warning("No music files found in any directory")
+        
     return jsonify(tracks)
 
 @music.route('/stream/<filename>')
