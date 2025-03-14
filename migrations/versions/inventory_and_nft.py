@@ -1,7 +1,7 @@
 """Inventory and NFT models migration
 
 Revision ID: inventory_nft_revision
-Revises: previous_revision_id
+Revises: None
 Create Date: 2023-08-01 12:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from datetime import datetime
 
 # revision identifiers, used by Alembic.
 revision = 'inventory_nft_revision'
-down_revision = 'previous_revision_id'  # Replace with actual previous revision
+down_revision = None  # This is the first migration
 branch_labels = None
 depends_on = None
 
