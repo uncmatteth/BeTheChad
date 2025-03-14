@@ -21,7 +21,49 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle Elixir activation
     setupElixirActivation();
+    
+    // Initialize music player UI handlers
+    setupMusicPlayer();
 });
+
+// Setup music player UI elements that need to be handled separately
+function setupMusicPlayer() {
+    // Handle closing the player with the close button
+    const closePlayerBtn = document.getElementById('close-player');
+    if (closePlayerBtn) {
+        closePlayerBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const playerControls = document.getElementById('player-controls');
+            if (playerControls) {
+                playerControls.classList.remove('active');
+            }
+            
+            // Stop the music if it's playing
+            if (window.jukebox && window.jukebox.isPlaying) {
+                window.jukebox.stop();
+            }
+        });
+    }
+    
+    // Prevent click events inside the player from closing it
+    const jukeboxContainer = document.getElementById('chad-jukebox');
+    if (jukeboxContainer) {
+        jukeboxContainer.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+    
+    // Ensure jukebox toggle shows/hides controls
+    const playerToggle = document.getElementById('player-toggle');
+    if (playerToggle) {
+        playerToggle.addEventListener('click', function() {
+            const playerControls = document.getElementById('player-controls');
+            if (playerControls) {
+                playerControls.classList.toggle('active');
+            }
+        });
+    }
+}
 
 // Set up Waifu equip/unequip actions
 function setupWaifuActions() {

@@ -4,7 +4,7 @@
     position: fixed;
     bottom: 0;
     right: 20px;
-    width: 250px;
+    width: 320px;
     background-color: #222;
     border-radius: 10px 10px 0 0;
     border: 2px solid #8a2be2;
@@ -13,6 +13,27 @@
     z-index: 1000;
     overflow: hidden;
     transition: all 0.3s ease;
+    font-family: 'Arial', sans-serif;
+}
+
+.jukebox-toggle {
+    position: absolute;
+    top: -30px;
+    right: 10px;
+    background-color: #8a2be2;
+    width: 40px;
+    height: 30px;
+    border-radius: 5px 5px 0 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 -3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.jukebox-toggle i {
+    color: white;
+    font-size: 16px;
 }
 
 .jukebox-header {
@@ -25,36 +46,37 @@
 }
 
 .jukebox-title {
-    font-family: 'Press Start 2P', cursive;
-    font-size: 0.8rem;
+    font-family: 'Press Start 2P', cursive, 'Arial', sans-serif;
+    font-size: 0.9rem;
     color: white;
     margin: 0;
 }
 
 .jukebox-track-info {
     padding: 10px 15px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     background-color: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    height: 20px;
 }
 
 .jukebox-buttons {
     display: flex;
     justify-content: center;
     padding: 10px;
+    gap: 10px;
 }
 
 .jukebox-btn {
     background-color: #333;
     border: none;
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    margin: 0 5px;
+    width: 40px;
+    height: 40px;
     cursor: pointer;
     color: white;
     display: flex;
@@ -68,26 +90,30 @@
     transform: scale(1.1);
 }
 
+.jukebox-btn:focus {
+    outline: none;
+}
+
 .jukebox-play-btn {
     background-color: #8a2be2;
-    width: 42px;
-    height: 42px;
+    width: 46px;
+    height: 46px;
 }
 
 .jukebox-volume {
     display: flex;
     align-items: center;
-    padding: 0 15px 10px;
+    padding: 0 15px 15px;
 }
 
 .jukebox-volume i {
     color: #999;
     font-size: 0.8rem;
+    margin: 0 8px;
 }
 
 .jukebox-volume-slider {
     flex-grow: 1;
-    margin: 0 10px;
     height: 5px;
     -webkit-appearance: none;
     appearance: none;
@@ -115,21 +141,45 @@
     border: none;
 }
 
+/* Controls visibility */
+.jukebox-controls {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+.jukebox-controls.active {
+    max-height: 200px; /* Set a value that will accommodate all your controls */
+}
+
+/* For the minimize/expand functionality */
+.jukebox-container.minimized .jukebox-controls {
+    display: none;
+}
+
 /* Responsive adjustments */
 @media (max-width: 576px) {
     #chad-jukebox {
         width: 100%;
         right: 0;
+        border-radius: 0;
+    }
+    
+    .jukebox-toggle {
+        top: -25px;
+        right: 10px;
+        width: 35px;
+        height: 25px;
     }
     
     .jukebox-btn {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
     }
     
     .jukebox-play-btn {
-        width: 38px;
-        height: 38px;
+        width: 42px;
+        height: 42px;
     }
 }
 
@@ -141,5 +191,16 @@
 
 .track-marquee {
     white-space: nowrap;
-    animation: marquee 10s linear infinite;
+    animation: marquee 15s linear infinite;
+    display: inline-block;
+}
+
+/* Additional styles for error states */
+.jukebox-error {
+    color: #ff6b6b;
+}
+
+/* Make sure audio element is not visible */
+#chad-jukebox-audio {
+    display: none;
 } 
