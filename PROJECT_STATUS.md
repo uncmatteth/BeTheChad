@@ -62,12 +62,19 @@ The latest changes have been:
 The live site should reflect all these changes once Render completes the deployment.
 
 ## Next Steps
-1. Verify the music player works on the live site (chadbattles.fun)
+1. **Implement MP3 optimization and hosting migration**
+   - Optimize MP3 files to 160kbps format (reducing size by ~50%)
+   - Move MP3 files to NameCheap hosting (already paid for)
+   - Implement Cloudflare CDN integration for better performance
+   - Update application code to reference external MP3 files
+   - See [MP3_OPTIMIZATION_PLAN.md](MP3_OPTIMIZATION_PLAN.md) for full details
+
+2. Verify the music player works on the live site (chadbattles.fun)
    - Follow the verification process outlined in MUSIC_PLAYER_VERIFICATION.md
    - Test on multiple browsers and devices
    - Check for any console errors or performance issues
-2. Monitor for any additional issues or user feedback
-3. Consider implementing music player improvements:
+3. Monitor for any additional issues or user feedback
+4. Consider implementing music player improvements:
    - Add track progress visualization
    - Implement lazy loading for improved performance
    - Add keyboard shortcuts for player control

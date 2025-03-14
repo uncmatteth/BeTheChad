@@ -36,6 +36,23 @@ All items from the WEBSITE_ISSUES_CHECKLIST.md have been addressed and fixed:
    - Created Item and Elixir placeholder images
    - Added script for generating consistent placeholder images
 
+## Current In-Progress Task
+
+### MP3 Optimization and Hosting Migration
+
+The current MP3 implementation has these issues:
+- Large MP3 files (3-5MB each) in the repository 
+- High bandwidth usage when streamed directly from the server
+- Potential increased costs on Render.com due to bandwidth usage
+
+**Planned solution:**
+1. Optimize MP3 files to 160kbps (reducing size by ~50% while maintaining quality)
+2. Move MP3 hosting to NameCheap (already paid for hosting)
+3. Implement Cloudflare CDN integration (free) for better performance
+4. Update app code to use the new MP3 locations
+
+**Implementation status:** Planning completed, awaiting implementation
+
 ## Future Plans
 
 ### 1. Twitter API v2 Upgrade
@@ -95,12 +112,19 @@ The following documentation has been created or updated:
 - [TWITTER_API_V2_UPGRADE_PLAN.md](TWITTER_API_V2_UPGRADE_PLAN.md) - Plan for Twitter API upgrade
 - [BLOCKCHAIN_INTEGRATION_PLAN.md](BLOCKCHAIN_INTEGRATION_PLAN.md) - Plan for blockchain integration
 - [README.md](README.md) - Updated with latest features and documentation links
+- [MP3_OPTIMIZATION_PLAN.md](MP3_OPTIMIZATION_PLAN.md) - Detailed plan for MP3 optimization and hosting migration
 
 ## Next Steps
 
-1. Verify all changes on the live site
-2. Begin implementation of Twitter API v2 upgrade
-3. Start planning for blockchain integration
-4. Continue monitoring for any issues or user feedback
+1. **Implement MP3 optimization and hosting migration**
+   - Optimize all 104 MP3 files to 160kbps format
+   - Upload files to NameCheap hosting
+   - Set up Cloudflare CDN integration
+   - Update app code to reference new file locations
+
+2. Verify all changes on the live site
+3. Begin implementation of Twitter API v2 upgrade
+4. Start planning for blockchain integration
+5. Continue monitoring for any issues or user feedback
 
 All tasks from the WEBSITE_ISSUES_CHECKLIST.md have been completed, and the website should now be fully functional with proper music player functionality and placeholder images for all game assets. 

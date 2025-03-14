@@ -157,6 +157,13 @@ Last Updated: March 29, 2025
 - [x] Verified no template/placeholder code remains in the codebase
 - [x] Final cross-browser testing completed
 
+### 4. MP3 Optimization & Hosting (Planned)
+- [ ] Move MP3 files from GitHub/Render to NameCheap hosting
+- [ ] Optimize MP3 files to 160kbps for better performance (50% size reduction)
+- [ ] Implement Cloudflare CDN integration for improved global performance
+- [ ] Update application code to point to the new MP3 file locations
+- [ ] Create detailed migration plan in [MP3_OPTIMIZATION_PLAN.md](MP3_OPTIMIZATION_PLAN.md)
+
 ## Reference Documentation
 
 - Game Completion: [docs/game_completion.md](docs/game_completion.md)
