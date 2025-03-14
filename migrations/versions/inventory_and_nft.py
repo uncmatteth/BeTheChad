@@ -109,15 +109,15 @@ def upgrade():
     for table, columns in [
         ('chads', [('is_minted', sa.Boolean(), False)]),
         ('waifus', [('is_minted', sa.Boolean(), False), ('is_equipped', sa.Boolean(), False)]),
-        ('items', [('is_minted', sa.Boolean(), False)]),
+        ('items', [('is_minted', sa.Boolean(), False), ('is_equipped', sa.Boolean(), False)]),
         ('users', [('wallet_type', sa.String(50), True)])
     ]:
         table_columns = [col['name'] for col in inspector.get_columns(table)]
         for col_name, col_type, nullable in columns:
             if col_name not in table_columns:
-                op.add_column(table, sa.Column(col_name, col_type, nullable=nullable))
+                op.add_column(table, sa.Column(col_name, col_type, nullable=nullable, server_default='0' if col_type == sa.Boolean() else None))
     
-    # Create index for inventory searching
+    # Create index for inventory searching after columns are added
     op.create_index('idx_items_user_equipped', 'items', ['user_id', 'is_equipped'])
     op.create_index('idx_waifus_user_equipped', 'waifus', ['user_id', 'is_equipped'])
 
@@ -137,7 +137,7 @@ def downgrade():
     for table, columns in [
         ('users', ['wallet_type']),
         ('waifus', ['is_equipped', 'is_minted']),
-        ('items', ['is_minted']),
+        ('items', ['is_equipped', 'is_minted']),
         ('chads', ['is_minted'])
     ]:
         if table in inspector.get_table_names():
