@@ -11,8 +11,20 @@ class Jukebox {
         this.audio = new Audio();
         this.currentTrackIndex = -1;
         
+        console.log('Jukebox initialized with', musicFiles.length, 'music files');
+        if (musicFiles.length > 0) {
+            console.log('First music file:', musicFiles[0]);
+        }
+        
         // Set up event listener for when a song ends
         this.audio.addEventListener('ended', () => this.playNextRandom());
+        
+        // Add error listener to debug audio loading issues
+        this.audio.addEventListener('error', (e) => {
+            console.error('Audio error:', e);
+            console.error('Error code:', this.audio.error ? this.audio.error.code : 'unknown');
+            console.error('Current audio src:', this.audio.src);
+        });
         
         // Create the player if container exists
         if (this.container) {
@@ -123,6 +135,7 @@ class Jukebox {
     
     playNextRandom() {
         if (this.musicFiles.length === 0) {
+            console.warn('No music files available to play');
             document.getElementById('jukebox-now-playing').textContent = 'No music files available';
             return;
         }
@@ -140,6 +153,8 @@ class Jukebox {
         this.currentTrackIndex = newIndex;
         this.currentTrack = this.musicFiles[this.currentTrackIndex];
         
+        console.log('Playing track:', this.currentTrack);
+        
         // Update the audio source
         this.audio.src = this.currentTrack.path;
         
@@ -147,9 +162,16 @@ class Jukebox {
         document.getElementById('jukebox-now-playing').textContent = `Now playing: ${this.currentTrack.title}`;
         
         // Play the track
-        this.audio.play();
-        this.isPlaying = true;
-        document.getElementById('jukebox-play').textContent = '⏸ Pause';
+        this.audio.play()
+            .then(() => {
+                console.log('Audio playback started successfully');
+                this.isPlaying = true;
+                document.getElementById('jukebox-play').textContent = '⏸ Pause';
+            })
+            .catch(error => {
+                console.error('Error playing audio:', error);
+                document.getElementById('jukebox-now-playing').textContent = `Error playing: ${this.currentTrack.title}`;
+            });
     }
     
     // Method to set new music files
@@ -165,10 +187,16 @@ class Jukebox {
 
 // Function to initialize the jukebox with music files from the server
 function initJukebox(containerId) {
+    console.log('Initializing jukebox, fetching music from /music/list');
+    
     // Create an AJAX request to get the music files
     fetch('/music/list')
-        .then(response => response.json())
+        .then(response => {
+            console.log('Music list response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Music files received:', data);
             const jukebox = new Jukebox(containerId, data);
             window.jukebox = jukebox; // Make it globally accessible
         })
