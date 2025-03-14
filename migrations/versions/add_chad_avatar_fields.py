@@ -8,6 +8,7 @@ Create Date: 2023-08-15 14:00:00.000000
 from alembic import op
 import sqlalchemy as sa
 from datetime import datetime
+from sqlalchemy.engine.reflection import Inspector
 
 # revision identifiers, used by Alembic.
 revision = 'add_chad_avatar_fields'
@@ -17,11 +18,22 @@ depends_on = None
 
 
 def upgrade():
-    # Add avatar fields to the chads table
-    op.add_column('chads', sa.Column('avatar_path', sa.String(255), nullable=True))
-    op.add_column('chads', sa.Column('avatar_locked', sa.Boolean(), default=False))
-    op.add_column('chads', sa.Column('avatar_generation_count', sa.Integer(), default=0))
-    op.add_column('chads', sa.Column('avatar_last_generated', sa.DateTime(), nullable=True))
+    # Check if chads table exists and get existing columns
+    conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+    
+    if 'chads' in inspector.get_table_names():
+        chad_columns = [col['name'] for col in inspector.get_columns('chads')]
+        
+        # Add avatar fields to the chads table if they don't exist
+        if 'avatar_path' not in chad_columns:
+            op.add_column('chads', sa.Column('avatar_path', sa.String(255), nullable=True))
+        if 'avatar_locked' not in chad_columns:
+            op.add_column('chads', sa.Column('avatar_locked', sa.Boolean(), default=False))
+        if 'avatar_generation_count' not in chad_columns:
+            op.add_column('chads', sa.Column('avatar_generation_count', sa.Integer(), default=0))
+        if 'avatar_last_generated' not in chad_columns:
+            op.add_column('chads', sa.Column('avatar_last_generated', sa.DateTime(), nullable=True))
     
     # Create directories for avatar storage
     import os
@@ -37,8 +49,19 @@ def upgrade():
 
 
 def downgrade():
-    # Remove avatar fields from the chads table
-    op.drop_column('chads', 'avatar_last_generated')
-    op.drop_column('chads', 'avatar_generation_count')
-    op.drop_column('chads', 'avatar_locked')
-    op.drop_column('chads', 'avatar_path') 
+    # Check if chads table exists and get existing columns
+    conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+    
+    if 'chads' in inspector.get_table_names():
+        chad_columns = [col['name'] for col in inspector.get_columns('chads')]
+        
+        # Remove avatar fields from the chads table if they exist
+        if 'avatar_last_generated' in chad_columns:
+            op.drop_column('chads', 'avatar_last_generated')
+        if 'avatar_generation_count' in chad_columns:
+            op.drop_column('chads', 'avatar_generation_count')
+        if 'avatar_locked' in chad_columns:
+            op.drop_column('chads', 'avatar_locked')
+        if 'avatar_path' in chad_columns:
+            op.drop_column('chads', 'avatar_path') 
