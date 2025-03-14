@@ -25,24 +25,24 @@ def upgrade():
     if 'wallet_type' not in user_columns:
         op.add_column('user', sa.Column('wallet_type', sa.String(20), nullable=True))
     
-    # Check if NFT table exists
-    if 'nft' in inspector.get_table_names():
+    # Check if NFTs table exists
+    if 'nfts' in inspector.get_table_names():
         # Get existing columns
-        nft_columns = [col['name'] for col in inspector.get_columns('nft')]
+        nft_columns = [col['name'] for col in inspector.get_columns('nfts')]
         
-        # Remove marketplace-related fields from NFT table if they exist
+        # Remove marketplace-related fields from NFTs table if they exist
         if 'is_listed' in nft_columns:
-            op.drop_column('nft', 'is_listed')
+            op.drop_column('nfts', 'is_listed')
         if 'current_price' in nft_columns:
-            op.drop_column('nft', 'current_price')
+            op.drop_column('nfts', 'current_price')
         if 'listed_at' in nft_columns:
-            op.drop_column('nft', 'listed_at')
+            op.drop_column('nfts', 'listed_at')
         
         # Check if index exists before trying to drop it
-        nft_indexes = inspector.get_indexes('nft')
-        if any(idx['name'] == 'ix_nft_is_listed' for idx in nft_indexes):
-            with op.batch_alter_table('nft', schema=None) as batch_op:
-                batch_op.drop_index('ix_nft_is_listed')
+        nft_indexes = inspector.get_indexes('nfts')
+        if any(idx['name'] == 'ix_nfts_is_listed' for idx in nft_indexes):
+            with op.batch_alter_table('nfts', schema=None) as batch_op:
+                batch_op.drop_index('ix_nfts_is_listed')
 
 
 def downgrade():
@@ -50,24 +50,24 @@ def downgrade():
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
     
-    # Check if NFT table exists before adding columns back
-    if 'nft' in inspector.get_table_names():
+    # Check if NFTs table exists before adding columns back
+    if 'nfts' in inspector.get_table_names():
         # Get existing columns
-        nft_columns = [col['name'] for col in inspector.get_columns('nft')]
+        nft_columns = [col['name'] for col in inspector.get_columns('nfts')]
         
-        # Add back marketplace-related fields to NFT table if they don't exist
+        # Add back marketplace-related fields to NFTs table if they don't exist
         if 'is_listed' not in nft_columns:
-            op.add_column('nft', sa.Column('is_listed', sa.Boolean(), nullable=False, server_default='0'))
+            op.add_column('nfts', sa.Column('is_listed', sa.Boolean(), nullable=False, server_default='0'))
         if 'current_price' not in nft_columns:
-            op.add_column('nft', sa.Column('current_price', sa.Integer(), nullable=True))
+            op.add_column('nfts', sa.Column('current_price', sa.Integer(), nullable=True))
         if 'listed_at' not in nft_columns:
-            op.add_column('nft', sa.Column('listed_at', sa.DateTime(), nullable=True))
+            op.add_column('nfts', sa.Column('listed_at', sa.DateTime(), nullable=True))
         
         # Check if index exists before trying to create it
-        nft_indexes = inspector.get_indexes('nft')
-        if not any(idx['name'] == 'ix_nft_is_listed' for idx in nft_indexes):
-            with op.batch_alter_table('nft', schema=None) as batch_op:
-                batch_op.create_index('ix_nft_is_listed', ['is_listed'], unique=False)
+        nft_indexes = inspector.get_indexes('nfts')
+        if not any(idx['name'] == 'ix_nfts_is_listed' for idx in nft_indexes):
+            with op.batch_alter_table('nfts', schema=None) as batch_op:
+                batch_op.create_index('ix_nfts_is_listed', ['is_listed'], unique=False)
     
     # Check if user table and wallet_type column exist before dropping
     if 'user' in inspector.get_table_names():
