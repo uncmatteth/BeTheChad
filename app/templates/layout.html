@@ -17,6 +17,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/jukebox.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/wallet.css') }}">
+    
+    <!-- Browser compatibility checker - load this first -->
+    <script src="{{ url_for('static', filename='js/browser_compatibility.js') }}"></script>
+    
     {% block styles %}{% endblock %}
     <style>
         /* Improve text readability with lighter colors */
