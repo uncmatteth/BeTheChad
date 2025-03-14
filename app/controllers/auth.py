@@ -146,6 +146,83 @@ def twitter_login():
                     """)
                     db.session.commit()
                 
+                # Check if items table exists
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='items'").fetchone()
+                if result[0] == 0:
+                    # Create items table
+                    current_app.logger.warning("items table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS items (
+                            id INTEGER PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            chad_id INTEGER,
+                            waifu_id INTEGER,
+                            item_type_id INTEGER NOT NULL,
+                            name VARCHAR(50) NOT NULL,
+                            is_equipped BOOLEAN DEFAULT 0,
+                            type VARCHAR(50),
+                            clout_bonus INTEGER DEFAULT 0,
+                            roast_bonus INTEGER DEFAULT 0,
+                            cringe_resistance_bonus INTEGER DEFAULT 0,
+                            drip_bonus INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users (id),
+                            FOREIGN KEY (chad_id) REFERENCES chads (id)
+                        )
+                    """)
+                    db.session.commit()
+                
+                # Check if battles table exists
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='battles'").fetchone()
+                if result[0] == 0:
+                    # Create battles table
+                    current_app.logger.warning("battles table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS battles (
+                            id INTEGER PRIMARY KEY,
+                            battle_type VARCHAR(20) NOT NULL,
+                            status VARCHAR(20) NOT NULL,
+                            initiator_id INTEGER NOT NULL,
+                            initiator_chad_id INTEGER NOT NULL,
+                            opponent_id INTEGER,
+                            opponent_chad_id INTEGER,
+                            npc_opponent_id INTEGER,
+                            wager_amount INTEGER DEFAULT 0,
+                            turn_count INTEGER DEFAULT 0,
+                            current_turn INTEGER DEFAULT 0,
+                            winner_id INTEGER,
+                            loser_id INTEGER,
+                            battle_log TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            started_at TIMESTAMP,
+                            completed_at TIMESTAMP,
+                            FOREIGN KEY (initiator_id) REFERENCES users (id),
+                            FOREIGN KEY (initiator_chad_id) REFERENCES chads (id),
+                            FOREIGN KEY (opponent_id) REFERENCES users (id),
+                            FOREIGN KEY (opponent_chad_id) REFERENCES chads (id),
+                            FOREIGN KEY (winner_id) REFERENCES users (id),
+                            FOREIGN KEY (loser_id) REFERENCES users (id)
+                        )
+                    """)
+                    db.session.commit()
+                
+                # Check if inventories table exists
+                result = db.session.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='inventories'").fetchone()
+                if result[0] == 0:
+                    # Create inventories table
+                    current_app.logger.warning("inventories table not found in SQLite database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS inventories (
+                            id INTEGER PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users (id)
+                        )
+                    """)
+                    db.session.commit()
+                
             elif is_postgresql:
                 # PostgreSQL query to check if users table exists
                 result = db.session.execute("SELECT to_regclass('public.users')").fetchone()
@@ -226,6 +303,83 @@ def twitter_login():
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             FOREIGN KEY (user_id) REFERENCES users (id),
                             FOREIGN KEY (class_id) REFERENCES chad_classes (id)
+                        )
+                    """)
+                    db.session.commit()
+                
+                # Check if items table exists
+                result = db.session.execute("SELECT to_regclass('public.items')").fetchone()
+                if result[0] is None:
+                    # Create items table
+                    current_app.logger.warning("items table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS items (
+                            id SERIAL PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            chad_id INTEGER,
+                            waifu_id INTEGER,
+                            item_type_id INTEGER NOT NULL,
+                            name VARCHAR(50) NOT NULL,
+                            is_equipped BOOLEAN DEFAULT FALSE,
+                            type VARCHAR(50),
+                            clout_bonus INTEGER DEFAULT 0,
+                            roast_bonus INTEGER DEFAULT 0,
+                            cringe_resistance_bonus INTEGER DEFAULT 0,
+                            drip_bonus INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users (id),
+                            FOREIGN KEY (chad_id) REFERENCES chads (id)
+                        )
+                    """)
+                    db.session.commit()
+                
+                # Check if battles table exists
+                result = db.session.execute("SELECT to_regclass('public.battles')").fetchone()
+                if result[0] is None:
+                    # Create battles table
+                    current_app.logger.warning("battles table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS battles (
+                            id SERIAL PRIMARY KEY,
+                            battle_type VARCHAR(20) NOT NULL,
+                            status VARCHAR(20) NOT NULL,
+                            initiator_id INTEGER NOT NULL,
+                            initiator_chad_id INTEGER NOT NULL,
+                            opponent_id INTEGER,
+                            opponent_chad_id INTEGER,
+                            npc_opponent_id INTEGER,
+                            wager_amount INTEGER DEFAULT 0,
+                            turn_count INTEGER DEFAULT 0,
+                            current_turn INTEGER DEFAULT 0,
+                            winner_id INTEGER,
+                            loser_id INTEGER,
+                            battle_log TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            started_at TIMESTAMP,
+                            completed_at TIMESTAMP,
+                            FOREIGN KEY (initiator_id) REFERENCES users (id),
+                            FOREIGN KEY (initiator_chad_id) REFERENCES chads (id),
+                            FOREIGN KEY (opponent_id) REFERENCES users (id),
+                            FOREIGN KEY (opponent_chad_id) REFERENCES chads (id),
+                            FOREIGN KEY (winner_id) REFERENCES users (id),
+                            FOREIGN KEY (loser_id) REFERENCES users (id)
+                        )
+                    """)
+                    db.session.commit()
+                
+                # Check if inventories table exists
+                result = db.session.execute("SELECT to_regclass('public.inventories')").fetchone()
+                if result[0] is None:
+                    # Create inventories table
+                    current_app.logger.warning("inventories table not found in PostgreSQL database, creating it...")
+                    db.session.execute("""
+                        CREATE TABLE IF NOT EXISTS inventories (
+                            id SERIAL PRIMARY KEY,
+                            user_id INTEGER NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (user_id) REFERENCES users (id)
                         )
                     """)
                     db.session.commit()
@@ -343,6 +497,24 @@ def twitter_login():
                     db.session.execute(chad_query)
                     db.session.commit()
                     current_app.logger.info(f"Created Chad for user {user_id}")
+                    
+                    # Create an inventory for the user if it doesn't exist
+                    inventory_exists = db.session.execute(f"SELECT COUNT(*) FROM inventories WHERE user_id = {user_id}").fetchone()[0]
+                    if not inventory_exists:
+                        inventory_query = f"""
+                            INSERT INTO inventories (
+                                user_id,
+                                created_at,
+                                updated_at
+                            ) VALUES (
+                                {user_id},
+                                {timestamp_value},
+                                {timestamp_value}
+                            )
+                        """
+                        db.session.execute(inventory_query)
+                        db.session.commit()
+                        current_app.logger.info(f"Created inventory for user {user_id}")
             
             # Manually create a User instance with all required attributes
             current_app.logger.info(f"Logging in demo user with id: {result[0]}")

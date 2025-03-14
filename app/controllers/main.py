@@ -53,31 +53,35 @@ def index():
 def dashboard():
     """Render the user dashboard with their character, waifus, and battles."""
     try:
-        # Get the user's Chad character
-        chad = current_user.chad
-
-        if not chad:
-            # User has no character yet
-            current_app.logger.info(f"User {current_user.id} has no Chad character")
-            return render_template('dashboard.html', chad=None)
-
+        # Attempt to get the user's Chad
         try:
-            # Get the user's stats (including bonuses from waifus and items)
+            chad = Chad.query.filter_by(user_id=current_user.id).first()
+            if not chad:
+                current_app.logger.warning(f"No Chad found for user {current_user.id}")
+                flash("You don't have a character yet. Let's create one!", "warning")
+                return redirect(url_for('auth.create_character'))
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving Chad for user {current_user.id}: {str(e)}")
+            flash("There was an error retrieving your character. Please try again.", "danger")
+            return render_template('dashboard.html', chad=None, error=True)
+        
+        # Get character stats
+        try:
             stats = chad.get_total_stats()
         except Exception as e:
             current_app.logger.error(f"Error getting stats for Chad {chad.id}: {str(e)}")
-            # Create a simple stats object with default values
+            # Create a default stats object if get_total_stats fails
             class DefaultStats:
                 def __init__(self):
-                    self.clout = chad.clout if hasattr(chad, 'clout') else 10
-                    self.roast_level = chad.roast_level if hasattr(chad, 'roast_level') else 10
-                    self.cringe_resistance = chad.cringe_resistance if hasattr(chad, 'cringe_resistance') else 10
-                    self.drip_factor = chad.drip_factor if hasattr(chad, 'drip_factor') else 10
+                    self.clout = chad.clout
+                    self.roast_level = chad.roast_level
+                    self.cringe_resistance = chad.cringe_resistance
+                    self.drip_factor = chad.drip_factor
             stats = DefaultStats()
         
         try:
             # Get equipped waifus
-            equipped_waifus = chad.get_equipped_waifus() if hasattr(chad, 'get_equipped_waifus') else []
+            equipped_waifus = chad.get_equipped_waifus()
         except Exception as e:
             current_app.logger.error(f"Error getting equipped waifus for Chad {chad.id}: {str(e)}")
             equipped_waifus = []
@@ -92,13 +96,19 @@ def dashboard():
             current_app.logger.error(f"Error getting battles for Chad {chad.id}: {str(e)}")
             battles = []
         
+        # Get user's squad - this is optional
+        squad = None
         try:
-            # Get user's squad
-            from app.models.squad import Squad
-            squad = Squad.query.join(Squad.members).filter_by(chad_id=chad.id).first()
+            # Try to import the Squad module
+            try:
+                from app.models.squad import Squad
+                squad = Squad.query.join(Squad.members).filter_by(chad_id=chad.id).first()
+            except ImportError:
+                current_app.logger.warning("Squad module not available, skipping squad functionality")
+            except Exception as e:
+                current_app.logger.error(f"Error getting squad for Chad {chad.id}: {str(e)}")
         except Exception as e:
-            current_app.logger.error(f"Error getting squad for Chad {chad.id}: {str(e)}")
-            squad = None
+            current_app.logger.error(f"Error in squad processing: {str(e)}")
 
         return render_template(
             'dashboard.html',

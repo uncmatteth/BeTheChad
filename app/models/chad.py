@@ -83,37 +83,86 @@ class Chad(db.Model):
         """Calculate XP needed for the next level."""
         return 100 * self.level + 50 * (self.level - 1) ** 2
     
+    def get_stats_as_dict(self):
+        """Return stats as a dictionary."""
+        return {
+            'clout': self.clout,
+            'roast_level': self.roast_level,
+            'cringe_resistance': self.cringe_resistance,
+            'drip_factor': self.drip_factor
+        }
+        
+    def calculate_stats(self):
+        """Alias for get_total_stats() to maintain backwards compatibility."""
+        return self.get_total_stats()
+    
     def get_total_stats(self):
-        """Get total stats including bonuses from equipped items and waifus."""
-        total_clout = self.clout
-        total_roast = self.roast_level
-        total_cringe = self.cringe_resistance
-        total_drip = self.drip_factor
-        
-        # Add bonuses from equipped items
-        from app.models.item import Item
-        equipped_items = Item.query.filter_by(chad_id=self.id, is_equipped=True).all()
-        for item in equipped_items:
-            total_clout += item.clout_bonus or 0
-            total_roast += item.roast_bonus or 0
-            total_cringe += item.cringe_resistance_bonus or 0
-            total_drip += item.drip_bonus or 0
-        
-        # Add bonuses from equipped waifus
-        from app.models.waifu import Waifu
-        equipped_waifus = Waifu.query.filter_by(chad_id=self.id, is_equipped=True).all()
-        for waifu in equipped_waifus:
-            total_clout += waifu.clout_bonus or 0
-            total_roast += waifu.roast_bonus or 0
-            total_cringe += waifu.cringe_resistance_bonus or 0
-            total_drip += waifu.drip_bonus or 0
-        
-        # Create a stats object
-        class Stats:
-            def __init__(self, clout, roast, cringe, drip):
-                self.clout = clout
-                self.roast_level = roast
-                self.cringe_resistance = cringe
-                self.drip_factor = drip
-        
-        return Stats(total_clout, total_roast, total_cringe, total_drip) 
+        """Calculate total stats from base + bonuses from equipped items and waifus."""
+        try:
+            # Create a Stats class to hold the calculated stats
+            class Stats:
+                def __init__(self, clout, roast_level, cringe_resistance, drip_factor):
+                    self.clout = clout
+                    self.roast_level = roast_level
+                    self.cringe_resistance = cringe_resistance
+                    self.drip_factor = drip_factor
+            
+            # Start with base stats
+            total_clout = self.clout
+            total_roast = self.roast_level
+            total_cringe = self.cringe_resistance
+            total_drip = self.drip_factor
+            
+            # Add class bonuses if available
+            if hasattr(self, 'chad_class') and self.chad_class:
+                total_clout += self.chad_class.base_clout_bonus or 0
+                total_roast += self.chad_class.base_roast_bonus or 0
+                total_cringe += self.chad_class.base_cringe_resistance_bonus or 0
+                total_drip += self.chad_class.base_drip_bonus or 0
+            
+            # Add bonuses from equipped items
+            try:
+                from flask import current_app
+                from app.models.item import Item
+                
+                equipped_items = Item.query.filter_by(chad_id=self.id, is_equipped=True).all()
+                for item in equipped_items:
+                    total_clout += item.clout_bonus or 0
+                    total_roast += item.roast_bonus or 0
+                    total_cringe += item.cringe_resistance_bonus or 0
+                    total_drip += item.drip_bonus or 0
+            except Exception as e:
+                # Log error but continue
+                from flask import current_app
+                current_app.logger.error(f"Error getting equipped items for Chad {self.id}: {str(e)}")
+            
+            # Add bonuses from equipped waifus
+            try:
+                equipped_waifus = self.get_equipped_waifus()
+                for waifu in equipped_waifus:
+                    total_clout += waifu.clout_bonus or 0
+                    total_roast += waifu.roast_bonus or 0
+                    total_cringe += waifu.cringe_resistance_bonus or 0
+                    total_drip += waifu.drip_bonus or 0
+            except Exception as e:
+                # Log error but continue
+                from flask import current_app
+                current_app.logger.error(f"Error getting equipped waifus for Chad {self.id}: {str(e)}")
+            
+            return Stats(total_clout, total_roast, total_cringe, total_drip)
+        except Exception as e:
+            # Return base stats if there's an error
+            from flask import current_app
+            current_app.logger.error(f"Error calculating total stats for Chad {self.id}: {str(e)}")
+            return Stats(self.clout, self.roast_level, self.cringe_resistance, self.drip_factor)
+    
+    def get_equipped_waifus(self):
+        """Get all equipped waifus for this Chad."""
+        try:
+            from app.models.waifu import Waifu
+            return Waifu.query.filter_by(chad_id=self.id, is_equipped=True).all()
+        except Exception as e:
+            # Log error but return empty list
+            from flask import current_app
+            current_app.logger.error(f"Error getting equipped waifus for Chad {self.id}: {str(e)}")
+            return [] 
