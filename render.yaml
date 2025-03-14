@@ -6,6 +6,7 @@ services:
     buildCommand: >
       pip install --no-cache-dir -r requirements_deployment.txt &&
       export FLASK_APP=app &&
+      export DATABASE_URL=sqlite:///temp.db &&
       python -m flask init-db-force
     startCommand: gunicorn "app:create_app()"
     # Add health check

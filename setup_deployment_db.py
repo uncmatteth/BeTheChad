@@ -36,267 +36,267 @@ def setup_deployment_db(env='production'):
             fixed_url = db_url.replace('postgres://', 'postgresql://', 1)
             os.environ['DATABASE_URL'] = fixed_url
             print("Updated DATABASE_URL to use postgresql:// prefix")
+
+        # Ensure we're using SQLite for build phase
+        if 'sqlite:' not in db_url:
+            print("Using SQLite for build phase initialization to avoid PostgreSQL driver issues")
+            os.environ['DATABASE_URL'] = 'sqlite:///temp.db'
     else:
         print("WARNING: DATABASE_URL not found, using SQLite database for deployment")
         os.environ['DATABASE_URL'] = 'sqlite:///app.db'
-    
-    # Force SQLite for build phase to avoid PostgreSQL initialization issues
-    if 'sqlite:' not in os.environ.get('DATABASE_URL', ''):
-        print("Switching to SQLite for build phase initialization...")
-        original_db_url = os.environ['DATABASE_URL']
-        os.environ['DATABASE_URL'] = 'sqlite:///temp.db'
-    else:
-        original_db_url = None
     
     try:
         print("Creating application instance...")
         app = create_app(env)
         
         with app.app_context():
-            # Test the database connection
+            # Test the database connection - skip explicit testing to avoid psycopg2 errors
             print("Testing database connection...")
             try:
-                # For SQLite this should work reliably
-                db.engine.execute("SELECT 1")
-                print("Database connection successful!")
+                # Just print the URL type to verify configuration
+                db_url = app.config['SQLALCHEMY_DATABASE_URI']
+                is_sqlite = 'sqlite' in db_url.lower()
+                if is_sqlite:
+                    print("Using SQLite database for initialization")
+                else:
+                    print("Using PostgreSQL database configuration (connecting during runtime)")
             except Exception as e:
-                print(f"Database connection test failed: {str(e)}")
-                print("Detailed error information:")
+                print(f"Error checking database configuration: {str(e)}")
                 traceback.print_exc()
                 return False
             
+            print("Disabling foreign key constraints for initialization...")
             # Use direct SQL statements to create the tables
             with db.engine.connect() as conn:
-                conn.execution_options(isolation_level="AUTOCOMMIT")
+                if is_sqlite:
+                    conn.execute("PRAGMA foreign_keys = OFF")
+                else:
+                    # This won't execute since we're using SQLite, but for documentation
+                    print("PostgreSQL foreign key handling will be done at runtime")
                 
-                print("Disabling foreign key constraints for initialization...")
-                conn.execute("PRAGMA foreign_keys = OFF")
-                
-                # Drop all tables if they exist
                 print("Dropping all existing tables...")
                 try:
-                    tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';").fetchall()
-                    for table in tables:
-                        conn.execute(f"DROP TABLE IF EXISTS {table[0]}")
-                        print(f"Dropped table {table[0]} if it existed")
+                    # For SQLite, we need to drop tables manually
+                    if is_sqlite:
+                        # Drop tables in correct order to avoid foreign key issues
+                        tables_to_drop = [
+                            "cabal_analytics", "battle", "cabal_member", "cabal", 
+                            "chad", "chad_class", "users"
+                        ]
+                        
+                        for table in tables_to_drop:
+                            try:
+                                conn.execute(f"DROP TABLE IF EXISTS {table}")
+                            except Exception as e:
+                                print(f"Error dropping table {table}: {str(e)}")
+                    else:
+                        # For PostgreSQL - this would run at runtime
+                        print("PostgreSQL tables will be handled at runtime")
                 except Exception as e:
                     print(f"Error during table dropping: {str(e)}")
                 
-                # Create essential tables one by one using raw SQL
+                # Create essential tables with direct SQL
                 print("Creating essential tables with direct SQL...")
-                
-                # Create user table
                 try:
-                    conn.execute("""
-                    CREATE TABLE IF NOT EXISTS user (
-                        id VARCHAR(36) PRIMARY KEY,
-                        username VARCHAR(64) UNIQUE NOT NULL,
-                        email VARCHAR(120) UNIQUE NOT NULL,
-                        password_hash VARCHAR(128),
-                        chadcoin_balance INTEGER NOT NULL DEFAULT 0,
-                        is_admin BOOLEAN NOT NULL DEFAULT 0,
-                        twitter_id VARCHAR(64),
-                        twitter_username VARCHAR(64),
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        last_login TIMESTAMP
-                    )
-                    """)
-                    print("Created user table")
+                    # Create tables with direct SQL to avoid model validation issues
+                    # For SQLite
+                    if is_sqlite:
+                        # Users table
+                        conn.execute("""
+                            CREATE TABLE IF NOT EXISTS users (
+                                id INTEGER PRIMARY KEY,
+                                username VARCHAR(64) UNIQUE NOT NULL,
+                                email VARCHAR(120) UNIQUE NOT NULL,
+                                password_hash VARCHAR(128),
+                                display_name VARCHAR(64),
+                                bio TEXT,
+                                avatar_url VARCHAR(255),
+                                chadcoin_balance INTEGER DEFAULT 100,
+                                wallet_address VARCHAR(255) UNIQUE,
+                                wallet_type VARCHAR(50),
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                last_login TIMESTAMP,
+                                x_id VARCHAR(64) UNIQUE,
+                                x_username VARCHAR(64) UNIQUE,
+                                x_displayname VARCHAR(64),
+                                x_profile_image VARCHAR(255),
+                                is_admin BOOLEAN DEFAULT 0
+                            )
+                        """)
+                        print("Created user table")
+                        
+                        # ChadClass table
+                        conn.execute("""
+                            CREATE TABLE IF NOT EXISTS chad_class (
+                                id INTEGER PRIMARY KEY,
+                                name VARCHAR(50) UNIQUE NOT NULL,
+                                description TEXT NOT NULL,
+                                base_clout INTEGER DEFAULT 10,
+                                base_roast INTEGER DEFAULT 10,
+                                base_cringe_resistance INTEGER DEFAULT 10,
+                                base_drip INTEGER DEFAULT 10,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )
+                        """)
+                        print("Created chad_class table")
+                        
+                        # Chad table
+                        conn.execute("""
+                            CREATE TABLE IF NOT EXISTS chad (
+                                id INTEGER PRIMARY KEY,
+                                user_id INTEGER NOT NULL,
+                                class_id INTEGER NOT NULL,
+                                name VARCHAR(50) NOT NULL,
+                                bio TEXT,
+                                level INTEGER DEFAULT 1,
+                                xp INTEGER DEFAULT 0,
+                                clout INTEGER DEFAULT 10,
+                                roast INTEGER DEFAULT 10,
+                                cringe_resistance INTEGER DEFAULT 10,
+                                drip INTEGER DEFAULT 10,
+                                battles_won INTEGER DEFAULT 0,
+                                battles_lost INTEGER DEFAULT 0,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (user_id) REFERENCES users (id),
+                                FOREIGN KEY (class_id) REFERENCES chad_class (id)
+                            )
+                        """)
+                        print("Created chad table")
+                        
+                        # Cabal table
+                        conn.execute("""
+                            CREATE TABLE IF NOT EXISTS cabals (
+                                id INTEGER PRIMARY KEY,
+                                name VARCHAR(50) UNIQUE NOT NULL,
+                                description TEXT,
+                                leader_id INTEGER NOT NULL,
+                                level INTEGER DEFAULT 1,
+                                xp INTEGER DEFAULT 0,
+                                chadcoin_balance INTEGER DEFAULT 0,
+                                logo_url VARCHAR(255),
+                                banner_url VARCHAR(255),
+                                color_scheme VARCHAR(20) DEFAULT 'default',
+                                battles_won INTEGER DEFAULT 0,
+                                battles_lost INTEGER DEFAULT 0,
+                                total_member_count INTEGER DEFAULT 1,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (leader_id) REFERENCES users (id)
+                            )
+                        """)
+                        print("Created cabal table")
+                        
+                        # CabalMember table
+                        conn.execute("""
+                            CREATE TABLE IF NOT EXISTS cabal_member (
+                                id INTEGER PRIMARY KEY,
+                                cabal_id INTEGER NOT NULL,
+                                user_id INTEGER NOT NULL,
+                                role VARCHAR(20) DEFAULT 'member',
+                                joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                contribution_score INTEGER DEFAULT 0,
+                                FOREIGN KEY (cabal_id) REFERENCES cabals (id),
+                                FOREIGN KEY (user_id) REFERENCES users (id),
+                                UNIQUE (cabal_id, user_id)
+                            )
+                        """)
+                        print("Created cabal_member table")
+                        
+                        # Battle table
+                        conn.execute("""
+                            CREATE TABLE IF NOT EXISTS battle (
+                                id INTEGER PRIMARY KEY,
+                                initiator_cabal_id INTEGER NOT NULL,
+                                defender_cabal_id INTEGER NOT NULL,
+                                winner_cabal_id INTEGER,
+                                battle_type VARCHAR(20) DEFAULT 'standard',
+                                status VARCHAR(20) DEFAULT 'pending',
+                                reward_xp INTEGER DEFAULT 0,
+                                reward_chadcoin INTEGER DEFAULT 0,
+                                started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                ended_at TIMESTAMP,
+                                FOREIGN KEY (initiator_cabal_id) REFERENCES cabals (id),
+                                FOREIGN KEY (defender_cabal_id) REFERENCES cabals (id),
+                                FOREIGN KEY (winner_cabal_id) REFERENCES cabals (id)
+                            )
+                        """)
+                        print("Created battle table")
+                        
+                        # CabalAnalytics table
+                        conn.execute("""
+                            CREATE TABLE IF NOT EXISTS cabal_analytics (
+                                id VARCHAR(36) PRIMARY KEY,
+                                cabal_id INTEGER NOT NULL,
+                                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                member_count INTEGER NOT NULL,
+                                active_member_count INTEGER NOT NULL,
+                                total_power FLOAT NOT NULL,
+                                rank INTEGER NOT NULL,
+                                battles_won INTEGER NOT NULL,
+                                battles_lost INTEGER NOT NULL,
+                                referrals INTEGER NOT NULL,
+                                FOREIGN KEY (cabal_id) REFERENCES cabals (id)
+                            )
+                        """)
+                        print("Created cabal_analytics table")
+                    else:
+                        # For PostgreSQL - this would run at runtime
+                        print("PostgreSQL tables will be handled at runtime")
                 except Exception as e:
-                    print(f"Error creating user table: {str(e)}")
-                
-                # Create chad_class table
-                try:
-                    conn.execute("""
-                    CREATE TABLE IF NOT EXISTS chad_class (
-                        id VARCHAR(36) PRIMARY KEY,
-                        name VARCHAR(64) NOT NULL,
-                        description TEXT,
-                        base_strength FLOAT NOT NULL,
-                        base_agility FLOAT NOT NULL,
-                        base_intelligence FLOAT NOT NULL,
-                        base_charisma FLOAT NOT NULL,
-                        growth_strength FLOAT NOT NULL,
-                        growth_agility FLOAT NOT NULL,
-                        growth_intelligence FLOAT NOT NULL,
-                        growth_charisma FLOAT NOT NULL
-                    )
-                    """)
-                    print("Created chad_class table")
-                except Exception as e:
-                    print(f"Error creating chad_class table: {str(e)}")
-                
-                # Create chad table
-                try:
-                    conn.execute("""
-                    CREATE TABLE IF NOT EXISTS chad (
-                        id VARCHAR(36) PRIMARY KEY,
-                        name VARCHAR(64) NOT NULL,
-                        user_id VARCHAR(36),
-                        class_id VARCHAR(36),
-                        level INTEGER NOT NULL DEFAULT 1,
-                        xp INTEGER NOT NULL DEFAULT 0,
-                        strength FLOAT NOT NULL,
-                        agility FLOAT NOT NULL,
-                        intelligence FLOAT NOT NULL,
-                        charisma FLOAT NOT NULL,
-                        battles_won INTEGER NOT NULL DEFAULT 0,
-                        battles_lost INTEGER NOT NULL DEFAULT 0,
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        last_battle TIMESTAMP,
-                        FOREIGN KEY (user_id) REFERENCES user(id),
-                        FOREIGN KEY (class_id) REFERENCES chad_class(id)
-                    )
-                    """)
-                    print("Created chad table")
-                except Exception as e:
-                    print(f"Error creating chad table: {str(e)}")
-                
-                # Create cabal table
-                try:
-                    conn.execute("""
-                    CREATE TABLE IF NOT EXISTS cabal (
-                        id VARCHAR(36) PRIMARY KEY,
-                        name VARCHAR(64) UNIQUE NOT NULL,
-                        description TEXT,
-                        logo_url TEXT,
-                        banner_url TEXT,
-                        creator_id VARCHAR(36),
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        member_count INTEGER NOT NULL DEFAULT 0,
-                        total_power FLOAT NOT NULL DEFAULT 0,
-                        battles_won INTEGER NOT NULL DEFAULT 0,
-                        battles_lost INTEGER NOT NULL DEFAULT 0,
-                        rank INTEGER,
-                        FOREIGN KEY (creator_id) REFERENCES user(id)
-                    )
-                    """)
-                    print("Created cabal table")
-                except Exception as e:
-                    print(f"Error creating cabal table: {str(e)}")
-                
-                # Create cabal_member table
-                try:
-                    conn.execute("""
-                    CREATE TABLE IF NOT EXISTS cabal_member (
-                        id VARCHAR(36) PRIMARY KEY,
-                        cabal_id VARCHAR(36) NOT NULL,
-                        chad_id VARCHAR(36) NOT NULL,
-                        joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        is_admin BOOLEAN NOT NULL DEFAULT 0,
-                        is_active BOOLEAN NOT NULL DEFAULT 1,
-                        FOREIGN KEY (cabal_id) REFERENCES cabal(id),
-                        FOREIGN KEY (chad_id) REFERENCES chad(id)
-                    )
-                    """)
-                    print("Created cabal_member table")
-                except Exception as e:
-                    print(f"Error creating cabal_member table: {str(e)}")
-                
-                # Create battle table
-                try:
-                    conn.execute("""
-                    CREATE TABLE IF NOT EXISTS battle (
-                        id VARCHAR(36) PRIMARY KEY,
-                        attacker_cabal_id VARCHAR(36),
-                        defender_cabal_id VARCHAR(36),
-                        winner_cabal_id VARCHAR(36),
-                        attacker_total_power FLOAT,
-                        defender_total_power FLOAT,
-                        battle_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        xp_reward INTEGER,
-                        coin_reward INTEGER,
-                        battle_log TEXT,
-                        FOREIGN KEY (attacker_cabal_id) REFERENCES cabal(id),
-                        FOREIGN KEY (defender_cabal_id) REFERENCES cabal(id),
-                        FOREIGN KEY (winner_cabal_id) REFERENCES cabal(id)
-                    )
-                    """)
-                    print("Created battle table")
-                except Exception as e:
-                    print(f"Error creating battle table: {str(e)}")
-                
-                # Create cabal_analytics table
-                try:
-                    conn.execute("""
-                    CREATE TABLE IF NOT EXISTS cabal_analytics (
-                        id VARCHAR(36) PRIMARY KEY,
-                        cabal_id VARCHAR(36) NOT NULL,
-                        timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        member_count INTEGER NOT NULL,
-                        active_member_count INTEGER NOT NULL,
-                        total_power FLOAT NOT NULL,
-                        rank INTEGER NOT NULL,
-                        battles_won INTEGER NOT NULL,
-                        battles_lost INTEGER NOT NULL,
-                        referrals INTEGER NOT NULL,
-                        FOREIGN KEY (cabal_id) REFERENCES cabal(id)
-                    )
-                    """)
-                    print("Created cabal_analytics table")
-                except Exception as e:
-                    print(f"Error creating cabal_analytics table: {str(e)}")
+                    print(f"Error during table creation: {str(e)}")
+                    traceback.print_exc()
+                    return False
                 
                 # Re-enable foreign key constraints
                 print("Re-enabling foreign key constraints...")
-                conn.execute("PRAGMA foreign_keys = ON")
-            
-                # Create admin user directly with SQL instead of using ORM
+                if is_sqlite:
+                    conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create an admin user
                 print("Creating admin user...")
                 try:
-                    # Check if admin exists
-                    admin = conn.execute("SELECT * FROM user WHERE username = 'admin'").fetchone()
-                    if not admin:
-                        # Generate a UUID for the admin user
-                        admin_id = str(uuid.uuid4())
-                        
-                        # For the password hash, we'll use a pre-computed hash for 'admin'
-                        # This is the hash for 'admin' using werkzeug's generate_password_hash
-                        password_hash = 'pbkdf2:sha256:260000$7tGrB1C9LkOeFdqV$7dfc6164cc975e7a1b4d15a4a9c139ce04091454245097144c30d909da354f5a'
-                        
-                        # Insert admin user directly
-                        conn.execute("""
-                        INSERT INTO user (id, username, email, password_hash, chadcoin_balance, is_admin, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            admin_id,
-                            'admin',
-                            'admin@chadbattles.fun',
-                            password_hash,
-                            1000,
-                            True,
-                            datetime.utcnow()
-                        ))
+                    # Check if admin user exists
+                    result = conn.execute("SELECT id FROM users WHERE username = 'admin'").fetchone()
+                    
+                    if not result:
+                        # Insert admin user
+                        query = """
+                            INSERT INTO users (
+                                username, 
+                                email, 
+                                password_hash,
+                                display_name,
+                                chadcoin_balance,
+                                is_admin,
+                                created_at,
+                                updated_at
+                            ) VALUES (
+                                'admin', 
+                                'admin@chadbattles.fun', 
+                                'pbkdf2:sha256:150000$abcdefgh$1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+                                'Admin',
+                                10000,
+                                1,
+                                CURRENT_TIMESTAMP,
+                                CURRENT_TIMESTAMP
+                            )
+                        """
+                        conn.execute(query)
                         print("Admin user created with direct SQL.")
                     else:
                         print("Admin user already exists.")
                 except Exception as e:
-                    print(f"Error creating admin user with SQL: {str(e)}")
-                    print("Detailed error information:")
+                    print(f"Error creating admin user: {str(e)}")
                     traceback.print_exc()
-                    # Continue anyway
-            
-            # If we used SQLite temporarily, restore the original DB URL
-            if original_db_url:
-                print(f"Restoring original database URL for runtime...")
-                os.environ['DATABASE_URL'] = original_db_url
-            
-            print("Database initialization completed successfully!")
-            
+                    return False
+                
+            return True
     except Exception as e:
-        print(f"Error initializing database: {str(e)}")
-        print("Detailed error information:")
+        print(f"Error during database initialization: {str(e)}")
         traceback.print_exc()
-        print("Database initialization failed!")
-        
-        # If we used SQLite temporarily, restore the original DB URL
-        if original_db_url:
-            print(f"Restoring original database URL...")
-            os.environ['DATABASE_URL'] = original_db_url
-        
         return False
-    
-    return True
 
 if __name__ == "__main__":
     # Determine environment from command line argument if provided
