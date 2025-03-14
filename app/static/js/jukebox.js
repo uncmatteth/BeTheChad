@@ -52,7 +52,7 @@ class Jukebox {
                         <input type="range" id="volume-slider" min="0" max="100" value="${this.volume * 100}">
                     </div>
                 </div>
-                <div id="jukebox-now-playing" class="jukebox-now-playing">Select a track to begin</div>
+                <div id="jukebox-now-playing" class="jukebox-now-playing">Loading music...</div>
             </div>
         `;
         
@@ -337,6 +337,8 @@ function initJukebox(containerId) {
         .then(data => {
             const jukebox = new Jukebox(containerId, data);
             window.jukebox = jukebox;
+            // Auto-play a random track when the page loads
+            jukebox.playNextRandom();
         })
         .catch(error => {
             console.error('Error loading music files:', error);
