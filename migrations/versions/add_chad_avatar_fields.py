@@ -1,7 +1,7 @@
 """Add avatar fields to Chad model
 
 Revision ID: add_chad_avatar_fields
-Revises: inventory_nft_revision
+Revises: 2023_11_15_tweet_tracker
 Create Date: 2023-08-15 14:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from datetime import datetime
 
 # revision identifiers, used by Alembic.
 revision = 'add_chad_avatar_fields'
-down_revision = 'inventory_nft_revision'  # Make sure to chain from the previous revision
+down_revision = '2023_11_15_tweet_tracker'  # Chain from tweet tracker migration
 branch_labels = None
 depends_on = None
 
