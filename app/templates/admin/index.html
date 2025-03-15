@@ -3,38 +3,26 @@
 {% block admin_title %}Admin Dashboard{% endblock %}
 
 {% block admin_content %}
-<div class="row">
-    <!-- Pending Appeals Card -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Pending Appeals</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_appeals }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-gavel fa-2x text-gray-300"></i>
-                    </div>
+<div class="container">
+    <h1 class="mb-4">Admin Dashboard</h1>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Appeals</h5>
+                    <p class="card-text display-4">{{ pending_appeals_count }}</p>
+                    <a href="{{ url_for('admin.appeals', status='pending') }}" class="btn btn-primary">View Appeals</a>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Total Users Card -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Total Users</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_users }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-users fa-2x text-gray-300"></i>
-                    </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Users</h5>
+                    <p class="card-text display-4">{{ total_users }}</p>
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-primary">View Users</a>
                 </div>
             </div>
         </div>

@@ -1,0 +1,83 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="container">
+    <h1 class="mb-4">Users</h1>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Chad Class</th>
+                    <th>Joined</th>
+                    <th>Last Login</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users.items %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.chad_class }}</td>
+                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}</td>
+                    <td>
+                        {% if user.is_admin %}
+                        <span class="badge badge-primary">Admin</span>
+                        {% endif %}
+                        {% if user.is_active %}
+                        <span class="badge badge-success">Active</span>
+                        {% else %}
+                        <span class="badge badge-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if users.pages > 1 %}
+    <nav aria-label="User pages">
+        <ul class="pagination justify-content-center">
+            {% if users.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.users', page=users.prev_num) }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+
+            {% for page_num in users.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == users.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.users', page=page_num) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if users.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.users', page=users.next_num) }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %} 

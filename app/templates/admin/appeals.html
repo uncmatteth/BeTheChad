@@ -3,108 +3,103 @@
 {% block admin_title %}Class Appeals{% endblock %}
 
 {% block admin_content %}
-<!-- Status Filter -->
-<div class="mb-4">
-    <div class="btn-group" role="group" aria-label="Appeal status filter">
-        <a href="{{ url_for('admin.appeals', status='pending') }}" 
-           class="btn btn-{{ 'primary' if current_status == 'pending' else 'outline-primary' }}">
-            Pending
-        </a>
-        <a href="{{ url_for('admin.appeals', status='approved') }}"
-           class="btn btn-{{ 'primary' if current_status == 'approved' else 'outline-primary' }}">
-            Approved
-        </a>
-        <a href="{{ url_for('admin.appeals', status='rejected') }}"
-           class="btn btn-{{ 'primary' if current_status == 'rejected' else 'outline-primary' }}">
-            Rejected
-        </a>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Class Appeals</h1>
+        <div class="btn-group">
+            <a href="{{ url_for('admin.appeals', status='pending') }}" 
+               class="btn btn-outline-primary {% if current_status == 'pending' %}active{% endif %}">
+                Pending
+            </a>
+            <a href="{{ url_for('admin.appeals', status='approved') }}"
+               class="btn btn-outline-primary {% if current_status == 'approved' %}active{% endif %}">
+                Approved
+            </a>
+            <a href="{{ url_for('admin.appeals', status='rejected') }}"
+               class="btn btn-outline-primary {% if current_status == 'rejected' %}active{% endif %}">
+                Rejected
+            </a>
+            <a href="{{ url_for('admin.appeals', status='all') }}"
+               class="btn btn-outline-primary {% if current_status == 'all' %}active{% endif %}">
+                All
+            </a>
+        </div>
     </div>
-</div>
 
-<!-- Appeals Table -->
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">{{ current_status|title }} Appeals</h6>
-    </div>
-    <div class="card-body">
-        {% if appeals.items %}
-        <div class="table-responsive">
-            <table class="table table-bordered" width="100%" cellspacing="0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>User</th>
-                        <th>Requested Class</th>
-                        <th>Submitted</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for appeal in appeals.items %}
-                    <tr>
-                        <td>{{ appeal.id }}</td>
-                        <td>{{ appeal.user.username }}</td>
-                        <td>{{ appeal.requested_class }}</td>
-                        <td>{{ appeal.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                        <td>
-                            <span class="badge {{ appeal.status_badge_class }}">
-                                {{ appeal.status|title }}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('admin.appeal_detail', appeal_id=appeal.id) }}" 
-                               class="btn btn-info btn-sm">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            {% if appeal.status == 'pending' %}
-                            <form action="{{ url_for('admin.appeal_detail', appeal_id=appeal.id) }}" 
-                                  method="POST" class="d-inline">
-                                <input type="hidden" name="action" value="approve">
-                                <button type="submit" class="btn btn-success btn-sm">
-                                    <i class="fas fa-check"></i> Approve
-                                </button>
-                            </form>
-                            <form action="{{ url_for('admin.appeal_detail', appeal_id=appeal.id) }}"
-                                  method="POST" class="d-inline">
-                                <input type="hidden" name="action" value="reject">
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-times"></i> Reject
-                                </button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Pagination -->
-        {% if appeals.pages > 1 %}
-        <nav aria-label="Appeal pagination">
-            <ul class="pagination justify-content-center">
-                {% for page in appeals.iter_pages() %}
-                    {% if page %}
-                        <li class="page-item {{ 'active' if page == appeals.page else '' }}">
-                            <a class="page-link" href="{{ url_for('admin.appeals', status=current_status, page=page) }}">
-                                {{ page }}
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    {% endif %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Current Class</th>
+                    <th>Requested Class</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appeal in appeals.items %}
+                <tr>
+                    <td>{{ appeal.id }}</td>
+                    <td>{{ appeal.user.username }}</td>
+                    <td>{{ appeal.user.chad_class }}</td>
+                    <td>{{ appeal.requested_class }}</td>
+                    <td>
+                        <span class="badge {{ appeal.status_badge_class }}">
+                            {{ appeal.status }}
+                        </span>
+                    </td>
+                    <td>{{ appeal.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.appeal_detail', appeal_id=appeal.id) }}" 
+                           class="btn btn-sm btn-info">
+                            View
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">No appeals found.</td>
+                </tr>
                 {% endfor %}
-            </ul>
-        </nav>
-        {% endif %}
-        {% else %}
-        <div class="text-center py-4">
-            <p class="text-muted">No {{ current_status }} appeals found.</p>
-        </div>
-        {% endif %}
+            </tbody>
+        </table>
     </div>
+
+    {% if appeals.pages > 1 %}
+    <nav aria-label="Appeal pages">
+        <ul class="pagination justify-content-center">
+            {% if appeals.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.appeals', status=current_status, page=appeals.prev_num) }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+
+            {% for page_num in appeals.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == appeals.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.appeals', status=current_status, page=page_num) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if appeals.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.appeals', status=current_status, page=appeals.next_num) }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 {% endblock %} 

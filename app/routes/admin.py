@@ -13,7 +13,7 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or not current_user.is_admin:
-            flash('You do not have permission to access this area.', 'danger')
+            flash('You do not have permission to access this page.', 'danger')
             return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
@@ -23,26 +23,30 @@ def admin_required(f):
 @admin_required
 def index():
     """Admin dashboard"""
-    pending_appeals = Appeal.query.filter_by(status='pending').count()
+    pending_appeals_count = Appeal.query.filter_by(status='pending').count()
     total_users = User.query.count()
-    return render_template('admin/index.html', 
-                         pending_appeals=pending_appeals,
+    
+    return render_template('admin/index.html',
+                         pending_appeals_count=pending_appeals_count,
                          total_users=total_users)
 
 @admin.route('/appeals')
 @login_required
 @admin_required
 def appeals():
-    """List all class appeals"""
+    """List all appeals"""
     status = request.args.get('status', 'pending')
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    appeals = Appeal.query.filter_by(status=status)\
-        .order_by(Appeal.created_at.desc())\
-        .paginate(page=page, per_page=per_page)
+    query = Appeal.query
+    if status != 'all':
+        query = query.filter_by(status=status)
     
-    return render_template('admin/appeals.html', 
+    appeals = query.order_by(Appeal.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False)
+    
+    return render_template('admin/appeals.html',
                          appeals=appeals,
                          current_status=status)
 
@@ -50,19 +54,19 @@ def appeals():
 @login_required
 @admin_required
 def appeal_detail(appeal_id):
-    """View and process a specific appeal"""
+    """View and process an appeal"""
     appeal = Appeal.query.get_or_404(appeal_id)
     
     if request.method == 'POST':
         action = request.form.get('action')
-        reason = request.form.get('reason', '')
+        reason = request.form.get('reason')
         
         try:
             if action == 'approve':
-                appeal.approve(admin=current_user, reason=reason)
+                appeal.approve(current_user, reason)
                 flash('Appeal approved successfully.', 'success')
             elif action == 'reject':
-                appeal.reject(admin=current_user, reason=reason)
+                appeal.reject(current_user, reason)
                 flash('Appeal rejected successfully.', 'danger')
             else:
                 flash('Invalid action.', 'warning')
@@ -75,7 +79,7 @@ def appeal_detail(appeal_id):
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error processing appeal {appeal_id}: {str(e)}")
-            flash('An error occurred while processing the appeal.', 'danger')
+            flash(f'Error processing appeal: {str(e)}', 'danger')
     
     return render_template('admin/appeal_detail.html', appeal=appeal)
 
@@ -85,22 +89,12 @@ def appeal_detail(appeal_id):
 def users():
     """List all users"""
     page = request.args.get('page', 1, type=int)
-    per_page = 50
-    search = request.args.get('search', '')
+    per_page = 20
     
-    query = User.query
-    if search:
-        query = query.filter(
-            (User.username.ilike(f'%{search}%')) |
-            (User.twitter_username.ilike(f'%{search}%'))
-        )
+    users = User.query.order_by(User.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False)
     
-    users = query.order_by(User.created_at.desc())\
-        .paginate(page=page, per_page=per_page)
-    
-    return render_template('admin/users.html', 
-                         users=users,
-                         search=search)
+    return render_template('admin/users.html', users=users)
 
 @admin.route('/users/<int:user_id>')
 @login_required
