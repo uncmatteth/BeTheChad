@@ -250,6 +250,14 @@ Remember to:
 - Create actual files, never samples or placeholders
 - Always commit and push changes after fixing issues or implementing features
 - Document significant changes in commit messages
+- Never store credentials in files - use Render's environment variables for production
+
+### Security Best Practices
+- All production credentials must be stored in Render's environment variables
+- Local development should use non-sensitive placeholder values
+- Never commit real API keys or secrets to the repository
+- Keep .env.example updated with all required variables but use placeholder values
+- Regularly rotate production API keys and secrets in Render dashboard
 
 ### Technical Stack
 - Backend: Python
