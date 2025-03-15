@@ -9,6 +9,7 @@ from app.models.inventory import Inventory
 from app.models.battle import Battle
 import json
 import traceback
+from datetime import datetime
 
 # Create blueprint
 main = Blueprint('main', __name__)
@@ -130,12 +131,12 @@ def faq():
 @main.route('/terms')
 def terms():
     """Terms of service page"""
-    return render_template('main/terms.html')
+    return render_template('main/terms.html', now=datetime.now())
 
 @main.route('/privacy')
 def privacy():
     """Privacy policy page"""
-    return render_template('main/privacy.html')
+    return render_template('main/privacy.html', now=datetime.now())
 
 @main.route('/contact')
 def contact():
@@ -160,4 +161,10 @@ def search():
 @limiter.limit("30 per minute")
 def notifications():
     """User notifications"""
-    return render_template('main/notifications.html') 
+    return render_template('main/notifications.html')
+
+@main.route('/profile')
+@login_required
+def profile():
+    """User profile page."""
+    return render_template('main/profile.html', user=current_user) 
