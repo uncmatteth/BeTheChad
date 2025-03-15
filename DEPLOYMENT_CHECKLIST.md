@@ -33,7 +33,7 @@
 - [ ] Check admin features
 - [x] Verify error handling
 
-## Current Issues (Last Updated: March 14, 2024)
+## Current Issues (Last Updated: March 14, 2025)
 
 ### Database Issues
 - [ ] **Critical**: Database switches between SQLite and PostgreSQL during different operations
@@ -42,10 +42,10 @@
 - [ ] Migrations are being applied to SQLite temp.db but not PostgreSQL
 
 ### Template Issues
-- [ ] Missing templates: 
-  - [ ] chad/index.html
-  - [ ] base.html
-  - [ ] wallet/connect.html
+- [x] Missing templates: 
+  - [x] chad/index.html
+  - [x] base.html
+  - [x] wallet/connect.html
 
 ### Feature Issues
 - [ ] Music player doesn't find music files
@@ -71,7 +71,7 @@
    - [ ] All tables are created properly in the PostgreSQL database
 
 2. Fix template issues:
-   - [ ] Ensure all required templates are present and accessible
+   - [x] Ensure all required templates are present and accessible
 
 3. Fix music player:
    - [ ] Create appropriate directory for music files
