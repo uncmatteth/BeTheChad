@@ -47,21 +47,47 @@ def get_tracks():
     """Return a list of all music tracks"""
     tracks = []
     
-    # Namecheap server path
-    music_folder = '/home/chadszv/public_html/music'
-    
-    # For development environment
-    if current_app.config.get('FLASK_ENV') != 'production':
+    # Check environment to determine music folder
+    if os.environ.get('RENDER') == 'true':
+        # We're on Render.com
+        current_app.logger.info("Render environment detected")
         music_folder = os.path.join(current_app.static_folder, 'music')
-        current_app.logger.info(f"Development environment detected, using local path: {music_folder}")
-    else:
+        current_app.logger.info(f"Using Render path: {music_folder}")
+        
+        # Try to create the directory if it doesn't exist
+        if not os.path.exists(music_folder):
+            try:
+                current_app.logger.info(f"Creating music directory: {music_folder}")
+                os.makedirs(music_folder, exist_ok=True)
+            except Exception as e:
+                current_app.logger.error(f"Failed to create music directory: {str(e)}")
+        
+        # On Render, we'll create a hardcoded list of tracks served from our domain
+        current_app.logger.info("Using direct URLs for music files")
+        
+        # Get the list of music files from the server
+        try:
+            # This is a hardcoded list of known files 
+            for i in range(1, 104):  # Assuming files are numbered from 1 to 103
+                file_name = f"Be the Chad ({i}).m4a"
+                tracks.append({
+                    'title': f"Be the Chad {i}",
+                    'path': f"https://chadbattles.fun/music/{file_name}",
+                    'filename': file_name,
+                    'size': 2000000,  # Approximate size
+                    'type': 'm4a'
+                })
+            
+            current_app.logger.info(f"Added {len(tracks)} tracks")
+        except Exception as e:
+            current_app.logger.error(f"Error creating track list: {str(e)}")
+    
+    # Namecheap server path
+    elif current_app.config.get('FLASK_ENV') == 'production':
+        music_folder = '/home/chadszv/public_html/music'
         current_app.logger.info(f"Production environment detected, using Namecheap path: {music_folder}")
-    
-    current_app.logger.info(f"Scanning music directory: {music_folder}")
-    
-    # In production, we can't directly access the Namecheap server files
-    # So we'll create entries based on known files
-    if current_app.config.get('FLASK_ENV') == 'production':
+        
+        # Create entries based on known files
         current_app.logger.info("Production environment: Using direct URLs to Namecheap server files")
         
         # Get the list of music files from the server
@@ -81,7 +107,20 @@ def get_tracks():
             current_app.logger.info(f"Added {len(tracks)} tracks from Namecheap server")
         except Exception as e:
             current_app.logger.error(f"Error creating track list: {str(e)}")
+    
+    # Development environment
     else:
+        music_folder = os.path.join(current_app.static_folder, 'music')
+        current_app.logger.info(f"Development environment detected, using local path: {music_folder}")
+        
+        # Try to create the directory if it doesn't exist
+        if not os.path.exists(music_folder):
+            try:
+                current_app.logger.info(f"Creating music directory: {music_folder}")
+                os.makedirs(music_folder, exist_ok=True)
+            except Exception as e:
+                current_app.logger.error(f"Failed to create music directory: {str(e)}")
+        
         # For development, we can scan the local directory
         if os.path.exists(music_folder) and os.path.isdir(music_folder):
             try:
@@ -101,13 +140,25 @@ def get_tracks():
                             'type': os.path.splitext(filename)[1][1:].lower()
                         }
                         tracks.append(track)
-                        current_app.logger.debug(f"Added track: {track['title']}")
+                
+                current_app.logger.info(f"Returning {len(tracks)} tracks")
             except Exception as e:
-                current_app.logger.error(f"Error reading music directory {music_folder}: {str(e)}")
+                current_app.logger.error(f"Error scanning music directory: {str(e)}")
         else:
             current_app.logger.warning(f"Music directory not found: {music_folder}")
+            
+            # If no tracks found, create a fallback list
+            if not tracks:
+                current_app.logger.info("No tracks found, creating placeholder tracks")
+                for i in range(1, 5):
+                    tracks.append({
+                        'title': f'Placeholder Track {i}',
+                        'path': f'/static/placeholder_{i}.mp3',
+                        'filename': f'placeholder_{i}.mp3',
+                        'size': 1000000,
+                        'type': 'mp3'
+                    })
     
-    current_app.logger.info(f"Returning {len(tracks)} tracks")
     return jsonify(tracks)
 
 @music.route('/stream/<filename>')
