@@ -1,7 +1,7 @@
 # Cabal Feature QA Checklist
 
 ## Setup and Prerequisites
-- [ ] Environment variables are correctly set (MAX_CABAL_SIZE=69)
+- [ ] Environment variables are correctly set (MAX_CABAL_SIZE=21)
 - [ ] Database migration for Cabal tables has been applied
 - [ ] Test database has sample cabal data for testing
 - [ ] User accounts with different roles exist for testing
@@ -19,7 +19,7 @@
 - [ ] Adding members works correctly
 - [ ] Removing members works correctly
 - [ ] Members can't be in multiple cabals
-- [ ] Membership limit (69) is enforced
+- [ ] Membership limit (21) is enforced
 - [ ] Leader can't be removed via regular removal
 
 ### Officers
@@ -194,3 +194,9 @@
 - Document any workarounds or limitations
 - Track test coverage metrics
 - Note any areas needing improvement in future iterations 
+
+## Environment Configuration
+
+- [ ] Database tables properly created
+- [ ] Cabal model has correct relationships
+- [ ] Environment variables are correctly set (MAX_CABAL_SIZE=21) 

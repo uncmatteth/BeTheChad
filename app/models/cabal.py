@@ -7,6 +7,7 @@ import enum
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
 import uuid
+from flask import current_app
 
 class CabalMemberRole(enum.Enum):
     """Enum for cabal member roles."""
@@ -45,6 +46,11 @@ class Cabal(db.Model):
     def __repr__(self):
         return f'<Cabal {self.id}: {self.name}>'
     
+    @property
+    def max_size(self):
+        """Get the maximum size of the cabal"""
+        return current_app.config.get('MAX_CABAL_SIZE', 21)
+    
     def calculate_total_power(self):
         """Calculate the total power of the cabal based on members"""
         # This is a simplified version for deployment
@@ -76,6 +82,11 @@ class Cabal(db.Model):
                 db.session.commit()
                 self.update_member_count()
                 return True, "User rejoined the cabal"
+        
+        # Check if the cabal is full
+        active_members = sum(1 for member in self.members if member.is_active)
+        if active_members >= self.max_size:
+            return False, f"Cabal is full (maximum {self.max_size} members)"
         
         # Create new member
         member = CabalMember(

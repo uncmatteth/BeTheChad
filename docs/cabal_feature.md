@@ -157,7 +157,7 @@ The following Twitter commands allow users to interact with the Cabal system:
   - Member XP: 10-25 XP per participating member
 
 ## Limitations and Constraints
-- Maximum cabal size: 69 members
+- Maximum cabal size: 21 members
 - Weekly battle limit: 3 battles per cabal
 - Daily member battle limit: 5 battles per member
 - Leader removal: Requires 3/4 majority of officers or active members
@@ -187,4 +187,13 @@ Response: "Battle scheduled against 'RivalTeam' for tomorrow at 20:00 UTC! Encou
 ## Testing
 - Unit tests: `tests/test_cabal_model.py`
 - Route tests: `tests/test_cabal_routes.py`
-- Bot command tests: `tests/test_bot_commands.py` 
+- Bot command tests: `tests/test_bot_commands.py`
+
+## Specifications
+
+- Core functionality: Create, join, leave cabals
+- Leadership system: Leader with the ability to appoint officers
+- Officer system: Officers with specific bonuses to all members
+- Cabal battles: Organized battles against other cabals
+- Maximum cabal size: 21 members
+- Cabal levels: Based on member activity and battle wins 

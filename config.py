@@ -36,7 +36,20 @@ class Config:
     MAX_WAIFUS_EQUIPPED = int(os.getenv('MAX_WAIFUS_EQUIPPED', 3))
     BATTLE_XP_REWARD = int(os.getenv('BATTLE_XP_REWARD', 25))
     CHADCOIN_BATTLE_REWARD = int(os.getenv('CHADCOIN_BATTLE_REWARD', 10))
-    MAX_CABAL_SIZE = int(os.getenv('MAX_CABAL_SIZE', 69))
+    MAX_CABAL_SIZE = int(os.getenv('MAX_CABAL_SIZE', 21))
+
+    # Music Settings
+    MUSIC_STORAGE_RENDER = os.path.join(os.path.dirname(__file__), 'music')
+    MUSIC_RATE_LIMIT = "20 per minute"
+    
+    # Chat Settings
+    MAX_MESSAGE_LENGTH = 500
+    
+    # Game Settings
+    MAX_WAIFUS = int(os.getenv('MAX_WAIFUS', 3))
+    WAIFU_DROP_RATE = float(os.getenv('WAIFU_DROP_RATE', 0.33))
+    
+    # External API Integration
 
 
 class DevelopmentConfig(Config):
