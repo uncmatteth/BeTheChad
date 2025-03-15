@@ -204,8 +204,19 @@ def twitter_login():
             # Get environment-specific callback URL
             if os.environ.get('FLASK_ENV') == 'development':
                 callback_url = os.environ.get('DEV_CALLBACK_URL', 'http://127.0.0.1:5000/auth/twitter-callback')
+                logger.info(f"Using development callback URL: {callback_url}")
             else:
                 callback_url = os.environ.get('PROD_CALLBACK_URL', 'https://chadbattles.fun/auth/twitter-callback')
+                # Check if we're on Render.com by checking the environment
+                if os.environ.get('RENDER') == 'true':
+                    render_url = os.environ.get('RENDER_EXTERNAL_URL')
+                    if render_url:
+                        callback_url = f"{render_url}/auth/twitter-callback"
+                        logger.info(f"Using Render.com callback URL: {callback_url}")
+                    else:
+                        logger.warning(f"On Render but couldn't get RENDER_EXTERNAL_URL, using default: {callback_url}")
+                else:
+                    logger.info(f"Using production callback URL: {callback_url}")
             
             # Create OAuth handler with callback
             auth = tweepy.OAuth1UserHandler(
@@ -220,7 +231,7 @@ def twitter_login():
             session['request_token'] = auth.request_token
             
             # Log callback URL for debugging
-            logger.info(f"Using callback URL: {callback_url}")
+            logger.info(f"Using Twitter callback URL: {callback_url}")
             
             # Redirect to Twitter authorization URL
             return redirect(redirect_url)
