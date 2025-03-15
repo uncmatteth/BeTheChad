@@ -201,8 +201,11 @@ def twitter_login():
             return redirect(url_for('auth.login'))
         
         try:
-            # Create callback URL based on current hostname
-            callback_url = url_for('auth.twitter_callback', _external=True)
+            # Get environment-specific callback URL
+            if os.environ.get('FLASK_ENV') == 'development':
+                callback_url = os.environ.get('DEV_CALLBACK_URL', 'http://127.0.0.1:5000/auth/twitter-callback')
+            else:
+                callback_url = os.environ.get('PROD_CALLBACK_URL', 'https://chadbattles.fun/auth/twitter-callback')
             
             # Create OAuth handler with callback
             auth = tweepy.OAuth1UserHandler(
