@@ -592,7 +592,13 @@ def generate_automated_tweet():
         "👑 CHAD SPOTLIGHT 👑\n\nThe highest level Chad in the game is now level {highest_chad_level}! Think you can dethrone them? Get grinding, chads!",
         
         # Active users
-        "🔥 CHAD BATTLES IS LIT 🔥\n\n{active_users} Chads have been battling in the last 24 hours! The competition is heating up with {recent_battles} recent battles. Don't get left behind!"
+        "🔥 CHAD BATTLES IS LIT 🔥\n\n{active_users} Chads have been battling in the last 24 hours! The competition is heating up with {recent_battles} recent battles. Don't get left behind!",
+        
+        # New promotional tweet
+        "🎮 Join BeTheChad - the social RPG revolutionizing Twitter gaming!\n\n1️⃣ CREATE CHARACTER @RollMasterChad\n2️⃣ Collect waifus & items\n3️⃣ Challenge others to battles\n4️⃣ Join or create a cabal\n\nBecome the ultimate chad! #GamersUnite",
+        
+        # Battle encouragement
+        "Are you ready to prove yourself as the ultimate chad? BeTheChad is now accepting new players!\n\n1. Create your character based on your Twitter\n2. Collect rare waifus to boost your stats\n3. Challenge others with 'I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad'\n\nIt's that simple! #GamingOnTwitter"
     ]
     
     # Filter out templates we can't use (e.g., NFT if count is 0)
@@ -803,21 +809,14 @@ def generate_promotional_tweet():
         
         "💪 TIRED OF BEING A BETA? 💪\n\nStart your sigma grindset in #ChadBattles!\n\nTweet 'MAKE ME A CHAD @RollMasterChad' to transform your profile into a powerful Chad! Battle others, collect waifus, and dominate the leaderboards!",
         
-        "🏆 CHAD BATTLES COMMANDS 🏆\n\nHere are some basic commands:\n\n'MAKE ME A CHAD @RollMasterChad'\n'CHECK STATS @RollMasterChad'\n'HELP @RollMasterChad'\n\nReady to prove your chad status? #TwitterGaming"
+        # Active users
+        "🔥 CHAD BATTLES IS LIT 🔥\n\n{active_users} Chads have been battling in the last 24 hours! The competition is heating up with {recent_battles} recent battles. Don't get left behind!",
+        
+        # New promotional tweet
+        "🎮 Join BeTheChad - the social RPG revolutionizing Twitter gaming!\n\n1️⃣ CREATE CHARACTER @RollMasterChad\n2️⃣ Collect waifus & items\n3️⃣ Challenge others to battles\n4️⃣ Join or create a cabal\n\nBecome the ultimate chad! #GamersUnite"
     ]
     
-    # Randomly select a template
-    template = random.choice(promo_templates)
-    
-    # Sometimes add donation information (1 in 3 chance)
-    if random.randint(1, 3) == 1:
-        donation_message = "\n\n💰 Support Chad Battles: Send SOL to CyMubCiSr5iYZR48nJHRhF1dkggN5fbuoRzWrK5pex2a"
-        
-        # Check if adding this would exceed Twitter's character limit
-        if len(template) + len(donation_message) <= 280:
-            template += donation_message
-    
-    return template
+    return random.choice(promo_templates)
 
 def post_promotional_tweet():
     """
