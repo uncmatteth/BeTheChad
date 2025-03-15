@@ -7,6 +7,7 @@ import enum
 import json
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
+import uuid
 
 class BattleType(enum.Enum):
     """Enum for battle types."""
@@ -33,12 +34,11 @@ class Battle(db.Model):
     """Battle model for tracking battles between users"""
     __tablename__ = 'battles'
     
-    id = Column(Integer, primary_key=True)
-    initiator_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    target_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    winner_id = Column(Integer, ForeignKey('users.id'), nullable=True)
-    
-    # Battle details
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    initiator_id = Column(String(36), ForeignKey('chad.id'), nullable=False)
+    defender_id = Column(String(36), ForeignKey('chad.id'), nullable=False)
+    winner_id = Column(String(36), ForeignKey('chad.id'), nullable=True)
+    battle_timestamp = Column(DateTime, default=datetime.utcnow)
     battle_type = Column(String(50), nullable=False, default='standard')
     status = Column(String(20), nullable=False, default='pending')
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -46,9 +46,9 @@ class Battle(db.Model):
     
     # Battle stats
     initiator_power = Column(Float, nullable=False, default=0)
-    target_power = Column(Float, nullable=False, default=0)
+    defender_power = Column(Float, nullable=False, default=0)
     initiator_bonus = Column(Float, nullable=False, default=0)
-    target_bonus = Column(Float, nullable=False, default=0)
+    defender_bonus = Column(Float, nullable=False, default=0)
     
     # Battle outcome
     result_description = Column(Text, nullable=True)
@@ -56,34 +56,34 @@ class Battle(db.Model):
     xp_reward = Column(Integer, nullable=False, default=0)
     
     # Relationships
-    initiator = relationship('User', foreign_keys=[initiator_id], backref='initiated_battles')
-    target = relationship('User', foreign_keys=[target_id], backref='received_battles')
-    winner = relationship('User', foreign_keys=[winner_id], backref='won_battles')
+    initiator = relationship('Chad', foreign_keys=[initiator_id])
+    defender = relationship('Chad', foreign_keys=[defender_id])
+    winner = relationship('Chad', foreign_keys=[winner_id])
     
     def __repr__(self):
-        return f'<Battle {self.id}: {self.initiator_id} vs {self.target_id}>'
+        return f'<Battle {self.id}: {self.initiator_id} vs {self.defender_id}>'
     
     def calculate_power(self):
         """Calculate battle power for both participants"""
         # This is a simplified version for deployment
         # In the full version, we would calculate based on equipped items, level, etc.
         self.initiator_power = 100  # Placeholder
-        self.target_power = 100  # Placeholder
-        return self.initiator_power, self.target_power
+        self.defender_power = 100  # Placeholder
+        return self.initiator_power, self.defender_power
     
     def determine_winner(self):
         """Determine the winner of the battle"""
         # This is a simplified version for deployment
         # In the full version, we would use a more complex algorithm
         initiator_total = self.initiator_power + self.initiator_bonus
-        target_total = self.target_power + self.target_bonus
+        defender_total = self.defender_power + self.defender_bonus
         
-        if initiator_total > target_total:
+        if initiator_total > defender_total:
             self.winner_id = self.initiator_id
             self.result_description = "Initiator won the battle!"
-        elif target_total > initiator_total:
-            self.winner_id = self.target_id
-            self.result_description = "Target won the battle!"
+        elif defender_total > initiator_total:
+            self.winner_id = self.defender_id
+            self.result_description = "Defender won the battle!"
         else:
             # It's a tie, no winner
             self.result_description = "The battle ended in a tie!"
@@ -112,7 +112,7 @@ class Battle(db.Model):
             "turn": 0,
             "timestamp": datetime.utcnow().isoformat(),
             "event": "battle_started",
-            "description": f"Battle between {self.initiator_chad.name} and {self.opponent_chad.name if self.opponent_chad else 'NPC'} has begun!"
+            "description": f"Battle between {self.initiator.name} and {self.defender.name if self.defender else 'NPC'} has begun!"
         }])
         db.session.commit()
         
@@ -125,12 +125,12 @@ class Battle(db.Model):
         
         # Determine if it's this user's turn
         is_initiator_turn = (self.current_turn % 2 == 1)
-        if (is_initiator_turn and user_id != self.initiator_id) or (not is_initiator_turn and user_id != self.opponent_id):
+        if (is_initiator_turn and user_id != self.initiator_id) or (not is_initiator_turn and user_id != self.defender_id):
             return False, "It's not your turn"
         
         # Get the acting chad
-        acting_chad = self.initiator_chad if is_initiator_turn else self.opponent_chad
-        target_chad = self.opponent_chad if is_initiator_turn else self.initiator_chad
+        acting_chad = self.initiator if is_initiator_turn else self.defender
+        target_chad = self.defender if is_initiator_turn else self.initiator
         
         # Process the action
         result = self._process_action(acting_chad, target_chad, action_type, target)
@@ -215,19 +215,19 @@ class Battle(db.Model):
         
         # Determine winner (simplified)
         # In a real implementation, this would be based on remaining health or other metrics
-        initiator_score = sum(self.initiator_chad.get_total_stats().values())
-        opponent_score = sum(self.opponent_chad.get_total_stats().values()) if self.opponent_chad else 0
+        initiator_score = sum(self.initiator.get_total_stats().values())
+        defender_score = sum(self.defender.get_total_stats().values()) if self.defender else 0
         
-        if initiator_score > opponent_score:
+        if initiator_score > defender_score:
             self.winner_id = self.initiator_id
-            self.loser_id = self.opponent_id
-            winner_name = self.initiator_chad.name
-            loser_name = self.opponent_chad.name if self.opponent_chad else "NPC"
+            self.loser_id = self.defender_id
+            winner_name = self.initiator.name
+            loser_name = self.defender.name if self.defender else "NPC"
         else:
-            self.winner_id = self.opponent_id
+            self.winner_id = self.defender_id
             self.loser_id = self.initiator_id
-            winner_name = self.opponent_chad.name if self.opponent_chad else "NPC"
-            loser_name = self.initiator_chad.name
+            winner_name = self.defender.name if self.defender else "NPC"
+            loser_name = self.initiator.name
         
         # Add final event to battle log
         log = json.loads(self.battle_log) if self.battle_log else []
@@ -251,7 +251,7 @@ class Battle(db.Model):
                 user_id=self.winner_id,
                 amount=reward_amount,
                 description=f"Battle reward for defeating {loser_name}",
-                related_entity=('chad', self.initiator_chad_id if self.winner_id == self.initiator_id else self.opponent_chad_id)
+                related_entity=('chad', self.initiator_id if self.winner_id == self.initiator_id else self.defender_id)
             )
             
             # Update winner's Chadcoin balance
@@ -261,22 +261,102 @@ class Battle(db.Model):
                 winner.add_chadcoin(reward_amount)
     
     @classmethod
-    def get_user_battles(cls, user_id, limit=10):
-        """Get battles for a user."""
+    def get_user_battles(cls, user_id):
+        """Get all battles for a user"""
         return cls.query.filter(
-            db.or_(
-                cls.initiator_id == user_id,
-                cls.opponent_id == user_id
-            )
-        ).order_by(cls.created_at.desc()).limit(limit).all()
+            (cls.initiator_id == user_id) | (cls.defender_id == user_id)
+        ).order_by(cls.battle_timestamp.desc()).all()
     
     @classmethod
-    def get_active_battles(cls, user_id):
-        """Get active battles for a user."""
+    def get_user_wins(cls, user_id):
+        """Get number of wins for a user"""
+        return cls.query.filter(cls.winner_id == user_id).count()
+    
+    @classmethod
+    def get_user_battles_count(cls, user_id):
+        """Get number of battles for a user"""
         return cls.query.filter(
-            db.or_(
-                cls.initiator_id == user_id,
-                cls.opponent_id == user_id
-            ),
-            cls.status.in_([BattleStatus.PENDING.value, BattleStatus.IN_PROGRESS.value])
-        ).order_by(cls.created_at.desc()).all() 
+            (cls.initiator_id == user_id) | (cls.defender_id == user_id)
+        ).count()
+    
+    @classmethod
+    def get_leaderboard(cls, limit=10):
+        """
+        Get the top players for the leaderboard
+        
+        Returns:
+            list: List of dictionaries with chad info and battle stats
+        """
+        from sqlalchemy import func, case, literal_column
+        from sqlalchemy.sql import text
+        from app.models.chad import Chad
+        from app.models.user import User
+        
+        try:
+            # First attempt: Use SQLAlchemy
+            try:
+                # Get battle stats for each chad
+                subq = db.session.query(
+                    cls.initiator_id.label('chad_id'),
+                    func.count(cls.id).label('battles'),
+                    func.sum(case([(cls.winner_id == cls.initiator_id, 1)], else_=0)).label('wins')
+                ).group_by(cls.initiator_id).union(
+                    db.session.query(
+                        cls.defender_id.label('chad_id'),
+                        func.count(cls.id).label('battles'),
+                        func.sum(case([(cls.winner_id == cls.defender_id, 1)], else_=0)).label('wins')
+                    ).group_by(cls.defender_id)
+                ).subquery()
+                
+                # Aggregate the battle stats
+                battle_stats = db.session.query(
+                    subq.c.chad_id,
+                    func.sum(subq.c.battles).label('battles'),
+                    func.sum(subq.c.wins).label('wins')
+                ).group_by(subq.c.chad_id).subquery()
+                
+                # Join with Chad and User tables
+                result = db.session.query(
+                    Chad.id,
+                    User.username.label('chad_name'),
+                    Chad.chad_class.label('class_name'),
+                    battle_stats.c.wins,
+                    battle_stats.c.battles,
+                    (func.cast(battle_stats.c.wins, db.Float) / func.cast(battle_stats.c.battles, db.Float)).label('win_rate'),
+                    (battle_stats.c.wins * 10 + battle_stats.c.battles * 5).label('score')
+                ).join(battle_stats, Chad.id == battle_stats.c.chad_id
+                ).join(User, Chad.id == User.chad_id
+                ).filter(battle_stats.c.battles > 0
+                ).order_by(text('score DESC')
+                ).limit(limit).all()
+                
+                # Convert to list of dictionaries
+                leaderboard = []
+                for row in result:
+                    leaderboard.append({
+                        'chad_id': row.id,
+                        'chad_name': row.chad_name,
+                        'class_name': row.class_name,
+                        'wins': row.wins,
+                        'battles': row.battles,
+                        'win_rate': row.win_rate or 0,
+                        'score': row.score
+                    })
+                
+                return leaderboard
+                
+            except Exception as e:
+                # Log the error but continue with fallback
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error in primary leaderboard query: {str(e)}")
+                
+                # Fallback: Return empty list for now
+                return []
+                
+        except Exception as outer_e:
+            # Return empty list in case of any error
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in leaderboard query: {str(outer_e)}")
+            return [] 

@@ -1,7 +1,14 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from app.extensions import db, limiter
+from app.extensions import db, limiter, cache
 import logging
+from app.models.user import User
+from app.models.chad import Chad, ChadClass
+from app.models.waifu import Waifu
+from app.models.inventory import Inventory
+from app.models.battle import Battle
+import json
+import traceback
 
 # Create blueprint
 main = Blueprint('main', __name__)
@@ -42,23 +49,78 @@ def how_to_play():
     return render_template('main/how_to_play.html')
 
 @main.route('/leaderboard')
+@cache.cached(timeout=300)  # Cache for 5 minutes
+@limiter.limit("30/minute")
 def leaderboard():
-    """Leaderboard page"""
+    """Show leaderboard page"""
     try:
-        # This is a simplified version for deployment
-        # In the full version, we would query the database for top users
+        # Import here to avoid circular imports
+        from app.models.chad import Chad
+        from app.models.waifu import Waifu
+        from app.models.cabal import Cabal
         
-        # Create empty leaderboard_data for template
-        leaderboard_data = {
-            'top_players': [],
-            'current_user_rank': None
-        }
+        # Try to get battle leaderboard
+        try:
+            battle_leaderboard = Battle.get_leaderboard(limit=10)
+        except Exception as e:
+            logger.error(f"Error loading battle leaderboard: {str(e)}")
+            battle_leaderboard = []
+            
+        # Try to get waifu leaderboard (top collectors)
+        try:
+            waifu_leaderboard = []
+            waifu_stats = Waifu.get_collector_stats(limit=10)
+            for i, (chad_id, username, class_name, waifu_count, rare_count) in enumerate(waifu_stats, 1):
+                waifu_leaderboard.append({
+                    'rank': i,
+                    'chad_id': chad_id,
+                    'chad_name': username,
+                    'class_name': class_name,
+                    'waifu_count': waifu_count,
+                    'rare_count': rare_count,
+                    'score': waifu_count * 5 + rare_count * 20
+                })
+        except Exception as e:
+            logger.error(f"Error loading waifu leaderboard: {str(e)}")
+            waifu_leaderboard = []
+            
+        # Try to get cabal leaderboard
+        try:
+            cabal_leaderboard = []
+            cabal_stats = Cabal.get_top_cabals(limit=10)
+            for i, (cabal_id, cabal_name, member_count, total_power) in enumerate(cabal_stats, 1):
+                cabal_leaderboard.append({
+                    'rank': i,
+                    'cabal_id': cabal_id,
+                    'cabal_name': cabal_name,
+                    'member_count': member_count,
+                    'total_power': total_power,
+                    'avg_power': total_power / member_count if member_count > 0 else 0
+                })
+        except Exception as e:
+            logger.error(f"Error loading cabal leaderboard: {str(e)}")
+            cabal_leaderboard = []
         
-        return render_template('main/leaderboard.html', leaderboard=leaderboard_data)
+        # Add rank to battle leaderboard
+        for i, entry in enumerate(battle_leaderboard, 1):
+            entry['rank'] = i
+            
+        return render_template(
+            'main/leaderboard.html',
+            battle_leaderboard=battle_leaderboard,
+            waifu_leaderboard=waifu_leaderboard,
+            cabal_leaderboard=cabal_leaderboard
+        )
+        
     except Exception as e:
-        logger.error(f"Error loading leaderboard: {str(e)}")
-        flash('Error loading leaderboard', 'danger')
-        return redirect(url_for('main.index'))
+        logger.error(f"Error loading leaderboard: {str(e)}\n{traceback.format_exc()}")
+        # Return empty leaderboards
+        return render_template(
+            'main/leaderboard.html',
+            battle_leaderboard=[],
+            waifu_leaderboard=[],
+            cabal_leaderboard=[]
+        )
 
 @main.route('/faq')
 def faq():

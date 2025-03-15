@@ -6,6 +6,7 @@ from datetime import datetime
 import enum
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
+import uuid
 
 class CabalMemberRole(enum.Enum):
     """Enum for cabal member roles."""
@@ -116,6 +117,61 @@ class Cabal(db.Model):
         
         return True, "User removed from cabal"
 
+    @property
+    def member_count(self):
+        """Get the number of members in the cabal"""
+        return len(self.members)
+    
+    @property
+    def total_power(self):
+        """Get the total power of all members in the cabal"""
+        return sum([member.power_contribution for member in self.members if member.is_active])
+    
+    @classmethod
+    def get_top_cabals(cls, limit=10):
+        """
+        Get the top cabals for the leaderboard
+        
+        Returns:
+            list: List of tuples (cabal_id, cabal_name, member_count, total_power)
+        """
+        try:
+            cabals = cls.query.all()
+            
+            # Calculate stats for each cabal
+            cabal_stats = []
+            for cabal in cabals:
+                members = cabal.members
+                member_count = len(members)
+                
+                if member_count == 0:
+                    continue
+                    
+                # Calculate total power (this is just an example, adjust as needed)
+                total_power = 0
+                for membership in members:
+                    if membership.is_active:
+                        total_power += membership.power_contribution
+                
+                cabal_stats.append((
+                    cabal.id,
+                    cabal.name,
+                    member_count,
+                    total_power
+                ))
+            
+            # Sort by total power descending
+            cabal_stats.sort(key=lambda x: x[3], reverse=True)
+            
+            # Return top cabals
+            return cabal_stats[:limit]
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error getting top cabals: {str(e)}")
+            return []
+
 class CabalMember(db.Model):
     """Model for cabal membership"""
     __tablename__ = 'cabal_members'
@@ -220,4 +276,21 @@ class CabalOfficerRole:
 
 class CabalVote:
     """Stub for CabalVote."""
-    pass 
+    pass
+
+class CabalMembership(db.Model):
+    """
+    Model for tracking cabal memberships
+    """
+    id = Column(Integer, primary_key=True)
+    cabal_id = Column(Integer, ForeignKey('cabals.id'), nullable=False)
+    chad_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    role = Column(String(50), nullable=False, default='member')
+    joined_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    
+    # Relationships
+    cabal = relationship('Cabal', back_populates='members')
+    chad = relationship('User', backref='cabal_memberships')
+    
+    def __repr__(self):
+        return f'<CabalMembership {self.id}: {self.chad_id} in {self.cabal_id}>' 

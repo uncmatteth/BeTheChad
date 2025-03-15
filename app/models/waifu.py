@@ -3,6 +3,7 @@ Waifu model for Chad Battles.
 """
 from app.extensions import db
 from datetime import datetime
+import uuid
 
 class WaifuRarity(db.Model):
     """Waifu rarity model for different rarity levels."""
@@ -41,30 +42,76 @@ class WaifuType(db.Model):
         return f'<WaifuType {self.name} ({self.rarity.name})>'
 
 class Waifu(db.Model):
-    """Waifu model for companion characters."""
+    """
+    Waifu model for tracking collected waifus
+    """
     __tablename__ = 'waifus'
     
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    chad_id = db.Column(db.Integer, db.ForeignKey('chads.id'), nullable=True)
-    waifu_type_id = db.Column(db.Integer, db.ForeignKey('waifu_types.id'), nullable=False)
-    name = db.Column(db.String(50), nullable=False)
-    is_equipped = db.Column(db.Boolean, default=False)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    rarity = db.Column(db.String(50), nullable=False, default='common')
+    type = db.Column(db.String(50), nullable=False, default='standard')
+    image_url = db.Column(db.String(255), nullable=True)
+    power = db.Column(db.Integer, nullable=False, default=0)
+    intelligence = db.Column(db.Integer, nullable=False, default=0)
+    charisma = db.Column(db.Integer, nullable=False, default=0)
+    luck = db.Column(db.Integer, nullable=False, default=0)
     
-    # Stats
-    level = db.Column(db.Integer, default=1)
-    xp = db.Column(db.Integer, default=0)
-    clout_bonus = db.Column(db.Integer, default=0)
-    roast_bonus = db.Column(db.Integer, default=0)
-    cringe_resistance_bonus = db.Column(db.Integer, default=0)
-    drip_bonus = db.Column(db.Integer, default=0)
+    # Ownership tracking
+    owner_id = db.Column(db.String(36), db.ForeignKey('chads.id'), nullable=True)
+    acquired_date = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Relationships
+    owner = db.relationship('Chad', foreign_keys=[owner_id], backref='waifus')
     
     def __repr__(self):
-        return f'<Waifu {self.name} (Level {self.level})>'
+        return f'<Waifu {self.id}: {self.name} ({self.rarity})>'
+    
+    @classmethod
+    def get_user_waifus(cls, user_id):
+        """Get all waifus for a user"""
+        return cls.query.filter(cls.owner_id == user_id).all()
+    
+    @classmethod
+    def get_collector_stats(cls, limit=10):
+        """
+        Get top collectors' stats for the leaderboard
+        
+        Returns:
+            list: List of tuples (chad_id, username, class_name, waifu_count, rare_count)
+        """
+        from app.models.chad import Chad
+        from app.models.user import User
+        from sqlalchemy import func, case
+        
+        try:
+            # Get stats from database
+            query = db.session.query(
+                Chad.id,
+                User.username,
+                Chad.chad_class,
+                func.count(cls.id).label('waifu_count'),
+                func.sum(case([(cls.rarity.in_(['rare', 'legendary', 'mythic']), 1)], else_=0)).label('rare_count')
+            ).join(
+                User, Chad.id == User.chad_id
+            ).join(
+                cls, cls.owner_id == Chad.id
+            ).group_by(
+                Chad.id, User.username, Chad.chad_class
+            ).order_by(
+                func.count(cls.id).desc(), 
+                func.sum(case([(cls.rarity.in_(['rare', 'legendary', 'mythic']), 1)], else_=0)).desc()
+            ).limit(limit)
+            
+            result = query.all()
+            return result
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error getting collector stats: {str(e)}")
+            return []
     
     def add_xp(self, amount):
         """Add XP to the Waifu and level up if necessary."""
