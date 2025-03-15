@@ -6,7 +6,7 @@ from app.models.chad import Chad, ChadClass
 from app.models.waifu import Waifu
 from app.models.item import Item
 from app.models.rarity import Rarity
-from app.models.battle import Battle, BattleResult
+from app.models.battle import Battle
 
 # Other models that might exist in your app
 try:
