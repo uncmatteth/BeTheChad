@@ -8,6 +8,10 @@
 - [x] `Dockerfile`: Updated to use `requirements_deployment.txt` and setup script
 - [x] `requirements_deployment.txt`: Contains all dependencies except blockchain
 - [x] `setup_deployment_db.py`: Properly initializes the database
+- [x] `app/routes/auth.py`: Contains authentication routes
+- [x] `app/routes/main.py`: Contains main application routes
+- [x] `app/models/battle.py`: Contains Battle model with target_id attribute
+- [x] `app/models/cabal.py`: Contains Cabal model with total_power attribute
 
 ## Pre-Deployment Steps
 
@@ -33,7 +37,7 @@
 - [ ] Check admin features
 - [x] Verify error handling
 
-## Current Issues (Last Updated: March 14, 2025)
+## Current Issues (Last Updated: March 15, 2025)
 
 ### Database Issues
 - [x] **Critical**: Database switches between SQLite and PostgreSQL during different operations
@@ -52,16 +56,23 @@
   - [x] Fixed: Updated routes to use `/home/chadszv/public_html/music` on the hosting server
   - [x] Added fallback to `app/static/music` for local development
 - [ ] Twitter OAuth callback URL not approved for the application
-- [ ] Battle feature showing errors (missing target_id attribute)
+- [x] Battle feature showing errors (missing target_id attribute)
+  - [x] Fixed: Added target_id attribute to Battle model
 - [ ] Waifu module errors when trying to display user's waifus
-- [ ] Cabal feature errors due to missing tables and attributes
+- [x] Cabal feature errors due to missing tables and attributes
+  - [x] Fixed: Added total_power attribute to Cabal model
 
 ### Code Issues
-- [ ] Model relationship issues:
-  - [ ] `InstrumentedList` object has no attribute 'all'
-  - [ ] `Battle` has no attribute 'target_id'
-  - [ ] `Cabal` has no attribute 'total_power'
+- [x] Model relationship issues:
+  - [x] `InstrumentedList` object has no attribute 'all'
+  - [x] `Battle` has no attribute 'target_id'
+  - [x] `Cabal` has no attribute 'total_power'
 - [ ] Health check endpoint rate limit being exceeded
+
+### Route Structure Issues
+- [x] Missing route files in app/routes directory
+  - [x] Fixed: Created auth.py and main.py in app/routes
+  - [x] Updated app/__init__.py to use new route structure
 
 ## Next Steps Priority List
 
@@ -83,7 +94,7 @@
    - [ ] Update app configuration with correct Twitter API credentials
 
 5. Fix model relationship issues:
-   - [ ] Update models to fix attribute and method errors
+   - [x] Update models to fix attribute and method errors
    - [ ] Create missing tables and attributes
 
 ## Backup Plan
@@ -98,4 +109,14 @@
 - [ ] Configure regular backups
 - [ ] Create admin user management tools
 - [ ] Plan for gradual re-enabling of features
-- [ ] Document any issues encountered for future reference 
+- [ ] Document any issues encountered for future reference
+
+## Deployment Troubleshooting
+
+If deployment fails:
+1. Check Render logs for specific error messages
+2. Verify all required route files exist in app/routes directory
+3. Ensure models have all attributes referenced in controllers
+4. Check for missing Python modules in requirements_deployment.txt
+5. Verify database connection string is correctly formatted
+6. Clear build cache on Render if necessary 

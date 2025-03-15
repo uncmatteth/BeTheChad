@@ -2,7 +2,7 @@
 
 ## For Future AI Assistants
 This project follows a strict set of development standards (see Development Standards section below). 
-Current progress as of March 14, 2025:
+Current progress as of March 15, 2025:
 1. Music system core functionality is complete with:
    - Audio playback (.mp3 and .m4a support)
    - Rate limiting and caching
@@ -35,13 +35,29 @@ Current progress as of March 14, 2025:
    - Ensured consistent use of PostgreSQL
    - Proper migration handling
    - Robust initialization script
+7. Route structure updated:
+   - Created proper route files in app/routes
+   - Fixed missing module errors
+   - Added model attributes for battle and cabal
+
+## CRITICAL REMINDERS
+- Music files MUST be hosted on nameserver (`/home/chadszv/public_html/music`) NOT on Render
+- Always test PostgreSQL database operations, avoid SQLite even in development
+- Check for correct URLs in all templates (especially for music and API endpoints)
+- Templates must extend from base.html and implement required blocks
+- Update both checklists before committing changes
+- Render deployments are triggered automatically by git pushes
+- Use hardcoded fallbacks for critical resources when filesystem access might fail
+- When changing app structure, ensure all necessary files are created (routes, models, etc.)
+- Render deployment requires proper route files in app/routes directory
+- Models must include all attributes referenced in controllers
 
 Next priority tasks (in recommended order):
-1. Run and fix any failing tests (Testing)
-2. Improve mobile responsiveness (Frontend)
-3. Implement user authentication (Security)
-4. Create comprehensive API documentation (Documentation)
-5. Optimize database queries (Performance)
+1. Fix Twitter OAuth callback URL in the Twitter developer dashboard
+2. Fix remaining model relationship issues
+3. Run and fix any failing tests (Testing)
+4. Improve mobile responsiveness (Frontend)
+5. Create comprehensive API documentation (Documentation)
 
 Remember to:
 - Update this checklist after completing each task
@@ -57,6 +73,8 @@ Remember to:
 - Template structure completed for main pages
 - Database configuration fixed for consistent PostgreSQL usage
 - Music player system updated to use hosting server's music files in `/home/chadszv/public_html/music`
+- Route structure updated to use app/routes directory
+- Model attributes fixed for battle and cabal
 
 ## Immediate Tasks
 
@@ -139,6 +157,12 @@ Remember to:
 - [x] Improve database initialization script
 - [ ] Verify all tables are properly created in PostgreSQL
 
+### 11. Route Structure
+- [x] Create auth routes in app/routes/auth.py
+- [x] Create main routes in app/routes/main.py
+- [x] Update app/__init__.py to use new route structure
+- [x] Fix model attributes for battle and cabal
+
 ## Future Enhancements
 - [ ] Consider implementing offline playback capability
 - [ ] Add support for user playlists
@@ -212,4 +236,4 @@ This checklist consolidates tasks from:
 - WEBSITE_ISSUES_CHECKLIST.md
 - Other project documentation
 
-Last Updated: March 14, 2025 
+Last Updated: March 15, 2025 

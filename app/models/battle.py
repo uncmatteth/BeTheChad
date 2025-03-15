@@ -5,6 +5,8 @@ from app.extensions import db
 from datetime import datetime
 import enum
 import json
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Float
+from sqlalchemy.orm import relationship
 
 class BattleType(enum.Enum):
     """Enum for battle types."""
@@ -28,47 +30,75 @@ class BattleAction(enum.Enum):
     SPECIAL = "special"
 
 class Battle(db.Model):
-    """Battle model for tracking battles between Chads."""
+    """Battle model for tracking battles between users"""
     __tablename__ = 'battles'
     
-    id = db.Column(db.Integer, primary_key=True)
-    battle_type = db.Column(db.String(20), nullable=False, default=BattleType.PVP.value)
-    status = db.Column(db.String(20), nullable=False, default=BattleStatus.PENDING.value)
-    
-    # Participants
-    initiator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    initiator_chad_id = db.Column(db.Integer, db.ForeignKey('chads.id'), nullable=False)
-    opponent_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # Null for PVE
-    opponent_chad_id = db.Column(db.Integer, db.ForeignKey('chads.id'), nullable=True)  # Null for PVE
-    
-    # For PVE battles
-    npc_opponent_id = db.Column(db.Integer, nullable=True)  # Reference to NPC data
+    id = Column(Integer, primary_key=True)
+    initiator_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    target_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    winner_id = Column(Integer, ForeignKey('users.id'), nullable=True)
     
     # Battle details
-    wager_amount = db.Column(db.Integer, default=0)  # Chadcoin wager
-    turn_count = db.Column(db.Integer, default=0)
-    current_turn = db.Column(db.Integer, default=0)
-    winner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    loser_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    battle_type = Column(String(50), nullable=False, default='standard')
+    status = Column(String(20), nullable=False, default='pending')
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
     
-    # Battle log
-    battle_log = db.Column(db.Text, nullable=True)  # JSON string of battle actions
+    # Battle stats
+    initiator_power = Column(Float, nullable=False, default=0)
+    target_power = Column(Float, nullable=False, default=0)
+    initiator_bonus = Column(Float, nullable=False, default=0)
+    target_bonus = Column(Float, nullable=False, default=0)
     
-    # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    started_at = db.Column(db.DateTime, nullable=True)
-    completed_at = db.Column(db.DateTime, nullable=True)
+    # Battle outcome
+    result_description = Column(Text, nullable=True)
+    chadcoin_reward = Column(Integer, nullable=False, default=0)
+    xp_reward = Column(Integer, nullable=False, default=0)
     
     # Relationships
-    initiator = db.relationship('User', foreign_keys=[initiator_id], backref=db.backref('initiated_battles', lazy='dynamic'))
-    initiator_chad = db.relationship('Chad', foreign_keys=[initiator_chad_id])
-    opponent = db.relationship('User', foreign_keys=[opponent_id], backref=db.backref('opponent_battles', lazy='dynamic'))
-    opponent_chad = db.relationship('Chad', foreign_keys=[opponent_chad_id])
-    winner = db.relationship('User', foreign_keys=[winner_id], backref=db.backref('won_battles', lazy='dynamic'))
-    loser = db.relationship('User', foreign_keys=[loser_id], backref=db.backref('lost_battles', lazy='dynamic'))
+    initiator = relationship('User', foreign_keys=[initiator_id], backref='initiated_battles')
+    target = relationship('User', foreign_keys=[target_id], backref='received_battles')
+    winner = relationship('User', foreign_keys=[winner_id], backref='won_battles')
     
     def __repr__(self):
-        return f'<Battle {self.id}: {self.battle_type} {self.status}>'
+        return f'<Battle {self.id}: {self.initiator_id} vs {self.target_id}>'
+    
+    def calculate_power(self):
+        """Calculate battle power for both participants"""
+        # This is a simplified version for deployment
+        # In the full version, we would calculate based on equipped items, level, etc.
+        self.initiator_power = 100  # Placeholder
+        self.target_power = 100  # Placeholder
+        return self.initiator_power, self.target_power
+    
+    def determine_winner(self):
+        """Determine the winner of the battle"""
+        # This is a simplified version for deployment
+        # In the full version, we would use a more complex algorithm
+        initiator_total = self.initiator_power + self.initiator_bonus
+        target_total = self.target_power + self.target_bonus
+        
+        if initiator_total > target_total:
+            self.winner_id = self.initiator_id
+            self.result_description = "Initiator won the battle!"
+        elif target_total > initiator_total:
+            self.winner_id = self.target_id
+            self.result_description = "Target won the battle!"
+        else:
+            # It's a tie, no winner
+            self.result_description = "The battle ended in a tie!"
+        
+        self.status = 'completed'
+        self.completed_at = datetime.utcnow()
+        return self.winner_id
+    
+    def calculate_rewards(self):
+        """Calculate rewards for the battle"""
+        # This is a simplified version for deployment
+        # In the full version, we would use a more complex algorithm
+        self.chadcoin_reward = 10
+        self.xp_reward = 5
+        return self.chadcoin_reward, self.xp_reward
     
     def start_battle(self):
         """Start the battle."""

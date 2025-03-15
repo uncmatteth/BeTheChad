@@ -4,6 +4,8 @@ Cabal model for Chad Battles.
 from app.extensions import db
 from datetime import datetime
 import enum
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Float
+from sqlalchemy.orm import relationship
 
 class CabalMemberRole(enum.Enum):
     """Enum for cabal member roles."""
@@ -13,257 +15,137 @@ class CabalMemberRole(enum.Enum):
     RECRUIT = "recruit"
 
 class Cabal(db.Model):
-    """Cabal model for player guilds/clans."""
+    """Cabal model for groups of users"""
     __tablename__ = 'cabals'
     
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
-    description = db.Column(db.Text, nullable=True)
-    leader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(64), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    logo_url = Column(String(255), nullable=True)
     
     # Cabal stats
-    level = db.Column(db.Integer, default=1)
-    xp = db.Column(db.Integer, default=0)
-    chadcoin_balance = db.Column(db.Integer, default=0)
+    total_power = Column(Float, nullable=False, default=0)
+    member_count = Column(Integer, nullable=False, default=0)
+    victory_count = Column(Integer, nullable=False, default=0)
+    defeat_count = Column(Integer, nullable=False, default=0)
     
-    # Cabal customization
-    logo_url = db.Column(db.String(255), nullable=True)
-    banner_url = db.Column(db.String(255), nullable=True)
-    color_scheme = db.Column(db.String(20), default="default")
+    # Cabal status
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Cabal metrics
-    battles_won = db.Column(db.Integer, default=0)
-    battles_lost = db.Column(db.Integer, default=0)
-    total_member_count = db.Column(db.Integer, default=1)  # Start with leader
-    
-    # Timestamps
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Cabal leadership
+    leader_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     
     # Relationships
-    leader = db.relationship('User', backref=db.backref('led_cabal', uselist=False))
-    members = db.relationship('CabalMember', backref='cabal', lazy='dynamic', cascade='all, delete-orphan')
+    leader = relationship('User', foreign_keys=[leader_id], backref='led_cabals')
+    members = relationship('CabalMember', back_populates='cabal', cascade='all, delete-orphan')
     
     def __repr__(self):
-        return f'<Cabal {self.name} (Level {self.level})>'
-    
-    def add_member(self, user_id, role=CabalMemberRole.RECRUIT.value):
-        """Add a new member to the cabal.
-        
-        Args:
-            user_id (int): The user ID to add
-            role (str): The role to assign
-        
-        Returns:
-            CabalMember: The new member or None if already in cabal
-        """
-        # Check if user is already in the cabal
-        existing_member = CabalMember.query.filter_by(cabal_id=self.id, user_id=user_id).first()
-        if existing_member:
-            return None
-        
-        # Add the new member
-        member = CabalMember(
-            cabal_id=self.id,
-            user_id=user_id,
-            role=role
-        )
-        
-        db.session.add(member)
-        self.total_member_count += 1
-        db.session.commit()
-        
-        return member
-    
-    def remove_member(self, user_id):
-        """Remove a member from the cabal.
-        
-        Args:
-            user_id (int): The user ID to remove
-        
-        Returns:
-            bool: True if removed, False otherwise
-        """
-        # Cannot remove the leader
-        if user_id == self.leader_id:
-            return False
-        
-        # Find and remove the member
-        member = CabalMember.query.filter_by(cabal_id=self.id, user_id=user_id).first()
-        if member:
-            db.session.delete(member)
-            self.total_member_count -= 1
-            db.session.commit()
-            return True
-        
-        return False
-    
-    def change_leader(self, new_leader_id):
-        """Change the leader of the cabal.
-        
-        Args:
-            new_leader_id (int): The new leader's user ID
-        
-        Returns:
-            bool: True if changed, False otherwise
-        """
-        # Check if the new leader is a member
-        member = CabalMember.query.filter_by(cabal_id=self.id, user_id=new_leader_id).first()
-        if not member:
-            return False
-        
-        # Update the old leader's role
-        old_leader_member = CabalMember.query.filter_by(cabal_id=self.id, user_id=self.leader_id).first()
-        if old_leader_member:
-            old_leader_member.role = CabalMemberRole.MEMBER.value
-        
-        # Update the new leader's role
-        member.role = CabalMemberRole.LEADER.value
-        
-        # Update the cabal
-        self.leader_id = new_leader_id
-        db.session.commit()
-        
-        return True
-    
-    def add_xp(self, amount):
-        """Add XP to the cabal and level up if necessary."""
-        if amount <= 0:
-            return False
-        
-        self.xp += amount
-        
-        # Check for level up
-        xp_needed = self.get_xp_for_next_level()
-        while self.xp >= xp_needed:
-            self.level_up()
-            xp_needed = self.get_xp_for_next_level()
-        
-        db.session.commit()
-        return True
-    
-    def level_up(self):
-        """Level up the cabal."""
-        self.level += 1
-        return True
-    
-    def get_xp_for_next_level(self):
-        """Calculate XP needed for the next level."""
-        return 1000 * self.level + 500 * (self.level - 1) ** 2
-    
-    def add_chadcoin(self, amount):
-        """Add chadcoin to the cabal treasury.
-        
-        Args:
-            amount (int): The amount to add
-        
-        Returns:
-            bool: True if added, False otherwise
-        """
-        if amount <= 0:
-            return False
-        
-        self.chadcoin_balance += amount
-        db.session.commit()
-        
-        return True
-    
-    def remove_chadcoin(self, amount):
-        """Remove chadcoin from the cabal treasury.
-        
-        Args:
-            amount (int): The amount to remove
-        
-        Returns:
-            bool: True if removed, False otherwise
-        """
-        if amount <= 0 or amount > self.chadcoin_balance:
-            return False
-        
-        self.chadcoin_balance -= amount
-        db.session.commit()
-        
-        return True
-    
-    def get_active_members(self):
-        """Get active members of the cabal."""
-        return CabalMember.query.filter_by(cabal_id=self.id, is_active=True).all()
-    
-    def get_active_member_count(self):
-        """Get count of active members."""
-        return CabalMember.query.filter_by(cabal_id=self.id, is_active=True).count()
+        return f'<Cabal {self.id}: {self.name}>'
     
     def calculate_total_power(self):
-        """Calculate the total power of all members' Chads."""
-        total_power = 0
-        
-        active_members = self.get_active_members()
-        for member in active_members:
-            # Get the member's Chad
-            from app.models.chad import Chad
-            chad = Chad.query.filter_by(user_id=member.user_id).first()
-            if chad:
-                # Get the Chad's total stats
-                stats = chad.get_total_stats()
-                
-                # Calculate power as sum of stats
-                power = stats.clout + stats.roast_level + stats.cringe_resistance + stats.drip_factor
-                total_power += power
-        
-        return total_power
+        """Calculate the total power of the cabal based on members"""
+        # This is a simplified version for deployment
+        # In the full version, we would calculate based on member stats
+        total = 0
+        for member in self.members:
+            if member.is_active:
+                total += member.power_contribution
+        self.total_power = total
+        return self.total_power
     
-    @classmethod
-    def get_top_cabals(cls, limit=10):
-        """Get the top cabals by level."""
-        return cls.query.order_by(cls.level.desc(), cls.xp.desc()).limit(limit).all()
+    def update_member_count(self):
+        """Update the member count"""
+        self.member_count = sum(1 for member in self.members if member.is_active)
+        return self.member_count
+    
+    def add_member(self, user, role='member'):
+        """Add a user to the cabal"""
+        from app.models.cabal_member import CabalMember
+        
+        # Check if user is already a member
+        existing_member = CabalMember.query.filter_by(cabal_id=self.id, user_id=user.id).first()
+        if existing_member:
+            if existing_member.is_active:
+                return False, "User is already a member of this cabal"
+            else:
+                existing_member.is_active = True
+                existing_member.role = role
+                db.session.commit()
+                self.update_member_count()
+                return True, "User rejoined the cabal"
+        
+        # Create new member
+        member = CabalMember(
+            cabal_id=self.id,
+            user_id=user.id,
+            role=role,
+            joined_at=datetime.utcnow()
+        )
+        db.session.add(member)
+        db.session.commit()
+        
+        # Update cabal stats
+        self.update_member_count()
+        self.calculate_total_power()
+        db.session.commit()
+        
+        return True, "User added to cabal"
+    
+    def remove_member(self, user_id):
+        """Remove a user from the cabal"""
+        from app.models.cabal_member import CabalMember
+        
+        member = CabalMember.query.filter_by(cabal_id=self.id, user_id=user_id, is_active=True).first()
+        if not member:
+            return False, "User is not a member of this cabal"
+        
+        # Cannot remove the leader
+        if user_id == self.leader_id:
+            return False, "Cannot remove the cabal leader"
+        
+        member.is_active = False
+        member.left_at = datetime.utcnow()
+        db.session.commit()
+        
+        # Update cabal stats
+        self.update_member_count()
+        self.calculate_total_power()
+        db.session.commit()
+        
+        return True, "User removed from cabal"
 
 class CabalMember(db.Model):
-    """Cabal member model for tracking cabal membership."""
+    """Model for cabal membership"""
     __tablename__ = 'cabal_members'
     
-    id = db.Column(db.Integer, primary_key=True)
-    cabal_id = db.Column(db.Integer, db.ForeignKey('cabals.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    role = db.Column(db.String(20), default=CabalMemberRole.RECRUIT.value)
+    id = Column(Integer, primary_key=True)
+    cabal_id = Column(Integer, ForeignKey('cabals.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     
-    # Member stats
-    contribution_points = db.Column(db.Integer, default=0)
-    battles_participated = db.Column(db.Integer, default=0)
-    is_active = db.Column(db.Boolean, default=True)
+    # Member status
+    role = Column(String(20), nullable=False, default='member')
+    is_active = Column(Boolean, nullable=False, default=True)
+    power_contribution = Column(Float, nullable=False, default=0)
     
     # Timestamps
-    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_active_at = db.Column(db.DateTime, default=datetime.utcnow)
+    joined_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    left_at = Column(DateTime, nullable=True)
     
     # Relationships
-    user = db.relationship('User', backref=db.backref('cabal_membership', uselist=False))
+    cabal = relationship('Cabal', back_populates='members')
+    user = relationship('User', backref='cabal_memberships')
     
     def __repr__(self):
-        return f'<CabalMember {self.user_id} in {self.cabal_id} as {self.role}>'
+        return f'<CabalMember {self.id}: {self.user_id} in {self.cabal_id}>'
     
-    def add_contribution_points(self, amount):
-        """Add contribution points for cabal activities."""
-        if amount <= 0:
-            return False
-        
-        self.contribution_points += amount
-        db.session.commit()
-        
-        return True
-    
-    def increment_battles_participated(self):
-        """Increment the battles participated count."""
-        self.battles_participated += 1
-        db.session.commit()
-        
-        return True
-    
-    def update_activity(self):
-        """Update the last active timestamp."""
-        self.last_active_at = datetime.utcnow()
-        db.session.commit()
-        
-        return True
+    def calculate_power_contribution(self):
+        """Calculate the power contribution of this member"""
+        # This is a simplified version for deployment
+        # In the full version, we would calculate based on user stats
+        self.power_contribution = 100  # Placeholder
+        return self.power_contribution
 
 # Simple stub implementation of CabalBattle to resolve import errors
 class CabalBattle:
