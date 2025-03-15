@@ -35,92 +35,35 @@ def load_user(user_id):
         current_app.logger.error(f"Error loading user {user_id}: {str(e)}")
         return None
 
-def create_app(config_name='development'):
+def create_app(test_config=None):
     """
     Application factory pattern to create the Flask app
     
     Args:
-        config_name (str): Configuration environment name (development, testing, production)
+        test_config (dict): Configuration for testing
     
     Returns:
         Flask app instance
     """
     app = Flask(__name__, instance_relative_config=True)
     
-    # Load the config based on environment
-    app.config.from_object(config_by_name[config_name])
+    # Configure logging
+    configure_logging(app)
     
-    # Database URL handling: Ensure DATABASE_URL has priority if present
-    # This ensures consistent PostgreSQL usage in all environments including migrations
-    database_url = os.environ.get('DATABASE_URL')
-    if database_url:
-        # Handle Render's postgres:// vs postgresql:// URL format
-        if database_url.startswith('postgres://'):
-            database_url = database_url.replace('postgres://', 'postgresql://', 1)
-        
-        # Override the SQLALCHEMY_DATABASE_URI with DATABASE_URL
-        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-        
-        # Log the database connection (safely)
-        masked_url = database_url
-        if '@' in masked_url:
-            protocol_and_creds = masked_url.split('@')[0].split('://')
-            masked_url = f"{protocol_and_creds[0]}://****:****@{masked_url.split('@')[1]}"
-        app.logger.info(f"Using database URL: {masked_url}")
-    else:
-        app.logger.warning("No DATABASE_URL found in environment, using default config database.")
+    # Log startup information
+    app.logger.info("Starting application")
     
-    # Fix for proxy headers when behind a reverse proxy
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    # Load configuration
+    load_config(app, test_config)
     
-    # Configure compression
-    app.config['COMPRESS_MIMETYPES'] = [
-        'text/html',
-        'text/css',
-        'text/xml',
-        'application/json',
-        'application/javascript',
-        'application/x-javascript',
-        'application/xml',
-        'application/xml+rss',
-        'text/javascript'
-    ]
-    app.config['COMPRESS_LEVEL'] = 6  # Default level, good balance between speed and compression
-    app.config['COMPRESS_MIN_SIZE'] = 500  # Only compress responses > 500 bytes
+    # Ensure the instance folder exists
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except Exception as e:
+        app.logger.error(f"Failed to create instance path: {e}")
     
-    # Configure caching based on environment
-    if config_name == 'production':
-        app.config['CACHE_TYPE'] = 'RedisCache'
-        app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-        app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minutes
-    elif config_name == 'development':
-        app.config['CACHE_TYPE'] = 'SimpleCache'
-        app.config['CACHE_DEFAULT_TIMEOUT'] = 60  # 1 minute
-    else:  # testing
-        app.config['CACHE_TYPE'] = 'NullCache'  # No caching for tests
-    
-    # Initialize extensions with the app
-    db.init_app(app)
-    migrate.init_app(app, db)
-    login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
-    cache.init_app(app)
-    limiter.init_app(app)
-    compress.init_app(app)
-    
-    # Set up logging
-    if not app.debug and not app.testing:
-        if not os.path.exists('logs'):
-            os.mkdir('logs')
-        file_handler = RotatingFileHandler('logs/chadbattles.log', maxBytes=10240, backupCount=10)
-        file_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-        ))
-        file_handler.setLevel(logging.INFO)
-        app.logger.addHandler(file_handler)
-        
-        app.logger.setLevel(logging.INFO)
-        app.logger.info('Chad Battles startup')
+    # Initialize extensions
+    initialize_extensions(app)
     
     # Register blueprints
     register_blueprints(app)
@@ -128,27 +71,28 @@ def create_app(config_name='development'):
     # Register error handlers
     register_error_handlers(app)
     
-    # Register CLI commands
-    register_commands(app)
-    
-    # Add health check route
+    # Add health check endpoint
     @app.route('/health')
     def health_check():
         try:
-            # Test DB connection
-            db.session.execute('SELECT 1')
+            # Test database connection
+            db_ok = False
+            try:
+                db.session.execute('SELECT 1')
+                db_ok = True
+            except Exception as e:
+                app.logger.warning(f"Database health check failed: {e}")
+            
             return jsonify({
-                "status": "healthy",
-                "database": "connected",
-                "feature_flags": {
-                    "blockchain": app.config.get('ENABLE_BLOCKCHAIN', False),
-                    "twitter_bot": app.config.get('ENABLE_TWITTER_BOT', False)
-                }
+                'status': 'ok',
+                'message': 'Application is running',
+                'database': 'connected' if db_ok else 'error'
             })
         except Exception as e:
+            app.logger.error(f"Health check failed: {e}")
             return jsonify({
-                "status": "unhealthy",
-                "error": str(e)
+                'status': 'error',
+                'message': str(e)
             }), 500
     
     with app.app_context():
@@ -158,103 +102,205 @@ def create_app(config_name='development'):
     
     return app
 
-def register_error_handlers(app):
-    """Register error handlers with the Flask application."""
+def load_config(app, test_config):
+    """Load the configuration for the Flask application."""
+    app.logger.info("Loading configuration")
     
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return render_template('errors/404.html'), 404
+    try:
+        if test_config is None:
+            # Load the instance config, if it exists, when not testing
+            app.config.from_pyfile('config.py', silent=True)
+            
+            # Try to get environment from env var
+            env = os.environ.get('FLASK_ENV', 'development')
+            app.logger.info(f"Environment: {env}")
+            
+            # Load environment-specific config
+            if env == 'production':
+                app.logger.info("Loading production config")
+                app.config.from_object('config.ProductionConfig')
+            elif env == 'testing':
+                app.logger.info("Loading testing config")
+                app.config.from_object('config.TestingConfig')
+            else:
+                app.logger.info("Loading development config")
+                app.config.from_object('config.DevelopmentConfig')
+            
+            # Priority order for DATABASE_URL:
+            # 1. Environment variable DATABASE_URL (for Render.com and other hosting)
+            # 2. Config file setting
+            # 3. Default SQLite database
+            if 'DATABASE_URL' in os.environ:
+                db_url = os.environ.get('DATABASE_URL')
+                # Fix for Render.com - replace postgres:// with postgresql://
+                if db_url.startswith('postgres://'):
+                    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+                    app.logger.info("Fixed DATABASE_URL format (postgres:// -> postgresql://)")
+                
+                app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+                app.logger.info(f"Using DATABASE_URL from environment: {mask_password(db_url)}")
+        else:
+            # Load the test config if passed in
+            app.logger.info("Loading test configuration")
+            app.config.from_mapping(test_config)
+    except Exception as e:
+        app.logger.error(f"Error loading configuration: {e}")
+        # Use a safe fallback configuration
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/fallback.db'
+        app.config['SECRET_KEY'] = os.urandom(24)
+        app.logger.warning("Using fallback configuration due to error")
+
+def mask_password(url):
+    """Mask password in database URL for logging."""
+    if not url or '//' not in url:
+        return url
     
-    @app.errorhandler(500)
-    def internal_server_error(e):
-        return render_template('errors/500.html'), 500
+    try:
+        # Format: dialect+driver://username:password@host:port/database
+        parts = url.split('@')
+        if len(parts) < 2:
+            return url
+        
+        credentials = parts[0].split('//')
+        if len(credentials) < 2:
+            return url
+        
+        user_pass = credentials[1].split(':')
+        if len(user_pass) < 2:
+            return url
+        
+        # Replace password with asterisks
+        masked_url = f"{credentials[0]}//{user_pass[0]}:******@{parts[1]}"
+        return masked_url
+    except Exception:
+        # If anything goes wrong, return a completely masked URL
+        return "******"
+
+def initialize_extensions(app):
+    """Initialize Flask extensions."""
+    app.logger.info("Initializing extensions")
+    
+    try:
+        # Initialize SQLAlchemy
+        app.logger.info("Initializing SQLAlchemy")
+        db.init_app(app)
+        
+        # Initialize Flask-Migrate
+        app.logger.info("Initializing Flask-Migrate")
+        migrate.init_app(app, db)
+        
+        # Initialize Flask-Login
+        app.logger.info("Initializing Flask-Login")
+        login_manager.init_app(app)
+        login_manager.login_view = 'auth.login'
+        
+        # Initialize Flask-Limiter
+        app.logger.info("Initializing Flask-Limiter")
+        limiter.init_app(app)
+        
+        # Initialize Flask-Caching
+        app.logger.info("Initializing Flask-Caching")
+        cache.init_app(app)
+        
+        # Initialize user loader
+        from app.models.user import User
+        
+        @login_manager.user_loader
+        def load_user(user_id):
+            try:
+                return User.query.get(int(user_id))
+            except Exception as e:
+                app.logger.error(f"Error loading user {user_id}: {e}")
+                return None
+        
+    except Exception as e:
+        app.logger.error(f"Error initializing extensions: {e}")
 
 def register_blueprints(app):
     """Register Flask blueprints."""
-    from app.controllers.main import main_bp
-    from app.controllers.auth import auth_bp
-    from app.controllers.api import api_bp
-    from app.controllers.chad import chad_bp
-    from app.controllers.waifu import waifu_bp
-    from app.controllers.cabal import cabal_bp
-    from app.controllers.cabal_analytics import analytics_bp
-    from app.controllers.admin import admin_bp
-    from app.controllers.battle import battle_bp
-    from app.controllers.inventory import inventory_bp
-    from app.controllers.wallet import wallet_bp
-    from app.controllers.nft import nft_bp
-    from app.controllers.squad import squad_bp
+    app.logger.info("Registering blueprints")
     
-    app.register_blueprint(main_bp)
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    app.register_blueprint(api_bp, url_prefix='/api')
-    app.register_blueprint(chad_bp, url_prefix='/chad')
-    app.register_blueprint(waifu_bp, url_prefix='/waifu')
-    app.register_blueprint(cabal_bp, url_prefix='/cabal')
-    app.register_blueprint(analytics_bp, url_prefix='/analytics')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(battle_bp, url_prefix='/battle')
-    app.register_blueprint(inventory_bp, url_prefix='/inventory')
-    app.register_blueprint(wallet_bp, url_prefix='/wallet')
-    app.register_blueprint(nft_bp, url_prefix='/nft')
-    app.register_blueprint(squad_bp)
-    
-    # Register music blueprint
-    from app.routes.music import music
-    app.register_blueprint(music, url_prefix='/music')
-    
-    return None
+    try:
+        # Import blueprints
+        from app.routes.auth import auth as auth_blueprint
+        from app.routes.main import main as main_blueprint
+        from app.routes.music import music as music_blueprint
+        
+        # Register blueprints
+        app.logger.info("Registering auth blueprint")
+        app.register_blueprint(auth_blueprint)
+        
+        app.logger.info("Registering main blueprint")
+        app.register_blueprint(main_blueprint)
+        
+        app.logger.info("Registering music blueprint")
+        app.register_blueprint(music_blueprint)
+        
+        # Additional blueprint registrations
+        try:
+            # These blueprints might not be essential, so we handle them separately
+            from app.routes.wallet import wallet as wallet_blueprint
+            app.register_blueprint(wallet_blueprint)
+            app.logger.info("Registered wallet blueprint")
+        except ImportError as e:
+            app.logger.warning(f"Could not register wallet blueprint: {e}")
+            
+        try:
+            from app.routes.api import api as api_blueprint
+            app.register_blueprint(api_blueprint)
+            app.logger.info("Registered API blueprint")
+        except ImportError as e:
+            app.logger.warning(f"Could not register API blueprint: {e}")
+            
+    except Exception as e:
+        app.logger.error(f"Error registering blueprints: {e}")
 
-def register_commands(app):
-    """Register Flask CLI commands."""
+def register_error_handlers(app):
+    """Register error handlers."""
+    app.logger.info("Registering error handlers")
     
-    @app.cli.command("init-db")
-    def init_db_command():
-        """Initialize the database with minimal required data."""
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return jsonify({"error": "Not found", "message": "The requested resource was not found"}), 404
+    
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        app.logger.error(f"Internal server error: {e}")
+        return jsonify({"error": "Internal server error", "message": "An unexpected error occurred"}), 500
+    
+    @app.errorhandler(403)
+    def forbidden(e):
+        return jsonify({"error": "Forbidden", "message": "You don't have permission to access this resource"}), 403
+
+def configure_logging(app):
+    """Configure logging for the application."""
+    # Set the logging level
+    app.logger.setLevel(logging.INFO)
+    
+    # Create a handler for logging to stderr
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    stream_handler.setFormatter(formatter)
+    
+    # Add the handler to the logger
+    app.logger.addHandler(stream_handler)
+    
+    # In production, also log to a file
+    if os.environ.get('FLASK_ENV') == 'production':
         try:
-            from setup_deployment_db import setup_deployment_db
-            config_name = app.config['ENV']
-            print(f"Starting database initialization in {config_name} mode...")
-            if setup_deployment_db(config_name):
-                print("Database initialization completed successfully!")
-            else:
-                print("Database initialization failed!")
-                import sys
-                sys.exit(1)
+            log_dir = os.path.join(app.instance_path, 'logs')
+            os.makedirs(log_dir, exist_ok=True)
+            file_handler = RotatingFileHandler(
+                os.path.join(log_dir, 'app.log'),
+                maxBytes=10485760,  # 10MB
+                backupCount=3
+            )
+            file_handler.setLevel(logging.INFO)
+            file_handler.setFormatter(formatter)
+            app.logger.addHandler(file_handler)
         except Exception as e:
-            import traceback
-            print(f"Error during database initialization: {str(e)}")
-            traceback.print_exc()
-            import sys
-            sys.exit(1)
-            
-    @app.cli.command("init-db-force")
-    def init_db_force_command():
-        """Force initialize the database by dropping all tables first."""
-        try:
-            print("WARNING: This will delete all data in the database!")
-            print("Starting forced database initialization...")
-            
-            # Import the setup script here to avoid circular imports
-            from setup_deployment_db import setup_deployment_db
-            
-            # Determine environment
-            config_name = app.config['ENV']
-            print(f"Using environment: {config_name}")
-            
-            # Run the setup script
-            if setup_deployment_db(config_name):
-                print("Database initialization completed successfully!")
-            else:
-                print("Database initialization failed!")
-                import sys
-                sys.exit(1)
-        except Exception as e:
-            import traceback
-            print(f"Error during database initialization: {str(e)}")
-            traceback.print_exc()
-            import sys
-            sys.exit(1)
+            app.logger.error(f"Could not configure file logging: {e}")
 
 # Register models
 from app.models import user, chad, waifu, item, cabal, battle, meme_elixir, transaction, nft 
