@@ -2,6 +2,35 @@
 
 {% block title %}Dashboard - Chad Battles{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    /* Mobile Responsive Styles */
+    @media (max-width: 767px) {
+        .dashboard-card {
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-bar {
+            height: 24px;
+        }
+        
+        .recent-battle {
+            padding: 0.75rem;
+        }
+        
+        .dashboard-action-btn {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        .waifu-mini {
+            max-width: 60px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-12 mb-4">
@@ -12,8 +41,8 @@
 
 <div class="row">
     <!-- Chad Character Card -->
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 dashboard-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Your Chad</span>
                 <a href="{{ url_for('chad.index') }}" class="btn btn-sm btn-pixel">Details</a>
@@ -74,8 +103,8 @@
     </div>
     
     <!-- Equipped Waifus -->
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 dashboard-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Equipped Waifus</span>
                 <a href="{{ url_for('waifu.index') }}" class="btn btn-sm btn-pixel">View All</a>
@@ -132,52 +161,31 @@
     </div>
     
     <!-- Recent Battles -->
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 dashboard-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span>Recent Battles</span>
                 <a href="{{ url_for('main.battle_history') }}" class="btn btn-sm btn-pixel">View All</a>
             </div>
             <div class="card-body">
-                {% if battles %}
-                    <div class="battle-log">
-                        {% for battle in battles %}
-                            <div class="entry">
-                                {% if battle.winner_id == chad.id %}
-                                    You defeated <strong>{{ battle.opponent.user.x_username }}</strong>
-                                    {% if battle.waifu_at_stake %}
-                                        and claimed their <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span> waifu!
-                                    {% endif %}
-                                {% elif battle.winner_id == battle.opponent_id %}
-                                    You lost to <strong>{{ battle.opponent.user.x_username }}</strong>
-                                    {% if battle.waifu_at_stake %}
-                                        and lost your <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span> waifu!
-                                    {% endif %}
-                                {% elif battle.winner_id == battle.initiator_id and battle.initiator_id != chad.id %}
-                                    <strong>{{ battle.initiator.user.x_username }}</strong> defeated you
-                                    {% if battle.waifu_at_stake %}
-                                        and claimed your <span class="rarity-{{ battle.waifu_at_stake.waifu_type.rarity.name|lower }}">{{ battle.waifu_at_stake.waifu_type.name }}</span> waifu!
-                                    {% endif %}
-                                {% else %}
-                                    Battle with <strong>{{ battle.opponent.user.x_username if battle.initiator_id == chad.id else battle.initiator.user.x_username }}</strong> ({{ battle.status }})
-                                {% endif %}
-                                <span class="small text-muted d-block">{{ battle.completed_at.strftime('%b %d, %Y') if battle.completed_at else battle.created_at.strftime('%b %d, %Y') }}</span>
+                {% if recent_battles %}
+                    <div class="battles-list">
+                        {% for battle in recent_battles %}
+                            <div class="recent-battle mb-2 p-2 border rounded {{ 'bg-success-subtle' if battle.winner_id == chad.id else 'bg-danger-subtle' if battle.status == 'completed' else 'bg-info-subtle' }}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ battle.initiator.name }}</strong> vs <strong>{{ battle.defender.name }}</strong>
+                                    </div>
+                                    <span class="badge {{ 'bg-success' if battle.winner_id == chad.id else 'bg-danger' if battle.status == 'completed' else 'bg-info' }}">
+                                        {{ 'Victory' if battle.winner_id == chad.id else 'Defeat' if battle.status == 'completed' else battle.status|capitalize }}
+                                    </span>
+                                </div>
+                                <div class="small text-muted">{{ battle.created_at.strftime('%m/%d/%Y') }}</div>
                             </div>
                         {% endfor %}
                     </div>
-                    
-                    <div class="text-center mt-3">
-                        <a href="https://twitter.com/intent/tweet?text=I'm+going+to+CRUSH+@opponent!+CHALLENGE+TO+BATTLE+@RollMasterChad" target="_blank" class="btn btn-pixel">
-                            Start New Battle
-                        </a>
-                    </div>
                 {% else %}
-                    <div class="text-center py-4">
-                        <p>No battles yet</p>
-                        <a href="https://twitter.com/intent/tweet?text=I'm+going+to+CRUSH+@opponent!+CHALLENGE+TO+BATTLE+@RollMasterChad" target="_blank" class="btn btn-pixel">
-                            Start New Battle
-                        </a>
-                    </div>
+                    <p class="text-muted">No recent battles. Challenge someone!</p>
                 {% endif %}
             </div>
         </div>
@@ -186,8 +194,8 @@
 
 <div class="row">
     <!-- Cabal -->
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 dashboard-card">
             <div class="card-header">Cabal</div>
             <div class="card-body">
                 {% if cabal %}
@@ -232,8 +240,8 @@
     </div>
     
     <!-- Wallet & NFTs -->
-    <div class="col-md-6 mb-4">
-        <div class="card h-100">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 dashboard-card">
             <div class="card-header">Wallet & NFTs</div>
             <div class="card-body">
                 {% if current_user.wallet_address %}
@@ -289,6 +297,60 @@
                         <button id="connect-wallet-btn" class="btn btn-pixel" data-bs-toggle="modal" data-bs-target="#connectWalletModal">Connect Wallet</button>
                     </div>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Quick Actions</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('battle.index') }}" class="btn btn-pixel w-100 dashboard-action-btn">
+                            <i class="fas fa-swords me-2"></i>Battle
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('inventory.index') }}" class="btn btn-pixel w-100 dashboard-action-btn">
+                            <i class="fas fa-backpack me-2"></i>Inventory
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('marketplace.index') }}" class="btn btn-pixel w-100 dashboard-action-btn">
+                            <i class="fas fa-store me-2"></i>Marketplace
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('cabal.index') }}" class="btn btn-pixel w-100 dashboard-action-btn">
+                            <i class="fas fa-users me-2"></i>Cabal
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('waifu.index') }}" class="btn btn-pixel w-100 dashboard-action-btn">
+                            <i class="fas fa-heart me-2"></i>Waifus
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('nft.index') }}" class="btn btn-pixel w-100 dashboard-action-btn">
+                            <i class="fas fa-diamond me-2"></i>NFTs
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('leaderboard.index') }}" class="btn btn-pixel w-100 dashboard-action-btn">
+                            <i class="fas fa-trophy me-2"></i>Leaderboard
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <a href="{{ url_for('main.how_to_play') }}" class="btn btn-pixel w-100 dashboard-action-btn">
+                            <i class="fas fa-question-circle me-2"></i>How to Play
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
