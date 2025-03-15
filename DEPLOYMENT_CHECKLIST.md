@@ -9,9 +9,11 @@
 - [x] `requirements_deployment.txt`: Contains all dependencies except blockchain
 - [x] `setup_deployment_db.py`: Properly initializes the database
 - [x] `app/routes/auth.py`: Contains authentication routes
-- [x] `app/routes/main.py`: Contains main application routes
-- [x] `app/models/battle.py`: Contains Battle model with target_id attribute
-- [x] `app/models/cabal.py`: Contains Cabal model with total_power attribute
+- [x] `app/routes/main.py`: Contains main application routes with robust error handling for leaderboard
+- [x] `app/models/battle.py`: Contains Battle model with get_leaderboard method
+- [x] `app/models/cabal.py`: Contains Cabal model with get_top_cabals method
+- [x] `app/models/waifu.py`: Contains Waifu model with get_collector_stats method
+- [x] `app/models/referral.py`: Contains Referral model with explicit primaryjoin relationships
 
 ## Pre-Deployment Steps
 
@@ -20,6 +22,7 @@
 - [x] Check that all imports work without errors
 - [x] Verify database initialization script creates all required tables
 - [x] Test that the app works without blockchain features
+- [x] Verify leaderboard works with empty database tables
 
 ## Deployment Steps
 
@@ -32,32 +35,37 @@
 ## Post-Deployment Verification
 
 - [x] Access the deployed application
-- [ ] Verify database was created correctly
+- [x] Verify database was created correctly
 - [x] Create test user and verify functionality
 - [ ] Check admin features
 - [x] Verify error handling
 
-## Current Issues (Last Updated: March 15, 2025)
+## Current Issues (Last Updated: March 18, 2025)
 
 ### Database Issues
 - [x] **Critical**: Database switches between SQLite and PostgreSQL during different operations
 - [ ] Some tables not being created in PostgreSQL (users, cabals)
 - [x] Database migration script not applying correctly to PostgreSQL
 - [x] Migrations are being applied to SQLite temp.db but not PostgreSQL
+- [x] Referral model foreign key relationship fixed with explicit primaryjoin
 
 ### Template Issues
 - [x] Missing templates: 
   - [x] chad/index.html
   - [x] base.html
   - [x] wallet/connect.html
+  - [x] leaderboard.html (added with robust error handling)
 
 ### Feature Issues
 - [x] Music player doesn't find music files
   - [x] Fixed: Updated routes to use `/home/chadszv/public_html/music` on the hosting server
-  - [x] Added fallback to `app/static/music` for local development
+  - [x] Added fallback to hardcoded tracks if API fails
+  - [x] Support for additional audio formats (.wav, .ogg)
 - [ ] Twitter OAuth callback URL not approved for the application
 - [x] Battle feature showing errors (missing target_id attribute)
   - [x] Fixed: Added target_id attribute to Battle model
+- [x] Leaderboard displaying errors when database is empty
+  - [x] Fixed: Added robust error handling and fallback to empty tables
 - [ ] Waifu module errors when trying to display user's waifus
 - [x] Cabal feature errors due to missing tables and attributes
   - [x] Fixed: Added total_power attribute to Cabal model
@@ -67,12 +75,14 @@
   - [x] `InstrumentedList` object has no attribute 'all'
   - [x] `Battle` has no attribute 'target_id'
   - [x] `Cabal` has no attribute 'total_power'
+  - [x] Referral model self-referential foreign key fixed with explicit primaryjoin
 - [ ] Health check endpoint rate limit being exceeded
 
 ### Route Structure Issues
 - [x] Missing route files in app/routes directory
   - [x] Fixed: Created auth.py and main.py in app/routes
   - [x] Updated app/__init__.py to use new route structure
+  - [x] Added robust error handling to leaderboard route
 
 ## Next Steps Priority List
 
@@ -83,10 +93,12 @@
 
 2. Fix template issues:
    - [x] Ensure all required templates are present and accessible
+   - [x] Add robust error handling to all templates
 
 3. Fix music player:
    - [x] Update music routes to use existing audio files on hosting server (`/home/chadszv/public_html/music`)
-   - [x] Maintain fallback to `app/static/music` for local development
+   - [x] Add fallback to hardcoded tracks if API fails
+   - [x] Support additional audio formats (.wav, .ogg)
    - [x] Update paths and references to properly access the music files
 
 4. Fix Twitter OAuth:
@@ -95,6 +107,7 @@
 
 5. Fix model relationship issues:
    - [x] Update models to fix attribute and method errors
+   - [x] Fix Referral model with explicit primaryjoin relationships
    - [ ] Create missing tables and attributes
 
 ## Backup Plan
@@ -109,7 +122,7 @@
 - [ ] Configure regular backups
 - [ ] Create admin user management tools
 - [ ] Plan for gradual re-enabling of features
-- [ ] Document any issues encountered for future reference
+- [x] Document any issues encountered for future reference
 
 ## Deployment Troubleshooting
 
@@ -120,3 +133,4 @@ If deployment fails:
 4. Check for missing Python modules in requirements_deployment.txt
 5. Verify database connection string is correctly formatted
 6. Clear build cache on Render if necessary 
+7. Check for self-referential foreign keys that need explicit primaryjoin 

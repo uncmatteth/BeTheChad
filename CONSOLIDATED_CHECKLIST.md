@@ -2,13 +2,14 @@
 
 ## For Future AI Assistants
 This project follows a strict set of development standards (see Development Standards section below). 
-Current progress as of March 15, 2025:
+Current progress as of March 18, 2025:
 1. Music system core functionality is complete with:
-   - Audio playback (.mp3 and .m4a support)
+   - Audio playback (.mp3, .m4a, .wav, and .ogg support)
    - Rate limiting and caching
    - Range request streaming
    - Enhanced player UI with volume/progress controls
-   - Configured to use hosting server's `/home/chadszv/public_html/music` directory
+   - Using Namecheap server music files at `/home/chadszv/public_html/music`
+   - Fallback to hardcoded track URLs if API fails
    - Fixed URL prefix for music routes (fixing 404 errors)
 2. Security measures implemented:
    - Rate limiting on all endpoints
@@ -36,19 +37,20 @@ Current progress as of March 15, 2025:
    - Ensured consistent use of PostgreSQL
    - Proper migration handling
    - Robust initialization script
-   - Fixed model relationship issues (Referral-Chad relationship)
+   - Fixed model relationship issues (Referral-Chad relationship with explicit primaryjoin)
 7. Route structure updated:
    - Created proper route files in app/routes
    - Fixed missing module errors
    - Added model attributes for battle and cabal
    - Fixed broken route import (BattleResult)
+   - Fixed leaderboard route with robust error handling
 8. Character classes expanded:
    - Added 6 new Chad classes: KOL, Tech Bro, Gym Rat, Debate Lord, Diamond Hands, and Lore Master
    - Created placeholder images for all new classes
    - Updated database initialization script
 9. Anti-cheating system implemented:
    - Added Clown class for users trying to game the system
-   - Added Exit Liquidity class for fresh accounts
+   - Added Exit Liquidity class for fresh accounts (renamed from Newbie)
    - Added Blockchain Detective as a rare special class
    - Implemented tweet timestamp analysis to detect suspicious patterns
    - Created class appeal system for the Blockchain Detective class
@@ -64,6 +66,7 @@ Current progress as of March 15, 2025:
 - When changing app structure, ensure all necessary files are created (routes, models, etc.)
 - Render deployment requires proper route files in app/routes directory
 - Models must include all attributes referenced in controllers
+- All model relationships with self-referential foreign keys need explicit primaryjoin conditions
 
 Next priority tasks (in recommended order):
 1. Fix Twitter OAuth callback URL in the Twitter developer dashboard
@@ -92,8 +95,11 @@ Remember to:
 - Added 9 new Chad classes with placeholder images (6 standard + 3 special)
 - Implemented anti-cheating measures in Twitter profile analysis
 - Added appeal system for the Blockchain Detective class
-- Fixed Referral model relationship to Chad
+- Fixed Referral model relationship to Chad with explicit primaryjoin
 - Fixed music routes URL prefix
+- Robust error handling for leaderboard to handle database issues
+- Fixed encoding issues with UTF-8 in leaderboard
+- Updated all templates to handle empty data gracefully
 
 ## Immediate Tasks
 
@@ -104,14 +110,15 @@ Remember to:
 - [ ] Clean up any temporary or test files
 
 ### 2. Music System Implementation
-- [x] Update music routes to handle .m4a files
+- [x] Update music routes to handle .m4a, .wav, and .ogg files
 - [x] Implement proper caching headers for audio files
 - [x] Add range request support for better streaming
 - [x] Add rate limiting for music endpoints
-- [x] Update jukebox.js to support new audio format
+- [x] Update jukebox.js to support new audio formats
 - [x] Add volume control and progress bar to player
 - [x] Configure music system to use hosting server files (`/home/chadszv/public_html/music`)
 - [x] Fix music routes URL prefix to resolve 404 errors
+- [x] Add fallback to hardcoded tracks if API fails
 - [ ] Implement playlist management features
 
 ### 3. Testing
@@ -151,6 +158,7 @@ Remember to:
 - [x] Create base template structure
 - [x] Implement character profile templates
 - [x] Implement waifu collection templates
+- [x] Create robust leaderboard template with error handling
 
 ### 8. Testing and Quality Assurance
 - [x] Write unit tests for music player functionality
@@ -175,7 +183,7 @@ Remember to:
 - [x] Ensure consistent use of PostgreSQL for all operations
 - [x] Update migration handling to work with PostgreSQL
 - [x] Improve database initialization script
-- [x] Fix model relationship issues (Referral-Chad relationship)
+- [x] Fix model relationship issues (Referral-Chad relationship with explicit primaryjoin)
 - [ ] Verify all tables are properly created in PostgreSQL
 
 ### 11. Route Structure
@@ -184,11 +192,13 @@ Remember to:
 - [x] Update app/__init__.py to use new route structure
 - [x] Fix model attributes for battle and cabal
 - [x] Fix broken route import (BattleResult)
+- [x] Add robust error handling to leaderboard route
 
 ### 12. Character Classes
 - [x] Add new Chad classes to database initialization script
 - [x] Create placeholder images for new classes
 - [x] Balance stats for new character classes
+- [x] Rename "Newbie" class to "Exit Liquidity"
 - [ ] Update class selection UI to display new classes
 - [ ] Add special abilities for each class
 
@@ -270,8 +280,7 @@ Remember to:
 
 ## Reference
 This checklist consolidates tasks from:
-- Previous PROJECT_STATUS.md
+- DEPLOYMENT_CHECKLIST.md
 - WEBSITE_ISSUES_CHECKLIST.md
-- Other project documentation
 
-Last Updated: March 15, 2025 
+Last Updated: March 18, 2025 
