@@ -3,12 +3,22 @@ services:
   - type: web
     name: chad-battles
     env: python
-    buildCommand: >
-      pip install --no-cache-dir -r requirements_deployment.txt &&
-      export FLASK_APP=app &&
-      python -m flask db stamp head &&
-      python -m flask db upgrade
-    startCommand: gunicorn "app:create_app()"
+    buildCommand: pip install --no-cache-dir -r requirements_deployment.txt
+    startCommand: gunicorn 'app:create_app("production")' --bind=0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: FLASK_APP
+        value: app
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chad-battles-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+    preDeployCommand: python setup_render_db.py
     # Add health check
     healthCheckPath: /health
     # Auto-restart on crash
@@ -79,4 +89,5 @@ services:
 # Database
 databases:
   - name: chad-battles-db
-    plan: free 
+    plan: starter
+    ipAllowList: [] 

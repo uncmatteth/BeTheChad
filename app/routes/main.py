@@ -9,10 +9,21 @@ logger = logging.getLogger(__name__)
 
 @main.route('/')
 def index():
-    """Landing page"""
+    """Homepage route."""
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
     return render_template('main/index.html')
+
+@main.route('/health')
+def health():
+    """Health check endpoint for deployment monitoring."""
+    try:
+        # Check database connection
+        db.session.execute('SELECT 1')
+        return jsonify({'status': 'healthy'}), 200
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 
 @main.route('/dashboard')
 @login_required
