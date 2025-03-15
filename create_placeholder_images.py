@@ -28,6 +28,12 @@ CHAD_CLASSES = [
     "Ratio King",
     "Normie Chad",
     "Gigachad",  # Already exists but creating placeholder for consistency
+    "KOL",
+    "Tech Bro",
+    "Gym Rat",
+    "Debate Lord",
+    "Diamond Hands",
+    "Lore Master",
 ]
 WAIFU_TYPES = [
     "Common",
