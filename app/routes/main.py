@@ -12,7 +12,7 @@ def index():
     """Homepage route."""
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
-    return render_template('main/index.html')
+    return render_template('index.html')
 
 @main.route('/health')
 def health():
