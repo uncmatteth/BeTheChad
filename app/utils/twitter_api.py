@@ -598,7 +598,7 @@ def generate_automated_tweet():
         "🎮 Join BeTheChad - the social RPG revolutionizing Twitter gaming!\n\n1️⃣ CREATE CHARACTER @RollMasterChad\n2️⃣ Collect waifus & items\n3️⃣ Challenge others to battles\n4️⃣ Join or create a cabal\n\nBecome the ultimate chad! #GamersUnite",
         
         # Battle encouragement
-        "Are you ready to prove yourself as the ultimate chad? BeTheChad is now accepting new players!\n\n1. Create your character based on your Twitter\n2. Collect rare waifus to boost your stats\n3. Challenge others with 'I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad'\n\nIt's that simple! #GamingOnTwitter"
+        "Are you ready to prove yourself as the ultimate chad? Chad Battles is now accepting new players!\n\n1. Create your character based on your Twitter\n2. Collect rare waifus to boost your stats\n3. Challenge others with 'I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad'\n\nIt's that simple! #GamingOnTwitter"
     ]
     
     # Filter out templates we can't use (e.g., NFT if count is 0)
