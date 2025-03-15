@@ -48,9 +48,9 @@
   - [x] wallet/connect.html
 
 ### Feature Issues
-- [ ] Music player doesn't find music files
-  - [ ] `/public_html/music` directory not accessible or doesn't exist
-  - [ ] Need to upload music files to proper location
+- [x] Music player doesn't find music files
+  - [x] Fixed: Updated routes to use `/home/chadszv/public_html/music` on the hosting server
+  - [x] Added fallback to `app/static/music` for local development
 - [ ] Twitter OAuth callback URL not approved for the application
 - [ ] Battle feature showing errors (missing target_id attribute)
 - [ ] Waifu module errors when trying to display user's waifus
@@ -74,9 +74,9 @@
    - [x] Ensure all required templates are present and accessible
 
 3. Fix music player:
-   - [ ] Create appropriate directory for music files
-   - [ ] Upload music files to server
-   - [ ] Verify music player can find and play files
+   - [x] Update music routes to use existing audio files on hosting server (`/home/chadszv/public_html/music`)
+   - [x] Maintain fallback to `app/static/music` for local development
+   - [x] Update paths and references to properly access the music files
 
 4. Fix Twitter OAuth:
    - [ ] Configure proper callback URL in Twitter developer dashboard

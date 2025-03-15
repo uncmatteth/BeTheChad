@@ -2,12 +2,13 @@
 
 ## For Future AI Assistants
 This project follows a strict set of development standards (see Development Standards section below). 
-Current progress as of March 14, 2024:
+Current progress as of March 14, 2025:
 1. Music system core functionality is complete with:
    - Audio playback (.mp3 and .m4a support)
    - Rate limiting and caching
    - Range request streaming
    - Enhanced player UI with volume/progress controls
+   - Configured to use hosting server's `/home/chadszv/public_html/music` directory
 2. Security measures implemented:
    - Rate limiting on all endpoints
    - File type validation
@@ -55,6 +56,7 @@ Remember to:
 - Core functionality is working
 - Template structure completed for main pages
 - Database configuration fixed for consistent PostgreSQL usage
+- Music player system updated to use hosting server's music files in `/home/chadszv/public_html/music`
 
 ## Immediate Tasks
 
@@ -71,6 +73,7 @@ Remember to:
 - [x] Add rate limiting for music endpoints
 - [x] Update jukebox.js to support new audio format
 - [x] Add volume control and progress bar to player
+- [x] Configure music system to use hosting server files (`/home/chadszv/public_html/music`)
 - [ ] Implement playlist management features
 
 ### 3. Testing

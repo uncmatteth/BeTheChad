@@ -49,7 +49,8 @@ def get_tracks():
     
     # Define music directories to check
     music_folders = [
-        os.path.join(current_app.static_folder, 'music'),  # Primary location
+        '/home/chadszv/public_html/music',  # Primary location on hosting server
+        os.path.join(current_app.static_folder, 'music'),  # Fallback location
         os.environ.get('CHAD_MUSIC_DIR', '')  # Optional environment variable location
     ]
     
@@ -78,7 +79,10 @@ def get_tracks():
                     file_size = os.path.getsize(file_path)
                     
                     # Determine path based on directory
-                    if folder == os.path.join(current_app.static_folder, 'music'):
+                    if folder == '/home/chadszv/public_html/music':
+                        # If in public_html/music folder, use direct path
+                        path = f'/music/{filename}'
+                    elif folder == os.path.join(current_app.static_folder, 'music'):
                         # If in static/music folder, use /static/music path for web access
                         path = f'/static/music/{filename}'
                     else:
@@ -131,6 +135,11 @@ def get_tracks():
 def stream_music(filename):
     """Stream a music file with support for range requests"""
     try:
+        # First try to find file in hosting server's public_html/music
+        if os.path.exists('/home/chadszv/public_html/music') and os.path.exists(os.path.join('/home/chadszv/public_html/music', filename)):
+            return send_from_directory('/home/chadszv/public_html/music', filename)
+        
+        # Next try to find in our static directory
         music_dir = os.path.join(current_app.static_folder, 'music')
         file_path = None
         
@@ -258,11 +267,19 @@ def debug_music():
         return jsonify({"error": "Debug endpoint only available in development"}), 403
         
     music_dir = os.path.join(current_app.static_folder, 'music')
+    hosting_dir = '/home/chadszv/public_html/music'
     custom_dir = os.environ.get('CHAD_MUSIC_DIR', '')
     
     # Collect debug information
     debug_info = {
         'music_directories': [
+            {
+                'path': hosting_dir,
+                'exists': os.path.exists(hosting_dir),
+                'is_dir': os.path.isdir(hosting_dir) if os.path.exists(hosting_dir) else False,
+                'permission': 'readable' if os.access(hosting_dir, os.R_OK) else 'not readable' if os.path.exists(hosting_dir) else 'n/a',
+                'file_count': len([f for f in os.listdir(hosting_dir) if f.lower().endswith(('.mp3', '.m4a'))]) if os.path.exists(hosting_dir) and os.path.isdir(hosting_dir) else 0
+            },
             {
                 'path': music_dir,
                 'exists': os.path.exists(music_dir),
