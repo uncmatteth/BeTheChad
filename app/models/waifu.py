@@ -52,6 +52,7 @@ class Waifu(db.Model):
     description = db.Column(db.Text, nullable=True)
     rarity = db.Column(db.String(50), nullable=False, default='common')
     type = db.Column(db.String(50), nullable=False, default='standard')
+    waifu_type_id = db.Column(db.Integer, db.ForeignKey('waifu_types.id'), nullable=True)
     image_url = db.Column(db.String(255), nullable=True)
     power = db.Column(db.Integer, nullable=False, default=0)
     intelligence = db.Column(db.Integer, nullable=False, default=0)
