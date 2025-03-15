@@ -39,6 +39,10 @@ Current progress as of March 15, 2025:
    - Created proper route files in app/routes
    - Fixed missing module errors
    - Added model attributes for battle and cabal
+8. Character classes expanded:
+   - Added 6 new Chad classes: KOL, Tech Bro, Gym Rat, Debate Lord, Diamond Hands, and Lore Master
+   - Created placeholder images for all new classes
+   - Updated database initialization script
 
 ## CRITICAL REMINDERS
 - Music files MUST be hosted on nameserver (`/home/chadszv/public_html/music`) NOT on Render
@@ -75,6 +79,7 @@ Remember to:
 - Music player system updated to use hosting server's music files in `/home/chadszv/public_html/music`
 - Route structure updated to use app/routes directory
 - Model attributes fixed for battle and cabal
+- Added 6 new Chad classes with placeholder images
 
 ## Immediate Tasks
 
@@ -162,6 +167,13 @@ Remember to:
 - [x] Create main routes in app/routes/main.py
 - [x] Update app/__init__.py to use new route structure
 - [x] Fix model attributes for battle and cabal
+
+### 12. Character Classes
+- [x] Add new Chad classes to database initialization script
+- [x] Create placeholder images for new classes
+- [x] Balance stats for new character classes
+- [ ] Update class selection UI to display new classes
+- [ ] Add special abilities for each class
 
 ## Future Enhancements
 - [ ] Consider implementing offline playback capability
