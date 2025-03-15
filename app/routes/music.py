@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import timedelta
-from flask import Blueprint, jsonify, send_from_directory, current_app, render_template, request, Response
+from flask import Blueprint, jsonify, send_from_directory, current_app, render_template, request, Response, redirect
 from flask_login import login_required, current_user
 from app.extensions import limiter, cache
 import re
@@ -47,62 +47,67 @@ def get_tracks():
     """Return a list of all music tracks"""
     tracks = []
     
-    # Primary focus on the Namecheap server path
+    # Namecheap server path
     music_folder = '/home/chadszv/public_html/music'
     
-    # Track the total number of files processed
-    total_files = 0
-    valid_music_files = 0
-    
-    current_app.logger.info(f"Scanning Namecheap music directory: {music_folder}")
-    
-    # Check if we're in production or development
-    if current_app.config.get('FLASK_ENV') != 'production' or not os.path.exists(music_folder) or not os.path.isdir(music_folder):
-        # Fallback to static folder only for development
-        current_app.logger.warning(f"Not in production or Namecheap directory not accessible. Using static folder.")
+    # For development environment
+    if current_app.config.get('FLASK_ENV') != 'production':
         music_folder = os.path.join(current_app.static_folder, 'music')
-    
-    if os.path.exists(music_folder) and os.path.isdir(music_folder):
-        current_app.logger.info(f"Accessing music directory: {music_folder}")
-        
-        try:
-            # Get all audio files from the folder
-            for filename in os.listdir(music_folder):
-                total_files += 1
-                if filename.lower().endswith(('.mp3', '.m4a', '.wav', '.ogg')):
-                    file_path = os.path.join(music_folder, filename)
-                    file_size = os.path.getsize(file_path)
-                    
-                    # Determine path based on the music folder
-                    if music_folder == os.path.join(current_app.static_folder, 'music'):
-                        # If in static/music folder, use /static/music path for web access
-                        path = f'/static/music/{filename}'
-                    else:
-                        # For Namecheap server, use the direct music path
-                        path = f'/music/{filename}'
-                    
-                    # Create a track object with the correct path
-                    track = {
-                        'title': os.path.splitext(filename)[0].replace('_', ' ').replace('-', ' '),
-                        'path': path,
-                        'filename': filename,
-                        'size': file_size,
-                        'type': os.path.splitext(filename)[1][1:].lower()
-                    }
-                    tracks.append(track)
-                    valid_music_files += 1
-                    current_app.logger.debug(f"Added track: {track['title']} ({file_size} bytes)")
-        except Exception as e:
-            current_app.logger.error(f"Error reading music directory {music_folder}: {str(e)}")
+        current_app.logger.info(f"Development environment detected, using local path: {music_folder}")
     else:
-        current_app.logger.error(f"Music directory not found or not accessible: {music_folder}")
+        current_app.logger.info(f"Production environment detected, using Namecheap path: {music_folder}")
     
-    current_app.logger.info(f"Processed total of {total_files} files, found {valid_music_files} valid music files")
+    current_app.logger.info(f"Scanning music directory: {music_folder}")
     
-    # No fallback to hardcoded tracks - if no tracks are found, we'll return an empty array
-    if not tracks:
-        current_app.logger.warning("No music files found in any directories")
+    # In production, we can't directly access the Namecheap server files
+    # So we'll create entries based on known files
+    if current_app.config.get('FLASK_ENV') == 'production':
+        current_app.logger.info("Production environment: Using direct URLs to Namecheap server files")
         
+        # Get the list of music files from the server
+        try:
+            # This is a hardcoded list of known files on the Namecheap server
+            # We're using direct URLs that will work from the browser
+            for i in range(1, 104):  # Assuming files are numbered from 1 to 103
+                file_name = f"Be the Chad ({i}).m4a"
+                tracks.append({
+                    'title': f"Be the Chad {i}",
+                    'path': f"https://chadbattles.fun/music/{file_name}",
+                    'filename': file_name,
+                    'size': 2000000,  # Approximate size
+                    'type': 'm4a'
+                })
+            
+            current_app.logger.info(f"Added {len(tracks)} tracks from Namecheap server")
+        except Exception as e:
+            current_app.logger.error(f"Error creating track list: {str(e)}")
+    else:
+        # For development, we can scan the local directory
+        if os.path.exists(music_folder) and os.path.isdir(music_folder):
+            try:
+                for filename in os.listdir(music_folder):
+                    if filename.lower().endswith(('.mp3', '.m4a', '.wav', '.ogg')):
+                        file_path = os.path.join(music_folder, filename)
+                        file_size = os.path.getsize(file_path)
+                        
+                        # For local development
+                        path = f'/static/music/{filename}'
+                        
+                        track = {
+                            'title': os.path.splitext(filename)[0].replace('_', ' ').replace('-', ' '),
+                            'path': path,
+                            'filename': filename,
+                            'size': file_size,
+                            'type': os.path.splitext(filename)[1][1:].lower()
+                        }
+                        tracks.append(track)
+                        current_app.logger.debug(f"Added track: {track['title']}")
+            except Exception as e:
+                current_app.logger.error(f"Error reading music directory {music_folder}: {str(e)}")
+        else:
+            current_app.logger.warning(f"Music directory not found: {music_folder}")
+    
+    current_app.logger.info(f"Returning {len(tracks)} tracks")
     return jsonify(tracks)
 
 @music.route('/stream/<filename>')
@@ -116,80 +121,16 @@ def stream_music(filename):
         # Sanitize filename to prevent directory traversal
         filename = os.path.basename(filename)
         
-        # Check all possible music directories
-        music_dirs = [
-            os.path.join(current_app.static_folder, 'music'),  # Static folder
-            os.path.join(os.path.dirname(current_app.root_path), 'music'),  # Project root
-            os.environ.get('CHAD_MUSIC_DIR', ''),  # Environment variable
-            '/home/chadszv/public_html/music'  # Hosting server
-        ]
-        
-        file_path = None
-        
-        # Find the file in any of the directories
-        for directory in music_dirs:
-            if directory and os.path.exists(os.path.join(directory, filename)):
-                file_path = os.path.join(directory, filename)
-                current_app.logger.info(f"Found {filename} in directory: {directory}")
-                break
-        
-        if file_path:
-            # Get file size
-            file_size = os.path.getsize(file_path)
-            
-            # Handle range request
-            range_header = request.headers.get('Range')
-            
-            if range_header:
-                byte1, byte2 = 0, None
-                match = re.search(r'(\d+)-(\d*)', range_header)
-                groups = match.groups()
-                
-                if groups[0]:
-                    byte1 = int(groups[0])
-                if groups[1]:
-                    byte2 = int(groups[1])
-                
-                if byte2 is None:
-                    byte2 = file_size - 1
-                
-                length = byte2 - byte1 + 1
-                
-                resp = Response(
-                    partial_file_sender(file_path, byte1, byte2),
-                    206,
-                    mimetype=get_mime_type(filename),
-                    direct_passthrough=True
-                )
-                
-                resp.headers.add('Content-Range', f'bytes {byte1}-{byte2}/{file_size}')
-                resp.headers.add('Accept-Ranges', 'bytes')
-                resp.headers.add('Content-Length', str(length))
-                return resp
-            
-            return send_from_directory(os.path.dirname(file_path), os.path.basename(file_path))
-        
-        # If file not found and in production, try to create the static/music directory
+        # In production, redirect to the Namecheap server URL
         if current_app.config.get('FLASK_ENV') == 'production':
-            try:
-                music_dir = os.path.join(current_app.static_folder, 'music')
-                if not os.path.exists(music_dir):
-                    os.makedirs(music_dir, exist_ok=True)
-                    current_app.logger.info(f"Created music directory: {music_dir}")
-            except Exception as e:
-                current_app.logger.error(f"Failed to create music directory: {str(e)}")
+            return redirect(f"https://chadbattles.fun/music/{filename}")
         
-        # If file not found, return placeholder content for debugging
-        current_app.logger.error(f"Music file not found: {filename}")
-        if current_app.config.get('FLASK_ENV') == 'production':
-            # In production, return a placeholder audio fragment for debugging
-            resp = Response(
-                b'\x00' * 1024,  # 1KB of null bytes as placeholder audio
-                200,
-                mimetype=get_mime_type(filename)
-            )
-            return resp
+        # For development, serve from local directory
+        music_dir = os.path.join(current_app.static_folder, 'music')
+        if os.path.exists(os.path.join(music_dir, filename)):
+            return send_from_directory(music_dir, filename)
         else:
+            current_app.logger.error(f"Music file not found: {filename}")
             return jsonify({"error": "File not found"}), 404
             
     except Exception as e:
@@ -215,23 +156,19 @@ def partial_file_sender(file_path, byte1=0, byte2=None):
     if byte2 is None:
         byte2 = file_size - 1
     
-    try:
-        with open(file_path, 'rb') as f:
-            f.seek(byte1)
-            chunk_size = 8192
-            remaining = byte2 - byte1 + 1
-            
-            while True:
-                if remaining <= 0:
-                    break
-                chunk = f.read(min(chunk_size, remaining))
-                if not chunk:
-                    break
-                remaining -= len(chunk)
-                yield chunk
-    except Exception as e:
-        current_app.logger.error(f"Error in partial_file_sender: {str(e)}")
-        yield b''
+    length = byte2 - byte1 + 1
+    
+    with open(file_path, 'rb') as f:
+        f.seek(byte1)
+        while True:
+            chunk_size = min(8192, length)
+            if chunk_size <= 0:
+                break
+            data = f.read(chunk_size)
+            if not data:
+                break
+            length -= len(data)
+            yield data
 
 @music.route('/custom/<filename>')
 @limiter.limit("100 per hour")
