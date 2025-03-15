@@ -248,6 +248,8 @@ Remember to:
 - Never overwrite .env files without confirmation
 - Complete tasks fully without templates or placeholders
 - Create actual files, never samples or placeholders
+- Always commit and push changes after fixing issues or implementing features
+- Document significant changes in commit messages
 
 ### Technical Stack
 - Backend: Python
