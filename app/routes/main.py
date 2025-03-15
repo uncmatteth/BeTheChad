@@ -47,7 +47,14 @@ def leaderboard():
     try:
         # This is a simplified version for deployment
         # In the full version, we would query the database for top users
-        return render_template('main/leaderboard.html')
+        
+        # Create empty leaderboard_data for template
+        leaderboard_data = {
+            'top_players': [],
+            'current_user_rank': None
+        }
+        
+        return render_template('main/leaderboard.html', leaderboard=leaderboard_data)
     except Exception as e:
         logger.error(f"Error loading leaderboard: {str(e)}")
         flash('Error loading leaderboard', 'danger')
