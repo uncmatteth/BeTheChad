@@ -53,10 +53,7 @@ You control your Chad by tweeting specific commands to @RollMasterChad.
 
 | Command | Example Tweet | Description |
 |---------|--------------|-------------|
-| battle @user | "CHALLENGE @username TO BATTLE @RollMasterChad" | Initiates a battle |
-| attack | "I USE SAVAGE ROAST @RollMasterChad" | Standard attack in battle |
-| special | "I USE SIGMA MOVE @RollMasterChad" | Special move (costs energy) |
-| flee | "I WANT TO FLEE @RollMasterChad" | Attempt to escape battle (may fail) |
+| battle @user | "CHALLENGE @username TO BATTLE @RollMasterChad" | Initiates a battle (fully automated!) |
 
 ### Marketplace Commands
 
@@ -118,23 +115,21 @@ If you believe you deserve the Blockchain Detective class, you can appeal in you
 
 ## Battles
 
-Battles in Chad Battles are turn-based encounters between players.
+Battles in Chad Battles are automatically simulated encounters between players.
 
 ### Battle Flow
 
-1. **Challenge**: One player challenges another
-2. **Preparation**: Equip items and select your waifu companion
-3. **Initiative**: Highest Drip Factor determines who goes first
-4. **Attack Phase**: Your Roast Level vs opponent's Cringe Resistance
-5. **Special Abilities**: Use class and waifu abilities tactically
-6. **Resolution**: First chad to reach zero HP loses
+1. **Challenge**: One player challenges another using the command `CHALLENGE @username TO BATTLE @RollMasterChad`
+2. **Simulation**: The system automatically simulates the entire battle based on each player's stats
+3. **Results**: The bot replies with a single tweet containing the full battle results
+4. **Rewards**: Winner receives Chadcoin and XP, loser receives some participation XP
 
 ### Battle Mechanics
 
+- **Outcome Determination**: Based on player stats (with some randomness for excitement)
 - **Damage Calculation**: Base damage = (Attacker's Roast Level × Clout Modifier) - (Defender's Cringe Resistance × Defense Modifier)
 - **Critical Hits**: Occur when your attack roll exceeds the opponent's defense by 50% or more, dealing 1.5× damage
 - **Class Matchups**: Different Chad classes have advantages against others
-- **Special Moves**: Each class has unique special moves with powerful effects
 
 ### Rewards
 

@@ -681,25 +681,21 @@ def handle_opt_in_battle(tweet_id, username):
         return f"@{username} Sorry, there was an error opting into the battle. Please try again later."
 
 def handle_help(tweet_id, username):
-    """Handle help request"""
+    """Provide help information about available commands"""
     try:
-        help_message = f"""@{username} Chad Battles Commands:
-
-• CREATE CHARACTER @RollMasterChad - Create a new character
-• CHECK STATS @RollMasterChad - Check your character's stats
-• I'm going to CRUSH @opponent! CHALLENGE TO BATTLE @RollMasterChad - Challenge someone to battle
-
-Cabal Commands:
-• CREATE CABAL name @RollMasterChad - Create a new cabal
-• JOIN CABAL name @RollMasterChad - Join an existing cabal
-• APPOINT @member AS CLOUT/ROAST/CRINGE/DRIP OFFICER @RollMasterChad - Appoint a cabal officer
-• BATTLE CABAL name @RollMasterChad - Schedule a battle with another cabal
-• JOIN NEXT CABAL BATTLE @RollMasterChad - Opt into your cabal's next battle
-• VOTE REMOVE CABAL LEADER @RollMasterChad - Vote to remove your cabal's leader
-
-Visit https://chadbattles.com for more info!"""
-        
-        return help_message
+        reply = (
+            f"@{username} Here are the commands you can use with @RollMasterChad:\n\n"
+            f"• CREATE CHARACTER @RollMasterChad - Create your Chad character\n"
+            f"• CHECK STATS @RollMasterChad - Check your character's stats\n"
+            f"• SHOW MY WAIFUS @RollMasterChad - View your waifu collection\n"
+            f"• CHALLENGE @username TO BATTLE @RollMasterChad - Challenge someone to battle (battles are fully automated!)\n"
+            f"• CREATE CABAL name @RollMasterChad - Create a new cabal\n"
+            f"• JOIN CABAL name @RollMasterChad - Join an existing cabal\n"
+            f"• SHOW MY BALANCE @RollMasterChad - Check your Chadcoin balance\n\n"
+            f"For more details, visit our website or check the how-to-play guide!"
+        )
+        post_reply(reply, tweet_id)
+        return True
     except Exception as e:
-        logger.error(f"Error generating help for {username}: {str(e)}")
-        return f"@{username} Sorry, there was an error generating help. Please try again later." 
+        logger.error(f"Error handling help request from {username}: {str(e)}")
+        return False 

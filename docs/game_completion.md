@@ -18,7 +18,7 @@ Chad Battles is a multiplayer web-based game where players create and customize 
 ### Battle System
 - **PvP Battles**: Players can challenge other players to battles.
 - **PvE Battles**: Players can battle against AI-controlled enemies.
-- **Battle Mechanics**: Turn-based combat with special moves and strategies.
+- **Battle Mechanics**: Automated combat simulation with stat-based outcomes.
 - **Rewards**: Winning battles provides XP, currency, and items.
 - **Leaderboards**: Top players displayed on leaderboards with robust error handling.
 

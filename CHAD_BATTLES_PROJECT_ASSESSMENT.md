@@ -44,7 +44,7 @@ Chad Battles is a web-based game that combines traditional RPG elements with blo
 3. **Waifu**: Collectible characters that provide stat boosts
 4. **Item**: Equipment for Chads and Waifus (with inheritance)
 5. **Cabal**: Player guilds/groups
-6. **Battle**: Battle records and logic
+6. **Battle**: Automated combat simulation with stat-based calculations
 7. **MemeElixir**: Temporary stat boosts
 8. **Transaction**: In-game currency movements
 9. **NFT**: Blockchain asset tracking
@@ -83,7 +83,7 @@ The application is configured for deployment on Render.com, using:
 ### Game Mechanics
 1. **Character System**: Players create and level up Chad characters based on stats
 2. **Waifu Collection**: Players collect and equip Waifus for stat boosts
-3. **Battle System**: Turn-based combat with stat calculations
+3. **Battle System**: Automated combat simulation with stat-based calculations
 4. **Cabal System**: Group gameplay mechanics and bonuses
 5. **Marketplace**: In-game economy for buying and selling assets
 6. **NFT Integration**: Mint game assets to the Solana blockchain
