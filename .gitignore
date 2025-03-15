@@ -1,4 +1,5 @@
-# Python cache files
+# Python virtual environment
+venv/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,11 +21,6 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
-venv/
-env/
-ENV/
-
 # Backup directories
 backup_*/
 
@@ -34,17 +30,21 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
-# Log files
+# Database
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
 *.log
 
-# Database files
-*.sqlite
-*.db
-
-# Environment files
-.env
-
 # Temporary files
-*.tmp
-*.bak
-*.swp
+tmp/
+temp/

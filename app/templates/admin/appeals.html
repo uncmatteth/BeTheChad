@@ -2,31 +2,79 @@
 
 {% block admin_title %}Class Appeals{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    /* Mobile responsive styles */
+    .appeal-cards {
+        display: none;
+    }
+    
+    .status-filters {
+        margin-bottom: 15px;
+    }
+    
+    @media (max-width: 767.98px) {
+        .appeal-table {
+            display: none;
+        }
+        
+        .appeal-cards {
+            display: block;
+        }
+        
+        .status-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .status-filters .btn {
+            flex: 1;
+            min-width: 70px;
+            padding: 5px;
+            font-size: 0.85rem;
+        }
+        
+        .page-section-title {
+            font-size: 1.5rem;
+        }
+        
+        .appeal-card {
+            margin-bottom: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block admin_content %}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Class Appeals</h1>
-        <div class="btn-group">
-            <a href="{{ url_for('admin.appeals', status='pending') }}" 
-               class="btn btn-outline-primary {% if current_status == 'pending' %}active{% endif %}">
-                Pending
-            </a>
-            <a href="{{ url_for('admin.appeals', status='approved') }}"
-               class="btn btn-outline-primary {% if current_status == 'approved' %}active{% endif %}">
-                Approved
-            </a>
-            <a href="{{ url_for('admin.appeals', status='rejected') }}"
-               class="btn btn-outline-primary {% if current_status == 'rejected' %}active{% endif %}">
-                Rejected
-            </a>
-            <a href="{{ url_for('admin.appeals', status='all') }}"
-               class="btn btn-outline-primary {% if current_status == 'all' %}active{% endif %}">
-                All
-            </a>
+<div class="container-fluid">
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <h1 class="page-section-title">Class Appeals</h1>
+            <div class="btn-group status-filters">
+                <a href="{{ url_for('admin.appeals', status='pending') }}" 
+                   class="btn btn-outline-primary {% if current_status == 'pending' %}active{% endif %}">
+                    Pending
+                </a>
+                <a href="{{ url_for('admin.appeals', status='approved') }}"
+                   class="btn btn-outline-primary {% if current_status == 'approved' %}active{% endif %}">
+                    Approved
+                </a>
+                <a href="{{ url_for('admin.appeals', status='rejected') }}"
+                   class="btn btn-outline-primary {% if current_status == 'rejected' %}active{% endif %}">
+                    Rejected
+                </a>
+                <a href="{{ url_for('admin.appeals', status='all') }}"
+                   class="btn btn-outline-primary {% if current_status == 'all' %}active{% endif %}">
+                    All
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="table-responsive">
+    <!-- Desktop Table View -->
+    <div class="table-responsive appeal-table">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -67,6 +115,30 @@
             </tbody>
         </table>
     </div>
+    
+    <!-- Mobile Card View -->
+    <div class="appeal-cards">
+        {% for appeal in appeals.items %}
+        <div class="card appeal-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Appeal #{{ appeal.id }}</span>
+                <span class="badge {{ appeal.status_badge_class }}">{{ appeal.status }}</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-2"><strong>User:</strong> {{ appeal.user.username }}</div>
+                <div class="mb-2"><strong>Current:</strong> {{ appeal.user.chad_class }}</div>
+                <div class="mb-2"><strong>Requested:</strong> {{ appeal.requested_class }}</div>
+                <div class="mb-3"><strong>Date:</strong> {{ appeal.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                <a href="{{ url_for('admin.appeal_detail', appeal_id=appeal.id) }}" 
+                   class="btn btn-info btn-block">
+                    View Details
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">No appeals found.</div>
+        {% endfor %}
+    </div>
 
     {% if appeals.pages > 1 %}
     <nav aria-label="Appeal pages">
@@ -79,7 +151,7 @@
             </li>
             {% endif %}
 
-            {% for page_num in appeals.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+            {% for page_num in appeals.iter_pages(left_edge=1, left_current=1, right_current=1, right_edge=1) %}
                 {% if page_num %}
                     <li class="page-item {% if page_num == appeals.page %}active{% endif %}">
                         <a class="page-link" href="{{ url_for('admin.appeals', status=current_status, page=page_num) }}">

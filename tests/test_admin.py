@@ -3,6 +3,10 @@ from flask import url_for
 from app.models.user import User
 from app.models.appeal import Appeal
 from datetime import datetime, timedelta
+import os
+
+# Force SQLite for these tests
+os.environ['TEST_DATABASE_URI'] = 'sqlite:///:memory:'
 
 def create_admin_user():
     """Helper function to create an admin user"""
@@ -26,13 +30,15 @@ def create_regular_user():
     user.chad_class = 'Exit Liquidity'
     return user
 
-def create_appeal(user, requested_class='Blockchain Detective'):
+def create_appeal(user, requested_class='Blockchain Detective', days_ago=0):
     """Helper function to create an appeal"""
-    return Appeal(
+    appeal = Appeal(
         user_id=user.id,
         requested_class=requested_class,
-        reason='I deserve to be a Blockchain Detective because I found multiple rugpulls.'
+        reason='I deserve to be a Blockchain Detective because I found multiple rugpulls.',
+        created_at=datetime.utcnow() - timedelta(days=days_ago)
     )
+    return appeal
 
 @pytest.mark.usefixtures('client')
 class TestAdminInterface:
@@ -51,13 +57,13 @@ class TestAdminInterface:
         client.post(url_for('auth.login'), data={
             'username': 'admin',
             'password': 'adminpass123'
-        })
+        }, follow_redirects=True)
         
-        # Test admin access
+        # Test access after login
         response = client.get(url_for('admin.index'))
         assert response.status_code == 200
         assert b'Admin Dashboard' in response.data
-    
+
     def test_non_admin_access(self, client, db):
         """Test that non-admin users cannot access admin pages"""
         # Create and save regular user
@@ -207,4 +213,76 @@ class TestAdminInterface:
         response = client.get(url_for('admin.appeals', status='rejected'))
         assert response.status_code == 200
         assert b'Diamond Hands' in response.data
-        assert b'Tech Bro' not in response.data 
+        assert b'Tech Bro' not in response.data
+
+    def test_appeal_rate_limiting(self, client, db):
+        """Test that users can only submit one appeal per month"""
+        user = create_regular_user()
+        db.session.add(user)
+        db.session.commit()
+
+        # Create an appeal from 15 days ago
+        old_appeal = create_appeal(user, days_ago=15)
+        db.session.add(old_appeal)
+        db.session.commit()
+
+        # Login as user
+        client.post(url_for('auth.login'), data={
+            'username': 'user',
+            'password': 'userpass123'
+        }, follow_redirects=True)
+
+        # Try to create another appeal
+        response = client.post(url_for('admin.submit_appeal'), data={
+            'requested_class': 'Blockchain Detective',
+            'reason': 'Another attempt'
+        }, follow_redirects=True)
+
+        assert response.status_code == 403
+        assert b'You can only submit one appeal per month' in response.data
+
+    def test_environment_specific_callback(self, client):
+        """Test that Twitter callback URL is environment-specific"""
+        # Test development environment
+        with client.application.app_context():
+            client.application.config['ENV'] = 'development'
+            callback_url = url_for('auth.twitter_callback', _external=True)
+            assert 'localhost' in callback_url or '127.0.0.1' in callback_url
+
+        # Test production environment
+        with client.application.app_context():
+            client.application.config['ENV'] = 'production'
+            callback_url = url_for('auth.twitter_callback', _external=True)
+            assert 'chadbattles.fun' in callback_url
+
+    def test_admin_notification(self, client, db):
+        """Test that admins are notified of new appeals"""
+        admin = create_admin_user()
+        user = create_regular_user()
+        db.session.add_all([admin, user])
+        db.session.commit()
+
+        # Login as user
+        client.post(url_for('auth.login'), data={
+            'username': 'user',
+            'password': 'userpass123'
+        }, follow_redirects=True)
+
+        # Submit an appeal
+        response = client.post(url_for('admin.submit_appeal'), data={
+            'requested_class': 'Blockchain Detective',
+            'reason': 'Testing notifications'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+
+        # Login as admin
+        client.post(url_for('auth.login'), data={
+            'username': 'admin',
+            'password': 'adminpass123'
+        }, follow_redirects=True)
+
+        # Check admin dashboard for notification
+        response = client.get(url_for('admin.index'))
+        assert b'New Appeal' in response.data
+        assert b'Testing notifications' in response.data 

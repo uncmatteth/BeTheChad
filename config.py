@@ -50,7 +50,8 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     """Testing configuration."""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URI', 'sqlite:///test.db')
+    # Temporarily using SQLite for testing (NOTE: PostgreSQL is best practice)
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False  # Disable CSRF protection in tests
     # Disable features in testing by default
     ENABLE_BLOCKCHAIN = False

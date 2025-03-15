@@ -37,7 +37,7 @@
 - [x] Access the deployed application
 - [x] Verify database was created correctly
 - [x] Create test user and verify functionality
-- [ ] Check admin features
+- [x] Check admin features
 - [x] Verify error handling
 
 ## Current Issues (Last Updated: March 18, 2025)
@@ -61,7 +61,9 @@
   - [x] Fixed: Updated routes to use `/home/chadszv/public_html/music` on the hosting server
   - [x] Added fallback to hardcoded tracks if API fails
   - [x] Support for additional audio formats (.wav, .ogg)
-- [ ] Twitter OAuth callback URL not approved for the application
+- [x] Twitter OAuth callback URL not approved for the application
+  - [x] Fixed: Added environment-aware callback URLs
+  - [x] Updated Twitter developer dashboard configuration
 - [x] Battle feature showing errors (missing target_id attribute)
   - [x] Fixed: Added target_id attribute to Battle model
 - [x] Leaderboard displaying errors when database is empty
@@ -102,8 +104,9 @@
    - [x] Update paths and references to properly access the music files
 
 4. Fix Twitter OAuth:
-   - [ ] Configure proper callback URL in Twitter developer dashboard
-   - [ ] Update app configuration with correct Twitter API credentials
+   - [x] Configure proper callback URL in Twitter developer dashboard
+   - [x] Update app configuration with correct Twitter API credentials
+   - [x] Implement environment-specific callback URLs
 
 5. Fix model relationship issues:
    - [x] Update models to fix attribute and method errors

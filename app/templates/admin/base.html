@@ -20,12 +20,44 @@
         background-color: #007bff;
         color: white;
     }
+    
+    /* Mobile styles */
+    .mobile-admin-nav {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .mobile-admin-nav .dropdown-menu {
+        width: 100%;
+    }
+    
+    .mobile-admin-toggle {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+    }
+    
+    @media (max-width: 767.98px) {
+        .admin-content {
+            padding: 10px;
+        }
+        
+        .container-fluid {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
+        <!-- Desktop Sidebar - hidden on mobile -->
         <nav class="col-md-2 d-none d-md-block admin-sidebar">
             <div class="sidebar-sticky">
                 <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
@@ -53,6 +85,23 @@
                 </ul>
             </div>
         </nav>
+
+        <!-- Mobile Navigation - visible only on small screens -->
+        <div class="col-12 d-md-none mobile-admin-nav">
+            <div class="dropdown">
+                <button class="btn dropdown-toggle mobile-admin-toggle" type="button" id="mobileAdminMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Admin Menu
+                </button>
+                <div class="dropdown-menu" aria-labelledby="mobileAdminMenu">
+                    <a class="dropdown-item {% if request.endpoint == 'admin.index' %}active{% endif %}" 
+                       href="{{ url_for('admin.index') }}">Overview</a>
+                    <a class="dropdown-item {% if request.endpoint == 'admin.appeals' %}active{% endif %}"
+                       href="{{ url_for('admin.appeals') }}">Appeals</a>
+                    <a class="dropdown-item {% if request.endpoint == 'admin.users' %}active{% endif %}"
+                       href="{{ url_for('admin.users') }}">Users</a>
+                </div>
+            </div>
+        </div>
 
         <main role="main" class="col-md-10 ml-sm-auto col-lg-10 px-4 admin-content">
             {% with messages = get_flashed_messages(with_categories=true) %}

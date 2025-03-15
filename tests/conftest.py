@@ -3,16 +3,81 @@ import pytest
 from app import create_app
 from app.extensions import db as _db
 from config import TestingConfig
+import subprocess
+import sqlalchemy
+from sqlalchemy import create_engine, text
+
+def create_test_db():
+    """Create the test database if it doesn't exist."""
+    db_name = "chad_battles_test"
+    connection_string = f"postgresql://postgres:postgres@localhost/postgres"
+    
+    # Create connection to default database
+    engine = create_engine(connection_string)
+    
+    with engine.connect() as conn:
+        # Disconnect all active connections to database if exists
+        conn.execution_options(isolation_level="AUTOCOMMIT")
+        
+        # Check if database exists
+        result = conn.execute(text(f"SELECT 1 FROM pg_database WHERE datname = '{db_name}'"))
+        exists = result.scalar()
+        
+        if not exists:
+            print(f"Creating test database '{db_name}'...")
+            conn.execute(text(f"CREATE DATABASE {db_name}"))
+            print(f"Database '{db_name}' created successfully!")
+        else:
+            print(f"Test database '{db_name}' already exists.")
+
+def drop_test_db():
+    """Drop the test database if it exists."""
+    db_name = "chad_battles_test"
+    connection_string = f"postgresql://postgres:postgres@localhost/postgres"
+    
+    # Create connection to default database
+    engine = create_engine(connection_string)
+    
+    with engine.connect() as conn:
+        # Disconnect all active connections to database if exists
+        conn.execution_options(isolation_level="AUTOCOMMIT")
+        
+        # Check if database exists
+        result = conn.execute(text(f"SELECT 1 FROM pg_database WHERE datname = '{db_name}'"))
+        exists = result.scalar()
+        
+        if exists:
+            print(f"Closing all connections to '{db_name}'...")
+            conn.execute(text(f"""
+                SELECT pg_terminate_backend(pg_stat_activity.pid)
+                FROM pg_stat_activity
+                WHERE pg_stat_activity.datname = '{db_name}'
+                AND pid <> pg_backend_pid()
+            """))
+            
+            print(f"Dropping test database '{db_name}'...")
+            conn.execute(text(f"DROP DATABASE {db_name}"))
+            print(f"Database '{db_name}' dropped successfully!")
+        else:
+            print(f"Test database '{db_name}' does not exist.")
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_test_db():
+    """Set up the test database before all tests."""
+    # Clean up and create a fresh database
+    drop_test_db()
+    create_test_db()
+    yield
+    # Clean up after tests
+    drop_test_db()
 
 @pytest.fixture(scope='session')
 def app():
     """Create application for the tests."""
     _app = create_app(TestingConfig)
     _app.config['TESTING'] = True
-    _app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'TEST_DATABASE_URI',
-        'postgresql://postgres:postgres@localhost/chad_battles_test'
-    )
+    # Temporarily use SQLite for tests
+    _app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     
     # Other test settings
     _app.config['WTF_CSRF_ENABLED'] = False
@@ -35,6 +100,7 @@ def db(app):
     
     # Clean up
     with app.app_context():
+        _db.session.close()
         _db.drop_all()
 
 @pytest.fixture(scope='function')
