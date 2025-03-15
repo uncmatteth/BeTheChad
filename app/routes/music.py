@@ -7,7 +7,7 @@ from app.extensions import limiter, cache
 import re
 
 # Create blueprint
-music = Blueprint('music', __name__)
+music = Blueprint('music', __name__, url_prefix='/music')
 
 # Apply rate limiting to the entire blueprint
 @music.before_request

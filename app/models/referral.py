@@ -20,8 +20,8 @@ class Referral(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    referrer = db.relationship('Chad', foreign_keys=[referrer_id])
-    referred = db.relationship('Chad', foreign_keys=[referred_id])
+    referrer = db.relationship('Chad', foreign_keys=[referrer_id], backref=db.backref('referrals_made', lazy='dynamic'))
+    referred = db.relationship('Chad', foreign_keys=[referred_id], backref=db.backref('referrals_received', lazy='dynamic'))
     cabal = db.relationship('Cabal', backref='referrals')
     
     def __repr__(self):
