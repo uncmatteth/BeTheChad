@@ -11,6 +11,7 @@ Current progress as of March 18, 2025:
    - Using Namecheap server music files at `/home/chadszv/public_html/music`
    - Fallback to hardcoded track URLs if API fails
    - Fixed URL prefix for music routes (fixing 404 errors)
+   - Improved environment detection for Render.com deployments
 2. Security measures implemented:
    - Rate limiting on all endpoints
    - File type validation
@@ -40,6 +41,7 @@ Current progress as of March 18, 2025:
    - Proper migration handling
    - Robust initialization script
    - Fixed model relationship issues (Referral-Chad relationship with explicit primaryjoin)
+   - Fixed WaifuType relationship with Waifu model by adding foreign key
    - TODO: Properly configure PostgreSQL for testing environment
 7. Route structure updated:
    - Created proper route files in app/routes
@@ -77,9 +79,9 @@ Current progress as of March 18, 2025:
 Next priority tasks (in recommended order):
 1. ~~Fix Twitter OAuth callback URL in the Twitter developer dashboard~~ ✓ DONE
 2. ~~Add admin interface for managing class appeals~~ ✓ DONE
-3. Run and fix any failing tests (Testing)
-4. Improve mobile responsiveness (Frontend)
-5. Create comprehensive API documentation (Documentation)
+3. ~~Fix WaifuType relationship with Waifu model~~ ✓ DONE
+4. ~~Fix music directory handling for Render.com deployment~~ ✓ DONE
+5. Run and fix any failing tests (Testing)
 
 Remember to:
 - Update this checklist after completing each task
@@ -196,6 +198,7 @@ Remember to:
 - [x] Update migration handling to work with PostgreSQL
 - [x] Improve database initialization script
 - [x] Fix model relationship issues (Referral-Chad relationship with explicit primaryjoin)
+- [x] Fixed WaifuType relationship with Waifu model by adding foreign key
 - [ ] Verify all tables are properly created in PostgreSQL
 
 ### 11. Route Structure
