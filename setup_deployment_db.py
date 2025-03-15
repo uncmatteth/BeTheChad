@@ -145,8 +145,8 @@ def create_default_chad_class():
             name='Sigma',
             description='Lone wolves with exceptional focus and determination.',
             base_clout_bonus=15,
-            base_roast_bonus=10,
-            base_cringe_resistance_bonus=15,
+            base_roast_bonus=15,
+            base_cringe_resistance_bonus=20,
             base_drip_bonus=10
         ),
         ChadClass(
@@ -160,16 +160,16 @@ def create_default_chad_class():
         ChadClass(
             name='Gigachad',
             description='Legendary individuals with unparalleled status.',
-            base_clout_bonus=25,
-            base_roast_bonus=25,
-            base_cringe_resistance_bonus=25,
-            base_drip_bonus=25
+            base_clout_bonus=20,
+            base_roast_bonus=10,
+            base_cringe_resistance_bonus=10,
+            base_drip_bonus=20
         ),
         ChadClass(
             name='Meme Overlord',
             description='Masters of internet culture who weaponize viral content.',
-            base_clout_bonus=20,
-            base_roast_bonus=25,
+            base_clout_bonus=15,
+            base_roast_bonus=20,
             base_cringe_resistance_bonus=10,
             base_drip_bonus=15
         ),
@@ -177,15 +177,15 @@ def create_default_chad_class():
             name='Crypto Knight',
             description='Digital asset warriors who live by the blockchain.',
             base_clout_bonus=15,
-            base_roast_bonus=15,
+            base_roast_bonus=10,
             base_cringe_resistance_bonus=20,
-            base_drip_bonus=20
+            base_drip_bonus=15
         ),
         ChadClass(
             name='Ratio King',
             description='Social media tacticians who dominate conversations.',
-            base_clout_bonus=25,
-            base_roast_bonus=20,
+            base_clout_bonus=10,
+            base_roast_bonus=25,
             base_cringe_resistance_bonus=15,
             base_drip_bonus=10
         ),
@@ -201,76 +201,76 @@ def create_default_chad_class():
         ChadClass(
             name='KOL',
             description='Key Opinion Leaders who shape trends and influence the masses.',
-            base_clout_bonus=30,
-            base_roast_bonus=15,
+            base_clout_bonus=25,
+            base_roast_bonus=10,
             base_cringe_resistance_bonus=10,
-            base_drip_bonus=25
+            base_drip_bonus=15
         ),
         ChadClass(
             name='Tech Bro',
             description='Startup enthusiasts who disrupt industries and scale exponentially.',
-            base_clout_bonus=20,
+            base_clout_bonus=15,
             base_roast_bonus=10,
             base_cringe_resistance_bonus=15,
-            base_drip_bonus=25
+            base_drip_bonus=20
         ),
         ChadClass(
             name='Gym Rat',
             description='Fitness devotees who maximize physical potential and protein intake.',
-            base_clout_bonus=15,
+            base_clout_bonus=10,
             base_roast_bonus=20,
             base_cringe_resistance_bonus=20,
-            base_drip_bonus=15
+            base_drip_bonus=10
         ),
         ChadClass(
             name='Debate Lord',
             description='Masters of rhetoric who never lose an argument, online or offline.',
             base_clout_bonus=10,
-            base_roast_bonus=30,
-            base_cringe_resistance_bonus=25,
-            base_drip_bonus=5
+            base_roast_bonus=25,
+            base_cringe_resistance_bonus=15,
+            base_drip_bonus=10
         ),
         ChadClass(
             name='Diamond Hands',
             description='Unshakeable investors who never sell, regardless of market conditions.',
-            base_clout_bonus=25,
-            base_roast_bonus=15,
-            base_cringe_resistance_bonus=30,
+            base_clout_bonus=15,
+            base_roast_bonus=10,
+            base_cringe_resistance_bonus=25,
             base_drip_bonus=10
         ),
         ChadClass(
             name='Lore Master',
             description='Knowledge keepers with encyclopedic understanding of niche subjects.',
             base_clout_bonus=15,
-            base_roast_bonus=25,
-            base_cringe_resistance_bonus=20,
+            base_roast_bonus=20,
+            base_cringe_resistance_bonus=15,
             base_drip_bonus=10
         ),
         # Anti-gaming system classes
         ChadClass(
             name='Clown',
             description='Detected trying to game the system. Nice try, but we see through your act.',
-            base_clout_bonus=5,
-            base_roast_bonus=5,
-            base_cringe_resistance_bonus=0,
-            base_drip_bonus=0
+            base_clout_bonus=3,
+            base_roast_bonus=2,
+            base_cringe_resistance_bonus=2,
+            base_drip_bonus=3
         ),
         ChadClass(
             name='Newbie',
             description='Fresh to the scene with potential yet to be realized.',
-            base_clout_bonus=10,
-            base_roast_bonus=10,
-            base_cringe_resistance_bonus=10,
-            base_drip_bonus=10
+            base_clout_bonus=15,
+            base_roast_bonus=15,
+            base_cringe_resistance_bonus=15,
+            base_drip_bonus=15
         ),
         # Special rare class
         ChadClass(
             name='Blockchain Detective',
             description='Elite on-chain sleuths with proven track records of digital investigation.',
-            base_clout_bonus=35,
+            base_clout_bonus=30,
             base_roast_bonus=20,
             base_cringe_resistance_bonus=35,
-            base_drip_bonus=20
+            base_drip_bonus=25
         )
     ]
     
