@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Chad Battles{% endblock %}</title>
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/wallet.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jukebox.css') }}">
+    {% block additional_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <img src="{{ url_for('static', filename='img/chad-logo.png') }}" alt="Chad Battles" width="40">
+                Chad Battles
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.how_to_play') }}">How to Play</a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('chad.index') }}">Chads</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('waifu.index') }}">Waifus</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('cabal.index') }}">Cabals</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('battle_bp.history') }}">Battles</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.profile') }}">
+                            <i class="fas fa-user"></i>
+                            {{ current_user.username }}
+                        </a>
+                    </li>
+                    {% if current_user.chadcoin_balance is defined %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('inventory.index') }}">
+                            <img src="{{ url_for('static', filename='img/chadcoin.png') }}" alt="Chadcoin" width="20">
+                            {{ current_user.chadcoin_balance }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.register') }}">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2025 Chad Battles</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="#" class="text-muted">Terms</a> |
+                    <a href="#" class="text-muted">Privacy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Jukebox Player -->
+    <div id="jukebox" class="jukebox">
+        <div class="jukebox-header">
+            <div class="jukebox-title">Music Player</div>
+            <div class="jukebox-controls">
+                <button id="jukebox-toggle" class="jukebox-button">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+        <div class="jukebox-body">
+            <div id="track-info">Loading music...</div>
+            <div class="jukebox-progress">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div class="controls">
+                <button id="prev-track" class="control-button">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button id="play-pause" class="control-button">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button id="next-track" class="control-button">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+                <button id="shuffle" class="control-button active">
+                    <i class="fas fa-random"></i>
+                </button>
+                <div class="volume-container">
+                    <i class="fas fa-volume-up"></i>
+                    <input type="range" id="volume" min="0" max="1" step="0.1" value="0.7">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery (required for some Bootstrap features) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Browser Compatibility Check -->
+    <script src="{{ url_for('static', filename='js/browser_compatibility.js') }}"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Jukebox JS -->
+    <script src="{{ url_for('static', filename='js/jukebox.js') }}"></script>
+    <!-- Wallet Connect JS -->
+    <script src="{{ url_for('static', filename='js/wallet-connect.js') }}"></script>
+    {% block additional_js %}{% endblock %}
+</body>
+</html> 

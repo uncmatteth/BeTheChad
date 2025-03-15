@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Waifu Collection{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Your Waifu Collection</h3>
+                    <a href="{{ url_for('shop.index') }}" class="btn btn-light btn-sm">
+                        <i class="fas fa-shopping-cart"></i> Shop for Waifus
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if waifus|length == 0 %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-heart-broken fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Waifus Yet</h4>
+                        <p>Visit the shop to acquire your first waifu companion!</p>
+                        <a href="{{ url_for('shop.index') }}" class="btn btn-primary mt-2">
+                            <i class="fas fa-shopping-cart"></i> Shop Now
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="row">
+                        {% for waifu in waifus %}
+                        <div class="col-md-4 col-lg-3 mb-4">
+                            <div class="card h-100 {% if waifu.id in equipped_waifus %}border-success{% endif %}">
+                                <div class="card-header {% if waifu.id in equipped_waifus %}bg-success text-white{% endif %}">
+                                    <h5 class="mb-0">{{ waifu.name }}</h5>
+                                    <span class="badge {% if waifu.id in equipped_waifus %}bg-light text-dark{% else %}bg-secondary{% endif %}">
+                                        {{ waifu.waifu_class.name }}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        {% if waifu.image_url %}
+                                        <img src="{{ waifu.image_url }}" class="img-fluid waifu-avatar" alt="{{ waifu.name }}">
+                                        {% else %}
+                                        <img src="{{ url_for('static', filename='img/default_waifu.png') }}" class="img-fluid waifu-avatar" alt="{{ waifu.name }}">
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <small><i class="fas fa-fire text-danger"></i> {{ waifu.clout_bonus }}</small>
+                                        <small><i class="fas fa-comment-alt text-warning"></i> {{ waifu.roast_bonus }}</small>
+                                        <small><i class="fas fa-shield-alt text-info"></i> {{ waifu.cringe_resistance_bonus }}</small>
+                                        <small><i class="fas fa-tshirt text-success"></i> {{ waifu.drip_bonus }}</small>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('waifu.detail', waifu_id=waifu.id) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-info-circle"></i> Details
+                                        </a>
+                                        {% if waifu.id in equipped_waifus %}
+                                        <button class="btn btn-outline-danger btn-sm unequip-waifu-btn" data-waifu-id="{{ waifu.id }}">
+                                            <i class="fas fa-times-circle"></i> Unequip
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-outline-success btn-sm equip-waifu-btn" data-waifu-id="{{ waifu.id }}">
+                                            <i class="fas fa-check-circle"></i> Equip
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if waifu.rarity %}
+                                <div class="card-footer text-center {% if waifu.rarity.name == 'Legendary' %}bg-warning{% elif waifu.rarity.name == 'Epic' %}bg-purple{% elif waifu.rarity.name == 'Rare' %}bg-info{% else %}bg-light{% endif %}">
+                                    <small>{{ waifu.rarity.name }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function() {
+        // Equip waifu
+        $('.equip-waifu-btn').click(function() {
+            var waifuId = $(this).data('waifu-id');
+            var button = $(this);
+            
+            $.ajax({
+                url: '{{ url_for("waifu.equip") }}',
+                type: 'POST',
+                data: {
+                    'waifu_id': waifuId
+                },
+                beforeSend: function() {
+                    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        showAlert('success', response.message);
+                        
+                        // Reload the page to show updated equipment
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert('danger', response.message);
+                        button.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Equip');
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error equipping waifu. Please try again.');
+                    button.prop('disabled', false).html('<i class="fas fa-check-circle"></i> Equip');
+                }
+            });
+        });
+        
+        // Unequip waifu
+        $('.unequip-waifu-btn').click(function() {
+            var waifuId = $(this).data('waifu-id');
+            var button = $(this);
+            
+            $.ajax({
+                url: '{{ url_for("waifu.unequip") }}',
+                type: 'POST',
+                data: {
+                    'waifu_id': waifuId
+                },
+                beforeSend: function() {
+                    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        showAlert('success', response.message);
+                        
+                        // Reload the page to show updated equipment
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert('danger', response.message);
+                        button.prop('disabled', false).html('<i class="fas fa-times-circle"></i> Unequip');
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error unequipping waifu. Please try again.');
+                    button.prop('disabled', false).html('<i class="fas fa-times-circle"></i> Unequip');
+                }
+            });
+        });
+        
+        // Helper function to show alerts
+        function showAlert(type, message) {
+            var alertHtml = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+                message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                '</div>';
+                
+            // Add alert to the page
+            $('.card-body').first().prepend(alertHtml);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 3000);
+        }
+    });
+</script>
+{% endblock %} 

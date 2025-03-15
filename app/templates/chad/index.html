@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Chad Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Chad Profile Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">{{ chad.name }}</h3>
+                    <span class="badge bg-info">Level {{ chad.level }}</span>
+                    <span class="badge bg-dark">{{ chad.chad_class.name }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if current_user.avatar_url %}
+                            <img src="{{ current_user.avatar_url }}" class="rounded-circle img-fluid chad-avatar" alt="{{ chad.name }}">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='img/default_chad.png') }}" class="rounded-circle img-fluid chad-avatar" alt="{{ chad.name }}">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ (chad.xp / chad.get_xp_for_next_level()) * 100 }}%">
+                            XP: {{ chad.xp }}/{{ chad.get_xp_for_next_level() }}
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted">Battles: {{ chad.battles_won }} won / {{ chad.battles_lost }} lost</p>
+                    
+                    <button id="refresh-stats-btn" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-sync-alt"></i> Refresh Stats from X Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Card -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Stats</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span><i class="fas fa-fire"></i> Clout:</span>
+                                <span class="fw-bold">{{ stats.clout }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ stats.clout }}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span><i class="fas fa-comment-alt"></i> Roast Level:</span>
+                                <span class="fw-bold">{{ stats.roast_level }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ stats.roast_level }}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span><i class="fas fa-shield-alt"></i> Cringe Resistance:</span>
+                                <span class="fw-bold">{{ stats.cringe_resistance }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ stats.cringe_resistance }}%"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span><i class="fas fa-tshirt"></i> Drip Factor:</span>
+                                <span class="fw-bold">{{ stats.drip_factor }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ stats.drip_factor }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Equipped Items and Inventory -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Equipment</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="inventoryTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="equipped-tab" data-bs-toggle="tab" data-bs-target="#equipped" type="button" role="tab">Equipped</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab">Inventory</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="waifus-tab" data-bs-toggle="tab" data-bs-target="#waifus" type="button" role="tab">Waifus</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content p-3" id="inventoryTabsContent">
+                        <!-- Equipped Items Tab -->
+                        <div class="tab-pane fade show active" id="equipped" role="tabpanel">
+                            {% if equipped_items|length == 0 %}
+                                <p class="text-muted">No items equipped yet.</p>
+                            {% else %}
+                                <div class="row">
+                                    {% for item in equipped_items %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">{{ item.name }}</h5>
+                                                <p class="card-text">
+                                                    <small class="text-muted">{{ item.item_type.slot }}</small>
+                                                </p>
+                                                <ul class="list-unstyled">
+                                                    {% if item.clout_bonus %}
+                                                    <li><i class="fas fa-fire text-danger"></i> +{{ item.clout_bonus }} Clout</li>
+                                                    {% endif %}
+                                                    {% if item.roast_bonus %}
+                                                    <li><i class="fas fa-comment-alt text-warning"></i> +{{ item.roast_bonus }} Roast</li>
+                                                    {% endif %}
+                                                    {% if item.cringe_resistance_bonus %}
+                                                    <li><i class="fas fa-shield-alt text-info"></i> +{{ item.cringe_resistance_bonus }} Cringe Res</li>
+                                                    {% endif %}
+                                                    {% if item.drip_bonus %}
+                                                    <li><i class="fas fa-tshirt text-success"></i> +{{ item.drip_bonus }} Drip</li>
+                                                    {% endif %}
+                                                </ul>
+                                                <button class="btn btn-outline-danger btn-sm unequip-item-btn" data-item-id="{{ item.id }}">
+                                                    Unequip
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Inventory Tab -->
+                        <div class="tab-pane fade" id="inventory" role="tabpanel">
+                            {% if available_items|length == 0 %}
+                                <p class="text-muted">No items in inventory.</p>
+                            {% else %}
+                                <div class="row">
+                                    {% for item in available_items %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">{{ item.name }}</h5>
+                                                <p class="card-text">
+                                                    <small class="text-muted">{{ item.item_type.slot }}</small>
+                                                </p>
+                                                <ul class="list-unstyled">
+                                                    {% if item.clout_bonus %}
+                                                    <li><i class="fas fa-fire text-danger"></i> +{{ item.clout_bonus }} Clout</li>
+                                                    {% endif %}
+                                                    {% if item.roast_bonus %}
+                                                    <li><i class="fas fa-comment-alt text-warning"></i> +{{ item.roast_bonus }} Roast</li>
+                                                    {% endif %}
+                                                    {% if item.cringe_resistance_bonus %}
+                                                    <li><i class="fas fa-shield-alt text-info"></i> +{{ item.cringe_resistance_bonus }} Cringe Res</li>
+                                                    {% endif %}
+                                                    {% if item.drip_bonus %}
+                                                    <li><i class="fas fa-tshirt text-success"></i> +{{ item.drip_bonus }} Drip</li>
+                                                    {% endif %}
+                                                </ul>
+                                                <button class="btn btn-outline-success btn-sm equip-item-btn" data-item-id="{{ item.id }}">
+                                                    Equip
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Waifus Tab -->
+                        <div class="tab-pane fade" id="waifus" role="tabpanel">
+                            {% if equipped_waifus|length == 0 %}
+                                <p class="text-muted">No waifus equipped yet.</p>
+                            {% else %}
+                                <div class="row">
+                                    {% for waifu in equipped_waifus %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title">{{ waifu.name }}</h5>
+                                                <p class="card-text">
+                                                    <small class="text-muted">{{ waifu.waifu_class.name }}</small>
+                                                </p>
+                                                <ul class="list-unstyled">
+                                                    {% if waifu.clout_bonus %}
+                                                    <li><i class="fas fa-fire text-danger"></i> +{{ waifu.clout_bonus }} Clout</li>
+                                                    {% endif %}
+                                                    {% if waifu.roast_bonus %}
+                                                    <li><i class="fas fa-comment-alt text-warning"></i> +{{ waifu.roast_bonus }} Roast</li>
+                                                    {% endif %}
+                                                    {% if waifu.cringe_resistance_bonus %}
+                                                    <li><i class="fas fa-shield-alt text-info"></i> +{{ waifu.cringe_resistance_bonus }} Cringe Res</li>
+                                                    {% endif %}
+                                                    {% if waifu.drip_bonus %}
+                                                    <li><i class="fas fa-tshirt text-success"></i> +{{ waifu.drip_bonus }} Drip</li>
+                                                    {% endif %}
+                                                </ul>
+                                                <a href="{{ url_for('waifu.view', waifu_id=waifu.id) }}" class="btn btn-outline-info btn-sm">
+                                                    View Waifu
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function() {
+        // Refresh stats from X profile
+        $('#refresh-stats-btn').click(function() {
+            $.ajax({
+                url: '{{ url_for("chad.refresh_stats") }}',
+                type: 'POST',
+                beforeSend: function() {
+                    $('#refresh-stats-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Refreshing...');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        showAlert('success', response.message);
+                        
+                        // Reload the page to show updated stats
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('danger', response.message);
+                        $('#refresh-stats-btn').prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Refresh Stats from X Profile');
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error refreshing stats. Please try again.');
+                    $('#refresh-stats-btn').prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Refresh Stats from X Profile');
+                }
+            });
+        });
+        
+        // Equip item
+        $('.equip-item-btn').click(function() {
+            var itemId = $(this).data('item-id');
+            var button = $(this);
+            
+            $.ajax({
+                url: '{{ url_for("chad.equip_item") }}',
+                type: 'POST',
+                data: {
+                    'item_id': itemId
+                },
+                beforeSend: function() {
+                    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        showAlert('success', response.message);
+                        
+                        // Reload the page to show updated equipment
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert('danger', response.message);
+                        button.prop('disabled', false).html('Equip');
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error equipping item. Please try again.');
+                    button.prop('disabled', false).html('Equip');
+                }
+            });
+        });
+        
+        // Unequip item
+        $('.unequip-item-btn').click(function() {
+            var itemId = $(this).data('item-id');
+            var button = $(this);
+            
+            $.ajax({
+                url: '{{ url_for("chad.unequip_item") }}',
+                type: 'POST',
+                data: {
+                    'item_id': itemId
+                },
+                beforeSend: function() {
+                    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        showAlert('success', response.message);
+                        
+                        // Reload the page to show updated equipment
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert('danger', response.message);
+                        button.prop('disabled', false).html('Unequip');
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Error unequipping item. Please try again.');
+                    button.prop('disabled', false).html('Unequip');
+                }
+            });
+        });
+        
+        // Helper function to show alerts
+        function showAlert(type, message) {
+            var alertHtml = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+                message +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                '</div>';
+                
+            // Add alert to the page
+            $('#inventoryTabsContent').prepend(alertHtml);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 3000);
+        }
+    });
+</script>
+{% endblock %} 

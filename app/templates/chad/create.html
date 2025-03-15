@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Chad Character{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Create Your Chad Character</h3>
+                </div>
+                <div class="card-body">
+                    {% if not current_user.x_id %}
+                    <div class="alert alert-warning">
+                        <h4 class="alert-heading">Connect your X account first</h4>
+                        <p>To create your Chad character, you need to connect your X (Twitter) account. We'll analyze your tweets to determine your Chad class and stats.</p>
+                        <hr>
+                        <a href="{{ url_for('auth.connect_twitter') }}" class="btn btn-primary">
+                            <i class="fab fa-twitter"></i> Connect X Account
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center mb-4">
+                        {% if current_user.x_profile_image %}
+                        <img src="{{ current_user.x_profile_image }}" class="rounded-circle mb-3" style="width: 120px; height: 120px;" alt="Profile Image">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='img/default_chad.png') }}" class="rounded-circle mb-3" style="width: 120px; height: 120px;" alt="Default Profile">
+                        {% endif %}
+                        <h4>@{{ current_user.x_username }}</h4>
+                        <p class="text-muted">{{ current_user.x_displayname }}</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <p><i class="fas fa-info-circle"></i> We'll analyze your tweets to determine your Chad class and base stats. Your character stats will be based on:</p>
+                        <ul>
+                            <li><strong>Clout:</strong> Your social influence and followers</li>
+                            <li><strong>Roast Level:</strong> Your ability to deliver sick burns</li>
+                            <li><strong>Cringe Resistance:</strong> Your immunity to embarrassment</li>
+                            <li><strong>Drip Factor:</strong> Your style and swagger</li>
+                        </ul>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('chad.create') }}">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus"></i> Create Character
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
