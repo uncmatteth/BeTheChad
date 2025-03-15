@@ -2,10 +2,62 @@
 
 {% block title %}Create Chad Character{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    /* Mobile Responsive Styles */
+    @media (max-width: 767px) {
+        .card-header h3 {
+            font-size: 1.5rem;
+        }
+        
+        .class-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .class-item {
+            margin-bottom: 0.5rem;
+        }
+    }
+    
+    .class-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .class-item {
+        text-align: center;
+        padding: 1rem;
+        border: 1px solid rgba(0,0,0,0.125);
+        border-radius: 0.25rem;
+        background-color: rgba(33, 37, 41, 0.03);
+    }
+    
+    .class-name {
+        font-weight: bold;
+        color: #ffc107;
+        margin-bottom: 0.5rem;
+    }
+    
+    .create-button {
+        transition: all 0.3s ease;
+    }
+    
+    .create-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 mb-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-lg-10">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
                     <h3 class="mb-0">Create Your Chad Character</h3>
@@ -40,14 +92,57 @@
                             <li><strong>Drip Factor:</strong> Your style and swagger</li>
                         </ul>
                     </div>
+                    
+                    <h5 class="mt-4 text-center">Possible Classes</h5>
+                    <p class="text-center text-muted mb-4">Our AI will analyze your X profile to assign one of these classes</p>
+                    
+                    <div class="class-preview">
+                        <div class="class-item">
+                            <div class="class-name">Sigma</div>
+                            <small>Lone wolves with focus</small>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-name">Alpha</div>
+                            <small>Natural leaders</small>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-name">Gigachad</div>
+                            <small>Legendary status</small>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-name">Meme Overlord</div>
+                            <small>Internet culture masters</small>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-name">KOL</div>
+                            <small>Key Opinion Leaders</small>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-name">Tech Bro</div>
+                            <small>Startup enthusiasts</small>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-name">Debate Lord</div>
+                            <small>Masters of rhetoric</small>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-name">Diamond Hands</div>
+                            <small>Unshakeable investors</small>
+                        </div>
+                    </div>
 
-                    <form method="POST" action="{{ url_for('chad.create') }}">
+                    <form method="POST" action="{{ url_for('chad.create') }}" class="mt-4">
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
+                            <button type="submit" class="btn btn-primary btn-lg create-button">
                                 <i class="fas fa-user-plus"></i> Create Character
                             </button>
                         </div>
                     </form>
+                    
+                    <div class="mt-4">
+                        <p class="text-center text-muted small">New accounts typically start as "Exit Liquidity" while our system evaluates your true Chad nature.</p>
+                        <p class="text-center text-muted small">Want to learn more about classes? Check out the <a href="{{ url_for('main.how_to_play') }}">How to Play</a> guide.</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>

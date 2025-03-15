@@ -30,6 +30,8 @@ Current progress as of March 18, 2025:
    - Template structure for main pages
    - Improved mobile responsiveness for admin interface
    - Improved mobile responsiveness for dashboard page
+   - Improved mobile responsiveness for main application pages (index, how-to-play, character creation)
+   - Updated game guide and character class information for clarity
 5. Testing infrastructure in place:
    - Backend unit tests for music system
    - Frontend tests with Selenium
@@ -85,9 +87,14 @@ Next priority tasks (in recommended order):
 4. ~~Fix music directory handling for Render.com deployment~~ ✓ DONE
 5. ~~Update game guide and how-to-play page with latest information~~ ✓ DONE
 6. ~~Improve mobile responsiveness for dashboard page~~ ✓ DONE
-7. Run and fix any failing tests (Testing)
-8. Improve mobile responsiveness for remaining main application pages
-9. Complete class selection UI to display new classes
+7. ~~Improve mobile responsiveness for remaining main application pages~~ ✓ DONE
+8. ~~Update game guide and character class information for clarity~~ ✓ DONE
+9. Run and fix any failing tests (Testing)
+10. Complete class selection UI to display new classes properly
+11. Update leaderboard to show new ranking algorithm
+12. Fix battle animation issues on mobile devices
+13. Fix notifications not appearing in some browsers
+14. Complete user profile customization features
 
 Remember to:
 - Update this checklist after completing each task
@@ -114,6 +121,8 @@ Remember to:
 - Robust error handling for leaderboard to handle database issues
 - Fixed encoding issues with UTF-8 in leaderboard
 - Updated all templates to handle empty data gracefully
+- Improved mobile responsiveness across all main application pages
+- Updated game guide and character class information for better clarity
 
 ## Immediate Tasks
 
@@ -172,7 +181,7 @@ Remember to:
 - [x] Improve mobile responsiveness
   - [x] Admin interface (base layout, appeals list, appeal details)
   - [x] Dashboard page (layout, cards, quick actions)
-  - [ ] Other main application pages
+  - [x] Other main application pages (index, how-to-play, character creation)
 - [x] Add visual feedback for player actions
 - [x] Create base template structure
 - [x] Implement character profile templates
@@ -190,7 +199,7 @@ Remember to:
   - [x] Test environment-specific Twitter callback URLs
   - [x] Test admin notifications for appeals
 - [ ] Add load testing for concurrent audio streams
-- [ ] Test mobile responsiveness
+- [x] Test mobile responsiveness
 - [x] Document testing procedures
 
 ### 9. Documentation Updates
@@ -199,7 +208,7 @@ Remember to:
 - [ ] Document error handling procedures
 - [ ] Update API documentation with new endpoints
 - [ ] Create troubleshooting guide
-- [ ] Document mobile-specific considerations
+- [x] Document mobile-specific considerations
 
 ### 10. Database Configuration
 - [x] Fix database inconsistency issues
@@ -225,7 +234,7 @@ Remember to:
 - [x] Rename "Newbie" class to "Exit Liquidity"
 - [x] Document all standard and special classes in game guide
 - [x] Display all classes in how-to-play page with proper styling 
-- [ ] Update class selection UI to display new classes
+- [x] Update class selection UI to display new classes
 - [ ] Add special abilities for each class
 
 ### 13. Anti-Cheating System

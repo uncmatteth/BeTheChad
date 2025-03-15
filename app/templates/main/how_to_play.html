@@ -2,6 +2,43 @@
 
 {% block title %}How to Play - Chad Battles{% endblock %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    /* Mobile Responsive Styles */
+    @media (max-width: 767px) {
+        .pixel-font {
+            font-size: 1.2rem;
+        }
+        
+        .battle-tips ul li,
+        .marketplace-info ul li {
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            margin-bottom: 1rem;
+        }
+        
+        .class-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .class-card {
+            margin-bottom: 1rem;
+        }
+        
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-12 mb-4">
@@ -39,111 +76,229 @@
                 </div>
                 
                 <div class="row mt-3">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <h4 class="pixel-font mb-3">3. Character Classes</h4>
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #2a2a2a;">
-                            <table class="table table-bordered table-dark">
-                                <thead class="sticky-top bg-dark">
-                                    <tr>
-                                        <th>Class</th>
-                                        <th>Specialty</th>
-                                        <th>Best Stats</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><span class="text-warning">Sigma</span></td>
-                                        <td>Lone wolves with exceptional focus</td>
-                                        <td>Cringe Resist, Roast</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Alpha</span></td>
-                                        <td>Natural leaders with charisma</td>
-                                        <td>Clout, Drip</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Gigachad</span></td>
-                                        <td>Legendary individuals with status</td>
-                                        <td>Clout, Drip</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Meme Overlord</span></td>
-                                        <td>Masters of internet culture</td>
-                                        <td>Roast, Drip</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Crypto Knight</span></td>
-                                        <td>Digital asset warriors</td>
-                                        <td>Cringe Resist, Clout</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Ratio King</span></td>
-                                        <td>Social media tacticians</td>
-                                        <td>Roast, Cringe Resist</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Normie Chad</span></td>
-                                        <td>Balanced individuals</td>
-                                        <td>Equal in all stats</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">KOL</span></td>
-                                        <td>Key Opinion Leaders</td>
-                                        <td>Clout (highest)</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Tech Bro</span></td>
-                                        <td>Startup enthusiasts</td>
-                                        <td>Drip, Cringe Resist</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Gym Rat</span></td>
-                                        <td>Fitness devotees</td>
-                                        <td>Roast, Cringe Resist</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Debate Lord</span></td>
-                                        <td>Masters of rhetoric</td>
-                                        <td>Roast (highest)</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Diamond Hands</span></td>
-                                        <td>Unshakeable investors</td>
-                                        <td>Cringe Resist (highest)</td>
-                                    </tr>
-                                    <tr>
-                                        <td><span class="text-warning">Lore Master</span></td>
-                                        <td>Knowledge keepers</td>
-                                        <td>Roast, Clout</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        
+                        <!-- Desktop table view -->
+                        <div class="d-none d-md-block">
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #2a2a2a;">
+                                <table class="table table-bordered table-dark">
+                                    <thead class="sticky-top bg-dark">
+                                        <tr>
+                                            <th>Class</th>
+                                            <th>Specialty</th>
+                                            <th>Best Stats</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span class="text-warning">Sigma</span></td>
+                                            <td>Lone wolves with exceptional focus</td>
+                                            <td>Cringe Resist, Roast</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Alpha</span></td>
+                                            <td>Natural leaders with charisma</td>
+                                            <td>Clout, Drip</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Gigachad</span></td>
+                                            <td>Legendary individuals with status</td>
+                                            <td>Clout, Drip</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Meme Overlord</span></td>
+                                            <td>Masters of internet culture</td>
+                                            <td>Roast, Drip</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Crypto Knight</span></td>
+                                            <td>Digital asset warriors</td>
+                                            <td>Cringe Resist, Clout</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Ratio King</span></td>
+                                            <td>Social media tacticians</td>
+                                            <td>Roast, Cringe Resist</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Normie Chad</span></td>
+                                            <td>Balanced individuals</td>
+                                            <td>Equal in all stats</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">KOL</span></td>
+                                            <td>Key Opinion Leaders</td>
+                                            <td>Clout (highest)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Tech Bro</span></td>
+                                            <td>Startup enthusiasts</td>
+                                            <td>Drip, Cringe Resist</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Gym Rat</span></td>
+                                            <td>Fitness devotees</td>
+                                            <td>Roast, Cringe Resist</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Debate Lord</span></td>
+                                            <td>Masters of rhetoric</td>
+                                            <td>Roast (highest)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Diamond Hands</span></td>
+                                            <td>Unshakeable investors</td>
+                                            <td>Cringe Resist (highest)</td>
+                                        </tr>
+                                        <tr>
+                                            <td><span class="text-warning">Lore Master</span></td>
+                                            <td>Knowledge keepers</td>
+                                            <td>Roast, Clout</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+                        
+                        <!-- Mobile card view -->
+                        <div class="d-md-none class-grid">
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Sigma</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Lone wolves with exceptional focus</p>
+                                    <p><strong>Best Stats:</strong> Cringe Resist, Roast</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Alpha</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Natural leaders with charisma</p>
+                                    <p><strong>Best Stats:</strong> Clout, Drip</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Gigachad</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Legendary individuals with status</p>
+                                    <p><strong>Best Stats:</strong> Clout, Drip</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Meme Overlord</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Masters of internet culture</p>
+                                    <p><strong>Best Stats:</strong> Roast, Drip</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Crypto Knight</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Digital asset warriors</p>
+                                    <p><strong>Best Stats:</strong> Cringe Resist, Clout</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Ratio King</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Social media tacticians</p>
+                                    <p><strong>Best Stats:</strong> Roast, Cringe Resist</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Normie Chad</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Balanced individuals</p>
+                                    <p><strong>Best Stats:</strong> Equal in all stats</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">KOL</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Key Opinion Leaders</p>
+                                    <p><strong>Best Stats:</strong> Clout (highest)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Tech Bro</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Startup enthusiasts</p>
+                                    <p><strong>Best Stats:</strong> Drip, Cringe Resist</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Gym Rat</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Fitness devotees</p>
+                                    <p><strong>Best Stats:</strong> Roast, Cringe Resist</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Debate Lord</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Masters of rhetoric</p>
+                                    <p><strong>Best Stats:</strong> Roast (highest)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Diamond Hands</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Unshakeable investors</p>
+                                    <p><strong>Best Stats:</strong> Cringe Resist (highest)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-dark border-warning">
+                                <div class="card-header bg-warning text-dark">Lore Master</div>
+                                <div class="card-body">
+                                    <p><strong>Specialty:</strong> Knowledge keepers</p>
+                                    <p><strong>Best Stats:</strong> Roast, Clout</p>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="text-center mt-2">
-                            <small class="text-muted">Scroll to see all classes. Special classes are shown below!</small>
+                            <small class="text-muted">Special classes are shown below!</small>
                         </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-12 mt-4">
                         <h4 class="pixel-font mb-3">4. Collect Waifus</h4>
-                        <p>Waifus are collectible companions that boost your Chad's stats:</p>
-                        <ul>
-                            <li>Waifus come in different rarities: Common, Uncommon, Rare, Epic, and Legendary</li>
-                            <li>Each waifu provides unique stat bonuses</li>
-                            <li>You can equip up to 3 waifus at once</li>
-                            <li>Waifus can be won in battles, purchased in the marketplace, or earned through special events</li>
-                            <li>Rare waifus provide stronger bonuses and unique special abilities</li>
-                        </ul>
-                        
-                        <h5 class="pixel-font text-primary mt-4">Popular Waifu Types</h5>
-                        <div class="bg-dark p-3 rounded border border-primary">
-                            <ul class="text-light mb-0">
-                                <li><strong class="text-primary">Yandere</strong> - Boosts Roast Level, intensely devoted and a bit dangerous</li>
-                                <li><strong class="text-primary">Tsundere</strong> - Boosts Roast Level, tough on the outside, sweet on the inside</li>
-                                <li><strong class="text-primary">Gamer Girl</strong> - Boosts Cringe Resistance, loves games and competitive play</li>
-                                <li><strong class="text-primary">E-Girl</strong> - Boosts Drip Factor, internet personality with unique aesthetic</li>
-                                <li><strong class="text-primary">A.I. Waifu</strong> - Boosts All Stats, legendary advanced artificial intelligence companion</li>
-                            </ul>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p>Waifus are collectible companions that boost your Chad's stats:</p>
+                                <ul>
+                                    <li>Waifus come in different rarities: Common, Uncommon, Rare, Epic, and Legendary</li>
+                                    <li>Each waifu provides unique stat bonuses</li>
+                                    <li>You can equip up to 3 waifus at once</li>
+                                    <li>Waifus can be won in battles, purchased in the marketplace, or earned through special events</li>
+                                    <li>Rare waifus provide stronger bonuses and unique special abilities</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="pixel-font text-primary mt-4 mt-md-0">Popular Waifu Types</h5>
+                                <div class="bg-dark p-3 rounded border border-primary">
+                                    <ul class="text-light mb-0">
+                                        <li><strong class="text-primary">Yandere</strong> - Boosts Roast Level, intensely devoted and a bit dangerous</li>
+                                        <li><strong class="text-primary">Tsundere</strong> - Boosts Roast Level, tough on the outside, sweet on the inside</li>
+                                        <li><strong class="text-primary">Gamer Girl</strong> - Boosts Cringe Resistance, loves games and competitive play</li>
+                                        <li><strong class="text-primary">E-Girl</strong> - Boosts Drip Factor, internet personality with unique aesthetic</li>
+                                        <li><strong class="text-primary">A.I. Waifu</strong> - Boosts All Stats, legendary advanced artificial intelligence companion</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,8 +312,8 @@
                             </div>
                             <div class="card-body bg-dark text-light">
                                 <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="card bg-dark border-warning mb-3">
+                                    <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="card bg-dark border-warning h-100">
                                             <div class="card-header text-center bg-warning text-dark">
                                                 <strong>Blockchain Detective</strong>
                                             </div>
@@ -176,8 +331,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <div class="card bg-dark border-info mb-3">
+                                    <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="card bg-dark border-info h-100">
                                             <div class="card-header text-center bg-info text-dark">
                                                 <strong>Exit Liquidity</strong>
                                             </div>
@@ -191,7 +346,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4">
-                                        <div class="card bg-dark border-danger mb-3">
+                                        <div class="card bg-dark border-danger h-100">
                                             <div class="card-header text-center bg-danger text-white">
                                                 <strong>Clown</strong>
                                             </div>
