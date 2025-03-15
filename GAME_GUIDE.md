@@ -27,6 +27,8 @@ Chad Battles is a Twitter-integrated game where you control a "Chad" character a
 3. **Chad Class Assignment**: Our AI analyzes your Twitter profile to generate a unique Chad character with one of several classes
 4. **Initial Setup**: Your Chad starts with basic stats and 1000 Chadcoin
 
+> **Note**: If your Twitter profile is private, you must follow the [@RollMasterChad](https://twitter.com/RollMasterChad) account for the game to properly analyze your profile and tweets. Without this, character creation may not work correctly.
+
 ### Understanding Stats
 
 - **Clout**: Determines your influence and status

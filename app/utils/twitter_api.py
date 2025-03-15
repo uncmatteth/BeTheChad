@@ -813,7 +813,7 @@ def generate_promotional_tweet():
         "🔥 CHAD BATTLES IS LIT 🔥\n\n{active_users} Chads have been battling in the last 24 hours! The competition is heating up with {recent_battles} recent battles. Don't get left behind!",
         
         # New promotional tweet
-        "🎮 Join BeTheChad - the social RPG revolutionizing Twitter gaming!\n\n1️⃣ CREATE CHARACTER @RollMasterChad\n2️⃣ Collect waifus & items\n3️⃣ Challenge others to battles\n4️⃣ Join or create a cabal\n\nBecome the ultimate chad! #GamersUnite"
+        "🎮 Join Chad Battles - the social RPG revolutionizing Twitter gaming!\n\n1️⃣ CREATE CHARACTER @RollMasterChad\n2️⃣ Collect waifus & items\n3️⃣ Challenge others to battles\n4️⃣ Join or create a cabal\n\nYou can be THE Chad! #GamersUnite"
     ]
     
     return random.choice(promo_templates)

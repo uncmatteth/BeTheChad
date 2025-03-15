@@ -76,27 +76,29 @@ def handle_mention(tweet):
         return False
 
 def handle_create_character(tweet_id, username):
-    """Handle the create character command"""
+    """Handle character creation request"""
     try:
-        # Check if user already exists
+        # Check if the user already has a character
         user = User.query.filter_by(x_username=username).first()
         if user and user.chad:
-            reply = f"@{username} You already have a Chad character! Check your stats with CHECK STATS @RollMasterChad"
+            reply = f"@{username} You already have a Chad character! Tweet CHECK STATS @RollMasterChad to see your stats."
             post_reply(reply, tweet_id)
             return False
         
-        # Get user profile from Twitter
-        profile = get_user_profile(username)
-        if not profile:
-            reply = f"@{username} Failed to fetch your X profile. Please try again later."
-            post_reply(reply, tweet_id)
+        # Get user data from Twitter API
+        user_profile = get_user_profile(username)
+        if not user_profile:
+            # This might happen if the user has a private profile and doesn't follow the bot
+            error_message = f"@{username} I couldn't access your profile! If your account is private, please follow @RollMasterChad so I can analyze your tweets. Once you've followed, try again!"
+            post_reply(error_message, tweet_id)
             return False
-        
-        # Get user tweets for analysis
+            
+        # Fetch user's tweets for analysis
         tweets = get_user_tweets(username)
-        if not tweets:
-            reply = f"@{username} Couldn't analyze your tweets. Make sure your account is public and try again."
-            post_reply(reply, tweet_id)
+        if not tweets or len(tweets) == 0:
+            # This might happen if the user has no tweets or a private account
+            error_message = f"@{username} I couldn't access your tweets! Either you have no tweets, or your account is private. If private, please follow @RollMasterChad and try again!"
+            post_reply(error_message, tweet_id)
             return False
         
         # Analyze tweets to determine character class and stats
@@ -105,19 +107,19 @@ def handle_create_character(tweet_id, username):
         # Create or update User record
         if not user:
             user = User(
-                x_id=profile.get('id_str'),
-                x_username=profile.get('screen_name'),
-                x_displayname=profile.get('name'),
-                x_profile_image=profile.get('profile_image_url_https'),
-                x_followers_count=profile.get('followers_count', 0),
-                x_following_count=profile.get('friends_count', 0),
+                x_id=user_profile.get('id_str'),
+                x_username=user_profile.get('screen_name'),
+                x_displayname=user_profile.get('name'),
+                x_profile_image=user_profile.get('profile_image_url_https'),
+                x_followers_count=user_profile.get('followers_count', 0),
+                x_following_count=user_profile.get('friends_count', 0),
                 last_login=datetime.utcnow()
             )
             db.session.add(user)
             db.session.commit()
         
         # Calculate Clout stat
-        clout = calculate_clout(profile.get('id_str'))
+        clout = calculate_clout(user_profile.get('id_str'))
         
         # Get or create Chad Class
         chad_class = ChadClass.query.filter_by(name=analysis['chad_class']).first()
