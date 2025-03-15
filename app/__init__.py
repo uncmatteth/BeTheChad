@@ -225,6 +225,7 @@ def register_blueprints(app):
         from app.routes.auth import auth as auth_blueprint
         from app.routes.main import main as main_blueprint
         from app.routes.music import music as music_blueprint
+        from app.routes.admin import admin as admin_blueprint
         
         # Register blueprints
         app.logger.info("Registering auth blueprint")
@@ -235,6 +236,9 @@ def register_blueprints(app):
         
         app.logger.info("Registering music blueprint")
         app.register_blueprint(music_blueprint)
+        
+        app.logger.info("Registering admin blueprint")
+        app.register_blueprint(admin_blueprint)
         
         # Additional blueprint registrations
         try:

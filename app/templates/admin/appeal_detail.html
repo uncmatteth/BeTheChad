@@ -1,0 +1,121 @@
+{% extends "admin/base.html" %}
+
+{% block admin_title %}Appeal Details{% endblock %}
+
+{% block admin_content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Appeal #{{ appeal.id }}</h6>
+        <span class="badge {{ appeal.status_badge_class }}">{{ appeal.status|title }}</span>
+    </div>
+    <div class="card-body">
+        <!-- User Information -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5 class="mb-3">User Information</h5>
+                <table class="table table-sm">
+                    <tr>
+                        <th>Username:</th>
+                        <td>{{ appeal.user.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Twitter:</th>
+                        <td>
+                            {% if appeal.user.twitter_username %}
+                            <a href="https://twitter.com/{{ appeal.user.twitter_username }}" target="_blank">
+                                @{{ appeal.user.twitter_username }}
+                            </a>
+                            {% else %}
+                            <span class="text-muted">Not connected</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Current Class:</th>
+                        <td>{{ appeal.user.chad_class }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h5 class="mb-3">Appeal Information</h5>
+                <table class="table table-sm">
+                    <tr>
+                        <th>Requested Class:</th>
+                        <td>{{ appeal.requested_class }}</td>
+                    </tr>
+                    <tr>
+                        <th>Submitted:</th>
+                        <td>{{ appeal.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+                    </tr>
+                    {% if appeal.admin %}
+                    <tr>
+                        <th>Processed by:</th>
+                        <td>{{ appeal.admin.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Processed at:</th>
+                        <td>{{ appeal.updated_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Appeal Reason -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="mb-3">Appeal Reason</h5>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        {{ appeal.reason|nl2br }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if appeal.admin_notes %}
+        <!-- Admin Notes -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5 class="mb-3">Admin Notes</h5>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        {{ appeal.admin_notes|nl2br }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if appeal.status == 'pending' %}
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <h5 class="mb-3">Process Appeal</h5>
+                <form action="{{ url_for('admin.appeal_detail', appeal_id=appeal.id) }}" method="POST">
+                    <div class="form-group">
+                        <label for="reason">Admin Notes (optional)</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3"></textarea>
+                    </div>
+                    <button type="submit" name="action" value="approve" class="btn btn-success mr-2">
+                        <i class="fas fa-check"></i> Approve Appeal
+                    </button>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Reject Appeal
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Back Button -->
+<div class="row">
+    <div class="col-12">
+        <a href="{{ url_for('admin.appeals') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Appeals
+        </a>
+    </div>
+</div>
+{% endblock %} 
