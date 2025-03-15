@@ -181,9 +181,9 @@ def determine_chad_class(keyword_counts, account_age=None, tweet_distribution=No
     if is_suspicious:
         return "Clown"
     
-    # 2. If very new account with few tweets, assign Newbie class
+    # 2. If very new account with few tweets, assign Exit Liquidity class
     if account_age is not None and account_age < 30:
-        return "Newbie"
+        return "Exit Liquidity"
     
     # 3. Check for Blockchain Detective (rare class)
     blockchain_detective_keywords = ['onchain', 'blockchain', 'detective', 'investigation', 'forensics', 'sleuth']

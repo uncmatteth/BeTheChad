@@ -45,8 +45,8 @@ Current progress as of March 15, 2025:
    - Updated database initialization script
 9. Anti-cheating system implemented:
    - Added Clown class for users trying to game the system
-   - Added Newbie class for fresh accounts
-   - Added Blockchain Detective as a rare prestigious class
+   - Added Exit Liquidity class for fresh accounts
+   - Added Blockchain Detective as a rare special class
    - Implemented tweet timestamp analysis to detect suspicious patterns
    - Created class appeal system for the Blockchain Detective class
 
@@ -185,8 +185,8 @@ Remember to:
 
 ### 13. Anti-Cheating System
 - [x] Add Clown class for users trying to game the system
-- [x] Add Newbie class for new accounts
-- [x] Add Blockchain Detective as a special rare class
+- [x] Add Exit Liquidity class for fresh accounts
+- [x] Add Blockchain Detective as a rare special class
 - [x] Implement tweet timestamp analysis for suspicious patterns
 - [x] Create appeal system for the Blockchain Detective class
 - [ ] Add admin interface for managing appeals

@@ -256,7 +256,7 @@ def create_default_chad_class():
             base_drip_bonus=3
         ),
         ChadClass(
-            name='Newbie',
+            name='Exit Liquidity',
             description='Fresh to the scene with potential yet to be realized.',
             base_clout_bonus=15,
             base_roast_bonus=15,

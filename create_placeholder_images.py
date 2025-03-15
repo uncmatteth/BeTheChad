@@ -35,7 +35,7 @@ CHAD_CLASSES = [
     "Diamond Hands",
     "Lore Master",
     "Clown",
-    "Newbie",
+    "Exit Liquidity",
     "Blockchain Detective",
 ]
 WAIFU_TYPES = [
