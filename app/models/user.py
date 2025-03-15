@@ -46,7 +46,6 @@ class User(UserMixin, db.Model):
     
     # Relationships
     chad = db.relationship('Chad', backref='user', uselist=False, lazy=True)
-    waifus = db.relationship('Waifu', backref='user', lazy=True)
     items = db.relationship('Item', backref='user', lazy=True)
     inventory = db.relationship('Inventory', back_populates='user', uselist=False, lazy=True)
     
@@ -144,7 +143,6 @@ class User(UserMixin, db.Model):
             'wallet_address': self.wallet_address,
             'wallet_type': self.wallet_type,
             'has_chad': bool(self.chad),
-            'waifu_count': len(self.waifus),
             'item_count': len(self.items),
             'nft_count': self.get_nft_count(),
             'created_at': self.created_at.isoformat() if self.created_at else None,

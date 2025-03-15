@@ -59,10 +59,12 @@ class Waifu(db.Model):
     luck = db.Column(db.Integer, nullable=False, default=0)
     
     # Ownership tracking
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     owner_id = db.Column(db.String(36), db.ForeignKey('chads.id'), nullable=True)
     acquired_date = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('waifus', lazy=True))
     owner = db.relationship('Chad', foreign_keys=[owner_id], backref='waifus')
     
     def __repr__(self):
