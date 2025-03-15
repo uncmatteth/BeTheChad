@@ -47,48 +47,39 @@ def get_tracks():
     """Return a list of all music tracks"""
     tracks = []
     
-    # Define music directories to check - prioritize relative paths that will work in all environments
-    music_folders = [
-        os.path.join(current_app.static_folder, 'music'),  # Primary location in static folder
-        os.path.join(os.path.dirname(current_app.root_path), 'music'),  # Music folder at project root
-        os.environ.get('CHAD_MUSIC_DIR', ''),  # Optional environment variable location
-        '/home/chadszv/public_html/music'  # Hosting server location (less priority)
-    ]
+    # Primary focus on the Namecheap server path
+    music_folder = '/home/chadszv/public_html/music'
     
     # Track the total number of files processed
     total_files = 0
     valid_music_files = 0
     
-    current_app.logger.info(f"Scanning music directories")
+    current_app.logger.info(f"Scanning Namecheap music directory: {music_folder}")
     
-    found_music_directory = False
+    # Check if we're in production or development
+    if current_app.config.get('FLASK_ENV') != 'production' or not os.path.exists(music_folder) or not os.path.isdir(music_folder):
+        # Fallback to static folder only for development
+        current_app.logger.warning(f"Not in production or Namecheap directory not accessible. Using static folder.")
+        music_folder = os.path.join(current_app.static_folder, 'music')
     
-    for folder in music_folders:
-        if not folder or not os.path.exists(folder) or not os.path.isdir(folder):
-            current_app.logger.warning(f"Music directory not found or not accessible: {folder}")
-            continue
-            
-        found_music_directory = True
-        current_app.logger.info(f"Found music directory: {folder}")
+    if os.path.exists(music_folder) and os.path.isdir(music_folder):
+        current_app.logger.info(f"Accessing music directory: {music_folder}")
         
         try:
             # Get all audio files from the folder
-            for filename in os.listdir(folder):
+            for filename in os.listdir(music_folder):
                 total_files += 1
                 if filename.lower().endswith(('.mp3', '.m4a', '.wav', '.ogg')):
-                    file_path = os.path.join(folder, filename)
+                    file_path = os.path.join(music_folder, filename)
                     file_size = os.path.getsize(file_path)
                     
-                    # Determine path based on directory
-                    if folder == os.path.join(current_app.static_folder, 'music'):
+                    # Determine path based on the music folder
+                    if music_folder == os.path.join(current_app.static_folder, 'music'):
                         # If in static/music folder, use /static/music path for web access
                         path = f'/static/music/{filename}'
-                    elif folder == '/home/chadszv/public_html/music':
-                        # If in public_html/music folder, use direct path
-                        path = f'/music/{filename}'
                     else:
-                        # For custom directory or project root, use the custom music endpoint
-                        path = f'/music/custom/{filename}'
+                        # For Namecheap server, use the direct music path
+                        path = f'/music/{filename}'
                     
                     # Create a track object with the correct path
                     track = {
@@ -102,40 +93,15 @@ def get_tracks():
                     valid_music_files += 1
                     current_app.logger.debug(f"Added track: {track['title']} ({file_size} bytes)")
         except Exception as e:
-            current_app.logger.error(f"Error reading music directory {folder}: {str(e)}")
+            current_app.logger.error(f"Error reading music directory {music_folder}: {str(e)}")
+    else:
+        current_app.logger.error(f"Music directory not found or not accessible: {music_folder}")
     
     current_app.logger.info(f"Processed total of {total_files} files, found {valid_music_files} valid music files")
     
-    # If no tracks found in any directory, create hardcoded entries for all Be the Chad tracks
-    # This ensures the music player works even if we can't access the files directly on Render
+    # No fallback to hardcoded tracks - if no tracks are found, we'll return an empty array
     if not tracks:
-        current_app.logger.warning("No music directories found. Using hardcoded track list.")
-        
-        # Add hardcoded tracks that match the actual files on the hosting server
-        chad_tracks = [
-            {"title": "Be the Chad 1", "filename": "Be the Chad (1).m4a", "path": "/music/Be the Chad (1).m4a", "size": 2130000, "type": "m4a"},
-            {"title": "Be the Chad 10", "filename": "Be the Chad (10).m4a", "path": "/music/Be the Chad (10).m4a", "size": 2120000, "type": "m4a"},
-            {"title": "Be the Chad 100", "filename": "Be the Chad (100).m4a", "path": "/music/Be the Chad (100).m4a", "size": 1590000, "type": "m4a"},
-            {"title": "Be the Chad 101", "filename": "Be the Chad (101).m4a", "path": "/music/Be the Chad (101).m4a", "size": 2090000, "type": "m4a"},
-            {"title": "Be the Chad 102", "filename": "Be the Chad (102).m4a", "path": "/music/Be the Chad (102).m4a", "size": 3810000, "type": "m4a"},
-            {"title": "Be the Chad 103", "filename": "Be the Chad (103).m4a", "path": "/music/Be the Chad (103).m4a", "size": 2290000, "type": "m4a"},
-            {"title": "Be the Chad 11", "filename": "Be the Chad (11).m4a", "path": "/music/Be the Chad (11).m4a", "size": 1560000, "type": "m4a"},
-            {"title": "Be the Chad 12", "filename": "Be the Chad (12).m4a", "path": "/music/Be the Chad (12).m4a", "size": 3870000, "type": "m4a"},
-            {"title": "Be the Chad 13", "filename": "Be the Chad (13).m4a", "path": "/music/Be the Chad (13).m4a", "size": 2460000, "type": "m4a"},
-            {"title": "Be the Chad 14", "filename": "Be the Chad (14).m4a", "path": "/music/Be the Chad (14).m4a", "size": 2460000, "type": "m4a"},
-            {"title": "Be the Chad 15", "filename": "Be the Chad (15).m4a", "path": "/music/Be the Chad (15).m4a", "size": 3730000, "type": "m4a"}
-        ]
-        tracks.extend(chad_tracks)
-        
-        # For additional tracks that might be needed
-        for i in range(16, 28):
-            tracks.append({
-                "title": f"Be the Chad {i}",
-                "path": f"/music/Be the Chad ({i}).m4a",
-                "filename": f"Be the Chad ({i}).m4a",
-                "size": 2500000,
-                "type": "m4a"
-            })
+        current_app.logger.warning("No music files found in any directories")
         
     return jsonify(tracks)
 
