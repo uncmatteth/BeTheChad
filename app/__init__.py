@@ -50,6 +50,26 @@ def create_app(config_name='development'):
     # Load the config based on environment
     app.config.from_object(config_by_name[config_name])
     
+    # Database URL handling: Ensure DATABASE_URL has priority if present
+    # This ensures consistent PostgreSQL usage in all environments including migrations
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Handle Render's postgres:// vs postgresql:// URL format
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        
+        # Override the SQLALCHEMY_DATABASE_URI with DATABASE_URL
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        
+        # Log the database connection (safely)
+        masked_url = database_url
+        if '@' in masked_url:
+            protocol_and_creds = masked_url.split('@')[0].split('://')
+            masked_url = f"{protocol_and_creds[0]}://****:****@{masked_url.split('@')[1]}"
+        app.logger.info(f"Using database URL: {masked_url}")
+    else:
+        app.logger.warning("No DATABASE_URL found in environment, using default config database.")
+    
     # Fix for proxy headers when behind a reverse proxy
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     
