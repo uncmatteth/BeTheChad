@@ -1,13 +1,14 @@
+"""
+Inventory model for Chad Battles.
+Handles user inventory management.
+"""
 from app.extensions import db
 from datetime import datetime
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import func
 
 class Inventory(db.Model):
-    """
-    Inventory model for tracking user's items, waifus, and NFTs.
-    Provides utility methods for inventory management.
-    """
+    """Inventory model for storing user inventory data."""
     __tablename__ = 'inventories'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -16,7 +17,10 @@ class Inventory(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    user = db.relationship('User', back_populates='inventory')
+    user = db.relationship('User', back_populates='inventory', uselist=False)
+    
+    def __repr__(self):
+        return f'<Inventory {self.id} (User: {self.user_id})>'
     
     @hybrid_property
     def total_items(self):

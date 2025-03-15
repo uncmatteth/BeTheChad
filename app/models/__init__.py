@@ -1,9 +1,20 @@
+# Import models to make them available and ensure proper relationships
+from app.models.transaction import Transaction, TransactionType
+from app.models.inventory import Inventory
 from app.models.user import User
-from app.models.chad import Chad
+from app.models.chad import Chad, ChadClass
 from app.models.waifu import Waifu
-from app.models.item import Item, WaifuItem, CharacterItem
-from app.models.cabal import Cabal, CabalMember
-from app.models.battle import Battle
-from app.models.meme_elixir import MemeElixir
-from app.models.transaction import Transaction
-from app.models.nft import NFT 
+from app.models.item import Item
+from app.models.rarity import Rarity
+from app.models.battle import Battle, BattleResult
+
+# Other models that might exist in your app
+try:
+    from app.models.cabal_analytics import CabalAnalytics
+except ImportError:
+    pass
+
+try:
+    from app.models.referral import Referral
+except ImportError:
+    pass 
