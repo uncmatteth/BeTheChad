@@ -29,6 +29,7 @@ Current progress as of March 18, 2025:
    - Visual feedback
    - Template structure for main pages
    - Improved mobile responsiveness for admin interface
+   - Improved mobile responsiveness for dashboard page
 5. Testing infrastructure in place:
    - Backend unit tests for music system
    - Frontend tests with Selenium
@@ -83,9 +84,10 @@ Next priority tasks (in recommended order):
 3. ~~Fix WaifuType relationship with Waifu model~~ ✓ DONE
 4. ~~Fix music directory handling for Render.com deployment~~ ✓ DONE
 5. ~~Update game guide and how-to-play page with latest information~~ ✓ DONE
-6. Run and fix any failing tests (Testing)
-7. Improve mobile responsiveness for main application pages
-8. Complete class selection UI to display new classes
+6. ~~Improve mobile responsiveness for dashboard page~~ ✓ DONE
+7. Run and fix any failing tests (Testing)
+8. Improve mobile responsiveness for remaining main application pages
+9. Complete class selection UI to display new classes
 
 Remember to:
 - Update this checklist after completing each task
@@ -169,7 +171,8 @@ Remember to:
 - [x] Add keyboard shortcuts for player control
 - [x] Improve mobile responsiveness
   - [x] Admin interface (base layout, appeals list, appeal details)
-  - [ ] Main application pages
+  - [x] Dashboard page (layout, cards, quick actions)
+  - [ ] Other main application pages
 - [x] Add visual feedback for player actions
 - [x] Create base template structure
 - [x] Implement character profile templates
