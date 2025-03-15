@@ -47,11 +47,12 @@ def get_tracks():
     """Return a list of all music tracks"""
     tracks = []
     
-    # Define music directories to check
+    # Define music directories to check - prioritize relative paths that will work in all environments
     music_folders = [
-        '/home/chadszv/public_html/music',  # Primary location on hosting server
-        os.path.join(current_app.static_folder, 'music'),  # Fallback location
-        os.environ.get('CHAD_MUSIC_DIR', '')  # Optional environment variable location
+        os.path.join(current_app.static_folder, 'music'),  # Primary location in static folder
+        os.path.join(os.path.dirname(current_app.root_path), 'music'),  # Music folder at project root
+        os.environ.get('CHAD_MUSIC_DIR', ''),  # Optional environment variable location
+        '/home/chadszv/public_html/music'  # Hosting server location (less priority)
     ]
     
     # Track the total number of files processed
@@ -74,19 +75,19 @@ def get_tracks():
             # Get all audio files from the folder
             for filename in os.listdir(folder):
                 total_files += 1
-                if filename.lower().endswith(('.mp3', '.m4a')):
+                if filename.lower().endswith(('.mp3', '.m4a', '.wav', '.ogg')):
                     file_path = os.path.join(folder, filename)
                     file_size = os.path.getsize(file_path)
                     
                     # Determine path based on directory
-                    if folder == '/home/chadszv/public_html/music':
-                        # If in public_html/music folder, use direct path
-                        path = f'/music/{filename}'
-                    elif folder == os.path.join(current_app.static_folder, 'music'):
+                    if folder == os.path.join(current_app.static_folder, 'music'):
                         # If in static/music folder, use /static/music path for web access
                         path = f'/static/music/{filename}'
+                    elif folder == '/home/chadszv/public_html/music':
+                        # If in public_html/music folder, use direct path
+                        path = f'/music/{filename}'
                     else:
-                        # For custom directory, use the custom music endpoint
+                        # For custom directory or project root, use the custom music endpoint
                         path = f'/music/custom/{filename}'
                     
                     # Create a track object with the correct path
@@ -149,26 +150,22 @@ def stream_music(filename):
         # Sanitize filename to prevent directory traversal
         filename = os.path.basename(filename)
         
-        # First try to find file in hosting server's public_html/music
-        hosting_dir = '/home/chadszv/public_html/music'
-        if os.path.exists(hosting_dir) and os.path.exists(os.path.join(hosting_dir, filename)):
-            current_app.logger.info(f"Found {filename} in hosting directory: {hosting_dir}")
-            return send_from_directory(hosting_dir, filename)
+        # Check all possible music directories
+        music_dirs = [
+            os.path.join(current_app.static_folder, 'music'),  # Static folder
+            os.path.join(os.path.dirname(current_app.root_path), 'music'),  # Project root
+            os.environ.get('CHAD_MUSIC_DIR', ''),  # Environment variable
+            '/home/chadszv/public_html/music'  # Hosting server
+        ]
         
-        # Next try to find in our static directory
-        music_dir = os.path.join(current_app.static_folder, 'music')
         file_path = None
         
-        # Check main music directory
-        if os.path.exists(os.path.join(music_dir, filename)):
-            file_path = os.path.join(music_dir, filename)
-            current_app.logger.info(f"Found {filename} in static directory: {music_dir}")
-        else:
-            # Try alternative music directory
-            alt_music_dir = os.environ.get('CHAD_MUSIC_DIR')
-            if alt_music_dir and os.path.exists(os.path.join(alt_music_dir, filename)):
-                file_path = os.path.join(alt_music_dir, filename)
-                current_app.logger.info(f"Found {filename} in alt directory: {alt_music_dir}")
+        # Find the file in any of the directories
+        for directory in music_dirs:
+            if directory and os.path.exists(os.path.join(directory, filename)):
+                file_path = os.path.join(directory, filename)
+                current_app.logger.info(f"Found {filename} in directory: {directory}")
+                break
         
         if file_path:
             # Get file size
@@ -206,7 +203,17 @@ def stream_music(filename):
             
             return send_from_directory(os.path.dirname(file_path), os.path.basename(file_path))
         
-        # If file not found, return placeholder content for debugging on Render
+        # If file not found and in production, try to create the static/music directory
+        if current_app.config.get('FLASK_ENV') == 'production':
+            try:
+                music_dir = os.path.join(current_app.static_folder, 'music')
+                if not os.path.exists(music_dir):
+                    os.makedirs(music_dir, exist_ok=True)
+                    current_app.logger.info(f"Created music directory: {music_dir}")
+            except Exception as e:
+                current_app.logger.error(f"Failed to create music directory: {str(e)}")
+        
+        # If file not found, return placeholder content for debugging
         current_app.logger.error(f"Music file not found: {filename}")
         if current_app.config.get('FLASK_ENV') == 'production':
             # In production, return a placeholder audio fragment for debugging
@@ -229,6 +236,10 @@ def get_mime_type(filename):
         return 'audio/mpeg'
     elif filename.lower().endswith('.m4a'):
         return 'audio/mp4'
+    elif filename.lower().endswith('.wav'):
+        return 'audio/wav'
+    elif filename.lower().endswith('.ogg'):
+        return 'audio/ogg'
     return 'application/octet-stream'
 
 def partial_file_sender(file_path, byte1=0, byte2=None):
@@ -253,143 +264,127 @@ def partial_file_sender(file_path, byte1=0, byte2=None):
                 remaining -= len(chunk)
                 yield chunk
     except Exception as e:
-        current_app.logger.error(f"Error reading file {file_path}: {str(e)}")
-        yield b''  # Return empty bytes on error
+        current_app.logger.error(f"Error in partial_file_sender: {str(e)}")
+        yield b''
 
 @music.route('/custom/<filename>')
 @limiter.limit("100 per hour")
 def stream_custom_music(filename):
-    """Stream a music file from the custom directory with range request support"""
+    """Stream music from a custom location defined in environment variable"""
     try:
         # Sanitize filename to prevent directory traversal
         filename = os.path.basename(filename)
         
-        custom_music_dir = os.environ.get('CHAD_MUSIC_DIR')
-        if not custom_music_dir or not os.path.exists(os.path.join(custom_music_dir, filename)):
-            current_app.logger.error(f"Custom music file not found: {filename}")
-            return jsonify({"error": "File not found"}), 404
-            
-        file_path = os.path.join(custom_music_dir, filename)
-        return stream_music(filename)
+        # Get music directory from environment variable or use a fallback
+        music_dir = os.environ.get('CHAD_MUSIC_DIR')
+        if not music_dir or not os.path.exists(music_dir):
+            music_dir = os.path.join(os.path.dirname(current_app.root_path), 'music')
+            if not os.path.exists(music_dir):
+                return jsonify({"error": "Custom music directory not configured"}), 404
         
+        return send_from_directory(music_dir, filename)
     except Exception as e:
-        current_app.logger.error(f"Error streaming custom music file: {e}")
-        return jsonify({"error": "File not found"}), 404
+        current_app.logger.error(f"Error streaming custom music file {filename}: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @music.route('/player')
 @limiter.limit("60 per hour")
 def player():
-    """Return HTML for embedding the music player"""
-    return '''
-    <div id="embedded-jukebox-container"></div>
-    <script src="/static/js/jukebox.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Only initialize if no existing player
-            if (!document.getElementById('chad-jukebox')) {
-                initJukebox('embedded-jukebox-container');
-            }
-        });
-    </script>
-    '''
+    """Music player page"""
+    return render_template('music/player.html')
 
 @music.route('/debug')
 @limiter.limit("10 per minute")
 @login_required  # Require authentication for debug endpoint
 def debug_music():
-    """Debug endpoint to check music system status"""
-    if not current_app.debug and not current_app.config.get('FLASK_ENV') == 'production':
-        return jsonify({"error": "Debug endpoint only available in development or production with debugging enabled"}), 403
+    """Debug endpoint to check music configuration"""
+    try:
+        if not current_user.is_admin:
+            return jsonify({"error": "Admin access required"}), 403
+            
+        debug_info = {
+            "app_root": current_app.root_path,
+            "static_folder": current_app.static_folder,
+            "music_dirs": []
+        }
         
-    music_dir = os.path.join(current_app.static_folder, 'music')
-    hosting_dir = '/home/chadszv/public_html/music'
-    custom_dir = os.environ.get('CHAD_MUSIC_DIR', '')
-    
-    # Collect debug information
-    debug_info = {
-        'environment': current_app.config.get('FLASK_ENV', 'unknown'),
-        'music_directories': [
-            {
-                'path': hosting_dir,
-                'exists': os.path.exists(hosting_dir),
-                'is_dir': os.path.isdir(hosting_dir) if os.path.exists(hosting_dir) else False,
-                'permission': 'readable' if os.access(hosting_dir, os.R_OK) else 'not readable' if os.path.exists(hosting_dir) else 'n/a',
-                'file_count': len([f for f in os.listdir(hosting_dir) if f.lower().endswith(('.mp3', '.m4a'))]) if os.path.exists(hosting_dir) and os.path.isdir(hosting_dir) and os.access(hosting_dir, os.R_OK) else 0
-            },
-            {
-                'path': music_dir,
-                'exists': os.path.exists(music_dir),
-                'is_dir': os.path.isdir(music_dir) if os.path.exists(music_dir) else False,
-                'permission': 'readable' if os.access(music_dir, os.R_OK) else 'not readable' if os.path.exists(music_dir) else 'n/a',
-                'file_count': len([f for f in os.listdir(music_dir) if f.lower().endswith(('.mp3', '.m4a'))]) if os.path.exists(music_dir) and os.path.isdir(music_dir) and os.access(music_dir, os.R_OK) else 0
+        # Check various music directory locations
+        music_dirs = [
+            {"name": "static/music", "path": os.path.join(current_app.static_folder, 'music')},
+            {"name": "project_root/music", "path": os.path.join(os.path.dirname(current_app.root_path), 'music')},
+            {"name": "CHAD_MUSIC_DIR", "path": os.environ.get('CHAD_MUSIC_DIR', 'Not set')},
+            {"name": "hosting_server", "path": '/home/chadszv/public_html/music'}
+        ]
+        
+        # Check each directory
+        for dir_info in music_dirs:
+            dir_path = dir_info["path"]
+            dir_exists = os.path.exists(dir_path) if dir_path else False
+            is_dir = os.path.isdir(dir_path) if dir_exists else False
+            
+            dir_debug = {
+                "name": dir_info["name"],
+                "path": dir_path,
+                "exists": dir_exists,
+                "is_directory": is_dir,
+                "files": []
             }
-        ],
-        'files': []
-    }
-    
-    # Add custom directory if set
-    if custom_dir:
-        debug_info['music_directories'].append({
-            'path': custom_dir,
-            'exists': os.path.exists(custom_dir),
-            'is_dir': os.path.isdir(custom_dir) if os.path.exists(custom_dir) else False,
-            'permission': 'readable' if os.access(custom_dir, os.R_OK) else 'not readable' if os.path.exists(custom_dir) else 'n/a',
-            'file_count': len([f for f in os.listdir(custom_dir) if f.lower().endswith(('.mp3', '.m4a'))]) if os.path.exists(custom_dir) and os.path.isdir(custom_dir) and os.access(custom_dir, os.R_OK) else 0
-        })
-    
-    # Collect file information safely
-    for dir_info in debug_info['music_directories']:
-        if dir_info['exists'] and dir_info['is_dir'] and dir_info['permission'] == 'readable':
+            
+            # If directory exists, list files
+            if dir_exists and is_dir:
+                try:
+                    files = os.listdir(dir_path)
+                    music_files = [f for f in files if f.lower().endswith(('.mp3', '.m4a', '.wav', '.ogg'))]
+                    
+                    for music_file in music_files[:10]:  # Limit to first 10 files
+                        file_path = os.path.join(dir_path, music_file)
+                        file_info = {
+                            "name": music_file,
+                            "size": os.path.getsize(file_path),
+                            "last_modified": os.path.getmtime(file_path)
+                        }
+                        dir_debug["files"].append(file_info)
+                        
+                    dir_debug["file_count"] = len(files)
+                    dir_debug["music_file_count"] = len(music_files)
+                except Exception as e:
+                    dir_debug["error"] = str(e)
+            
+            debug_info["music_dirs"].append(dir_debug)
+            
+        # Create static/music if it doesn't exist
+        if not os.path.exists(os.path.join(current_app.static_folder, 'music')):
             try:
-                folder = dir_info['path']
-                for filename in os.listdir(folder):
-                    if filename.lower().endswith(('.mp3', '.m4a')):
-                        try:
-                            file_path = os.path.join(folder, filename)
-                            file_size = os.path.getsize(file_path)
-                            debug_info['files'].append({
-                                'name': filename,
-                                'path': file_path,
-                                'size': file_size,
-                                'type': os.path.splitext(filename)[1][1:].lower()
-                            })
-                        except Exception as e:
-                            debug_info['files'].append({
-                                'name': filename,
-                                'path': os.path.join(folder, filename),
-                                'error': str(e)
-                            })
+                os.makedirs(os.path.join(current_app.static_folder, 'music'), exist_ok=True)
+                debug_info["created_static_music"] = True
             except Exception as e:
-                dir_info['error'] = str(e)
-    
-    # Add request information to help debug
-    debug_info['request'] = {
-        'host': request.host,
-        'user_agent': request.user_agent.string,
-        'remote_addr': request.remote_addr
-    }
-    
-    return jsonify(debug_info)
+                debug_info["create_static_music_error"] = str(e)
+                
+        return jsonify(debug_info)
+    except Exception as e:
+        current_app.logger.error(f"Error in debug endpoint: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @music.route('/health')
 def health_check():
-    """Simple health check endpoint for the music system"""
-    music_dir = os.path.join(current_app.static_folder, 'music')
-    hosting_dir = '/home/chadszv/public_html/music'
+    """Health check endpoint for the music service"""
+    # Check if we can access the static music directory
+    static_music = os.path.join(current_app.static_folder, 'music')
+    static_music_exists = os.path.exists(static_music) and os.path.isdir(static_music)
     
-    status = {
-        'status': 'ok',
-        'message': 'Music system operational',
-        'directories': {
-            'static_music': {
-                'exists': os.path.exists(music_dir),
-                'is_dir': os.path.isdir(music_dir) if os.path.exists(music_dir) else False
-            },
-            'hosting_music': {
-                'exists': os.path.exists(hosting_dir),
-                'is_dir': os.path.isdir(hosting_dir) if os.path.exists(hosting_dir) else False
-            }
-        }
-    }
+    # Check if we can access a custom music directory
+    custom_music = os.environ.get('CHAD_MUSIC_DIR')
+    custom_music_exists = False
+    if custom_music:
+        custom_music_exists = os.path.exists(custom_music) and os.path.isdir(custom_music)
+        
+    # Check if any music directory is available
+    any_music_dir_available = static_music_exists or custom_music_exists
     
-    return jsonify(status) 
+    # Return health status
+    return jsonify({
+        "status": "healthy" if any_music_dir_available else "degraded",
+        "static_music_available": static_music_exists,
+        "custom_music_available": custom_music_exists,
+        "timestamp": datetime.now().isoformat()
+    }) 
