@@ -61,6 +61,7 @@ Current progress as of March 18, 2025:
    - Created class appeal system for the Blockchain Detective class
    - Added admin interface for managing appeals
    - Added environment-aware Twitter OAuth callback URLs
+   - Updated game guide and how-to-play page with all character classes, battle mechanics, waifus, and cabals
 
 ## CRITICAL REMINDERS
 - Music files MUST be hosted on nameserver (`/home/chadszv/public_html/music`) NOT on Render
@@ -81,7 +82,10 @@ Next priority tasks (in recommended order):
 2. ~~Add admin interface for managing class appeals~~ ✓ DONE
 3. ~~Fix WaifuType relationship with Waifu model~~ ✓ DONE
 4. ~~Fix music directory handling for Render.com deployment~~ ✓ DONE
-5. Run and fix any failing tests (Testing)
+5. ~~Update game guide and how-to-play page with latest information~~ ✓ DONE
+6. Run and fix any failing tests (Testing)
+7. Improve mobile responsiveness for main application pages
+8. Complete class selection UI to display new classes
 
 Remember to:
 - Update this checklist after completing each task
@@ -155,7 +159,9 @@ Remember to:
 - [x] Update deployment guides
 - [ ] Add contribution guidelines
 - [ ] Document security practices
-- [ ] Create user guide for music system
+- [x] Create user guide for music system
+- [x] Update game guide with all characters, mechanics, and features
+- [x] Update how-to-play page with latest information
 
 ### 7. Frontend Improvements
 - [x] Add loading states for better user feedback
@@ -214,6 +220,8 @@ Remember to:
 - [x] Create placeholder images for new classes
 - [x] Balance stats for new character classes
 - [x] Rename "Newbie" class to "Exit Liquidity"
+- [x] Document all standard and special classes in game guide
+- [x] Display all classes in how-to-play page with proper styling 
 - [ ] Update class selection UI to display new classes
 - [ ] Add special abilities for each class
 
