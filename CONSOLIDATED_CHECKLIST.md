@@ -29,6 +29,11 @@ Current progress as of March 14, 2024:
    - Frontend tests with Selenium
    - Test fixtures and utilities
    - Continuous integration ready
+6. Database configuration:
+   - Fixed database inconsistency issues
+   - Ensured consistent use of PostgreSQL
+   - Proper migration handling
+   - Robust initialization script
 
 Next priority tasks (in recommended order):
 1. Run and fix any failing tests (Testing)
@@ -49,6 +54,7 @@ Remember to:
 - Basic project structure is in place
 - Core functionality is working
 - Template structure completed for main pages
+- Database configuration fixed for consistent PostgreSQL usage
 
 ## Immediate Tasks
 
@@ -122,6 +128,13 @@ Remember to:
 - [ ] Update API documentation with new endpoints
 - [ ] Create troubleshooting guide
 - [ ] Document mobile-specific considerations
+
+### 10. Database Configuration
+- [x] Fix database inconsistency issues
+- [x] Ensure consistent use of PostgreSQL for all operations
+- [x] Update migration handling to work with PostgreSQL
+- [x] Improve database initialization script
+- [ ] Verify all tables are properly created in PostgreSQL
 
 ## Future Enhancements
 - [ ] Consider implementing offline playback capability

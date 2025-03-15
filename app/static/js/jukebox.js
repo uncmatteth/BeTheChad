@@ -11,9 +11,11 @@ class Jukebox {
         this.audio = new Audio();
         this.currentTrackIndex = -1;
         this.volume = localStorage.getItem('jukebox_volume') || 0.7;
+        this.isMuted = localStorage.getItem('jukebox-muted') === 'true';
+        this.isShuffleEnabled = true; // Always shuffle for Chad Battles
         
         // Set initial volume
-        this.audio.volume = this.volume;
+        this.audio.volume = this.isMuted ? 0 : this.volume;
         
         // Set up event listeners
         this.audio.addEventListener('ended', () => this.playNextRandom());
@@ -197,9 +199,10 @@ class Jukebox {
     
     setVolume(value) {
         this.volume = Math.max(0, Math.min(1, value));
-        this.audio.volume = this.volume;
+        this.audio.volume = this.isMuted ? 0 : this.volume;
         document.getElementById('volume-slider').value = this.volume * 100;
         localStorage.setItem('jukebox_volume', this.volume);
+        this.updateMuteButton();
     }
     
     seekTo(position) {
@@ -326,6 +329,22 @@ class Jukebox {
         }
         this.currentTrackIndex = -1;
         localStorage.removeItem('jukebox_state');
+    }
+    
+    updateMuteButton() {
+        if (this.isMuted) {
+            document.getElementById('volume-slider').disabled = true;
+            document.getElementById('volume-slider').value = 0;
+            document.getElementById('volume-slider').style.background = '#555';
+            document.getElementById('volume-slider').style.cursor = 'not-allowed';
+            document.getElementById('volume-icon').textContent = '🔇';
+        } else {
+            document.getElementById('volume-slider').disabled = false;
+            document.getElementById('volume-slider').value = this.volume * 100;
+            document.getElementById('volume-slider').style.background = 'linear-gradient(to right, #4CAF50, #45a049)';
+            document.getElementById('volume-slider').style.cursor = 'pointer';
+            this.setVolume(this.volume);
+        }
     }
 }
 

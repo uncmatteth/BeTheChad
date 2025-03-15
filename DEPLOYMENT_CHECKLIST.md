@@ -36,10 +36,10 @@
 ## Current Issues (Last Updated: March 14, 2025)
 
 ### Database Issues
-- [ ] **Critical**: Database switches between SQLite and PostgreSQL during different operations
+- [x] **Critical**: Database switches between SQLite and PostgreSQL during different operations
 - [ ] Some tables not being created in PostgreSQL (users, cabals)
-- [ ] Database migration script not applying correctly to PostgreSQL
-- [ ] Migrations are being applied to SQLite temp.db but not PostgreSQL
+- [x] Database migration script not applying correctly to PostgreSQL
+- [x] Migrations are being applied to SQLite temp.db but not PostgreSQL
 
 ### Template Issues
 - [x] Missing templates: 
@@ -66,8 +66,8 @@
 ## Next Steps Priority List
 
 1. Fix database configuration to ensure:
-   - [ ] PostgreSQL is used consistently throughout the application
-   - [ ] All migrations are applied to PostgreSQL, not SQLite
+   - [x] PostgreSQL is used consistently throughout the application
+   - [x] All migrations are applied to PostgreSQL, not SQLite
    - [ ] All tables are created properly in the PostgreSQL database
 
 2. Fix template issues:

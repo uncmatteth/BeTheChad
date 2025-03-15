@@ -49,8 +49,7 @@ def get_tracks():
     
     # Define music directories to check
     music_folders = [
-        '/public_html/music',  # Primary location on nameserver
-        os.path.join(current_app.static_folder, 'music'),  # Fallback location
+        os.path.join(current_app.static_folder, 'music'),  # Primary location
         os.environ.get('CHAD_MUSIC_DIR', '')  # Optional environment variable location
     ]
     
@@ -60,11 +59,14 @@ def get_tracks():
     
     current_app.logger.info(f"Scanning music directories")
     
+    found_music_directory = False
+    
     for folder in music_folders:
         if not folder or not os.path.exists(folder) or not os.path.isdir(folder):
             current_app.logger.warning(f"Music directory not found or not accessible: {folder}")
             continue
             
+        found_music_directory = True
         current_app.logger.info(f"Checking music directory: {folder}")
         
         try:
@@ -75,10 +77,18 @@ def get_tracks():
                     file_path = os.path.join(folder, filename)
                     file_size = os.path.getsize(file_path)
                     
+                    # Determine path based on directory
+                    if folder == os.path.join(current_app.static_folder, 'music'):
+                        # If in static/music folder, use /static/music path for web access
+                        path = f'/static/music/{filename}'
+                    else:
+                        # For custom directory, use the custom music endpoint
+                        path = f'/music/custom/{filename}'
+                    
                     # Create a track object with the correct path
                     track = {
                         'title': os.path.splitext(filename)[0].replace('_', ' '),
-                        'path': f'/music/{filename}',  # Use direct path since files are in public_html/music
+                        'path': path,
                         'filename': filename,
                         'size': file_size,
                         'type': os.path.splitext(filename)[1][1:].lower()
@@ -92,7 +102,27 @@ def get_tracks():
     current_app.logger.info(f"Processed total of {total_files} files, found {valid_music_files} valid music files")
     
     if not tracks:
-        current_app.logger.warning("No music files found in any directory")
+        # Create default placeholder tracks if no real music is found
+        if not found_music_directory:
+            current_app.logger.warning("No music directories found. Using placeholder tracks.")
+            tracks = [
+                {
+                    'title': 'Demo Track 1',
+                    'path': '/static/audio/placeholder.mp3',
+                    'filename': 'placeholder.mp3',
+                    'size': 0,
+                    'type': 'mp3'
+                },
+                {
+                    'title': 'Demo Track 2',
+                    'path': '/static/audio/placeholder2.mp3',
+                    'filename': 'placeholder2.mp3',
+                    'size': 0,
+                    'type': 'mp3'
+                }
+            ]
+        else:
+            current_app.logger.warning("Music directories found but no music files. Add .mp3 or .m4a files.")
         
     return jsonify(tracks)
 
@@ -254,26 +284,51 @@ def debug_music():
             'file_count': len([f for f in os.listdir(custom_dir) if f.lower().endswith(('.mp3', '.m4a'))]) if os.path.exists(custom_dir) and os.path.isdir(custom_dir) else 0
         })
     
-    # Check each file in the default music directory
-    if os.path.exists(music_dir) and os.path.isdir(music_dir):
-        for filename in os.listdir(music_dir):
-            file_path = os.path.join(music_dir, filename)
-            if os.path.isfile(file_path) and filename.lower().endswith(('.mp3', '.m4a')):
-                file_size = os.path.getsize(file_path)
-                
-                debug_info['files'].append({
-                    'name': filename,
-                    'size': file_size,
-                    'size_readable': f"{file_size / 1024:.2f} KB" if file_size < 1024 * 1024 else f"{file_size / (1024 * 1024):.2f} MB",
-                    'path': f'/static/music/{filename}',
-                    'type': os.path.splitext(filename)[1][1:].lower()
-                })
+    # Collect file information
+    for dir_info in debug_info['music_directories']:
+        if dir_info['exists'] and dir_info['is_dir'] and dir_info['permission'] == 'readable':
+            folder = dir_info['path']
+            for filename in os.listdir(folder):
+                if filename.lower().endswith(('.mp3', '.m4a')):
+                    file_path = os.path.join(folder, filename)
+                    file_size = os.path.getsize(file_path)
+                    debug_info['files'].append({
+                        'name': filename,
+                        'path': file_path,
+                        'size': file_size,
+                        'type': os.path.splitext(filename)[1][1:].lower()
+                    })
     
-    # Get request information
-    debug_info['request'] = {
-        'host': request.host,
-        'url': request.url,
-        'headers': dict(request.headers)
-    }
+    return jsonify(debug_info)
+
+@music.route('/create_sample')
+@login_required
+def create_sample():
+    """Create sample music files for testing (dev only)"""
+    if not current_app.debug:
+        return jsonify({"error": "This endpoint is only available in development mode"}), 403
     
-    return jsonify(debug_info) 
+    music_dir = os.path.join(current_app.static_folder, 'music')
+    
+    # Make sure music directory exists
+    if not os.path.exists(music_dir):
+        os.makedirs(music_dir)
+    
+    # Create sample text files that simulate music files for testing
+    sample_files = [
+        {'name': 'sample_track_1.mp3', 'content': 'This is a sample MP3 file for testing'},
+        {'name': 'sample_track_2.mp3', 'content': 'Another sample MP3 file for testing'},
+        {'name': 'lofi_beats.mp3', 'content': 'A simulated lofi music file for testing'},
+        {'name': 'electronic_vibes.m4a', 'content': 'A simulated M4A file for testing'}
+    ]
+    
+    for sample in sample_files:
+        file_path = os.path.join(music_dir, sample['name'])
+        with open(file_path, 'w') as f:
+            f.write(sample['content'])
+    
+    return jsonify({
+        "success": True, 
+        "message": f"Created {len(sample_files)} sample files in {music_dir}",
+        "files": [s['name'] for s in sample_files]
+    }) 
