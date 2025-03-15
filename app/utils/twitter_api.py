@@ -71,34 +71,36 @@ def get_user_tweets(username, count=50):
         return []
 
 def analyze_tweets(tweets):
-    """Analyze tweets to determine Chad Class and base stats"""
-    # Count keyword frequencies
-    keyword_counts = {
-        'crypto': 0,
-        'meme': 0,
-        'nft': 0,
-        'chad': 0,
-        'based': 0,
-        'ratio': 0,
-        'alpha': 0,
-        'sigma': 0,
-        'hodl': 0,
-        'moon': 0,
-        'wojak': 0,
-        'pepe': 0
-    }
+    """Analyze a user's tweets to determine their Chad Class and stats"""
+    # Count occurrences of various keywords
+    keyword_counts = {}
+    keywords = [
+        'meme', 'pepe', 'wojak', 'crypto', 'nft', 'hodl', 'moon', 'alpha', 'chad',
+        'based', 'sigma', 'ratio', 'king', 'gigachad', 'normie', 'gm', 'wagmi',
+        'ngmi', 'bullish', 'bearish', 'fud', 'dyor', 'btc', 'eth', 'solana',
+        'defi', 'staking', 'gym', 'debate', 'investing', 'diamond hands'
+    ]
     
-    # Process tweets
     for tweet in tweets:
-        text = tweet.get('full_text', '').lower()
+        text = tweet.get('text', '').lower()
+        created_at = datetime.strptime(tweet.get('created_at', ''), '%a %b %d %H:%M:%S +0000 %Y')
         
-        # Count keyword occurrences
-        for keyword in keyword_counts.keys():
+        # Process each keyword
+        for keyword in keywords:
             if keyword in text:
-                keyword_counts[keyword] += 1
+                if keyword not in keyword_counts:
+                    keyword_counts[keyword] = {
+                        'count': 0,
+                        'timestamps': []
+                    }
+                keyword_counts[keyword]['count'] += 1
+                keyword_counts[keyword]['timestamps'].append(created_at)
     
-    # Determine Chad Class based on keyword frequencies
-    chad_class = determine_chad_class(keyword_counts)
+    # Check for account age and tweet distribution
+    account_age, tweet_distribution, is_suspicious = analyze_account_behavior(tweets, keyword_counts)
+    
+    # Determine Chad Class based on keyword frequencies, account age, and distribution
+    chad_class = determine_chad_class(keyword_counts, account_age, tweet_distribution, is_suspicious)
     
     # Calculate base stats based on keyword frequencies and engagement
     base_stats = calculate_base_stats(tweets, keyword_counts)
@@ -106,24 +108,115 @@ def analyze_tweets(tweets):
     return {
         'chad_class': chad_class,
         'base_stats': base_stats,
-        'keyword_analysis': keyword_counts
+        'keyword_analysis': {k: v['count'] for k, v in keyword_counts.items()},
+        'account_metadata': {
+            'age_days': account_age,
+            'distribution_score': tweet_distribution,
+            'suspicious_activity': is_suspicious
+        }
     }
 
-def determine_chad_class(keyword_counts):
-    """Determine the user's Chad Class based on keyword frequencies"""
-    # Define class criteria
+def analyze_account_behavior(tweets, keyword_counts):
+    """Analyze account age and tweet distribution for suspicious patterns"""
+    from datetime import datetime, timedelta
+    
+    # Get current time
+    now = datetime.utcnow()
+    
+    # Calculate account age
+    if tweets and len(tweets) > 0:
+        # Get the earliest tweet
+        created_at_str = min(tweets, key=lambda x: x.get('created_at', '')).get('created_at', '')
+        if created_at_str:
+            created_at = datetime.strptime(created_at_str, '%a %b %d %H:%M:%S +0000 %Y')
+            account_age = (now - created_at).days
+        else:
+            account_age = 0
+    else:
+        account_age = 0
+    
+    # Analyze keyword distribution over time
+    is_suspicious = False
+    tweet_distribution = 1.0  # 1.0 means evenly distributed
+    
+    # Check for suspicious patterns
+    if keyword_counts:
+        # Check if all keywords were used in the last week
+        recent_threshold = now - timedelta(days=7)
+        
+        # Count keywords with timestamps
+        keywords_with_timestamps = [k for k, v in keyword_counts.items() if 'timestamps' in v and v['timestamps']]
+        
+        if keywords_with_timestamps:
+            # Calculate percentage of keywords that only appear in recent tweets
+            recent_only_keywords = 0
+            for keyword, data in keyword_counts.items():
+                if 'timestamps' in data and data['timestamps']:
+                    if all(ts > recent_threshold for ts in data['timestamps']):
+                        recent_only_keywords += 1
+            
+            if recent_only_keywords > 0:
+                recent_keyword_percentage = recent_only_keywords / len(keywords_with_timestamps)
+                
+                # If more than 80% of keywords only appear in recent tweets, flag as suspicious
+                if recent_keyword_percentage > 0.8 and len(keywords_with_timestamps) > 3:
+                    is_suspicious = True
+                    tweet_distribution = 0.2
+                elif recent_keyword_percentage > 0.5:
+                    tweet_distribution = 0.5
+    
+    return account_age, tweet_distribution, is_suspicious
+
+def determine_chad_class(keyword_counts, account_age=None, tweet_distribution=None, is_suspicious=False):
+    """Determine the user's Chad Class based on keyword frequencies and account behavior"""
+    # First handle special cases
+    
+    # Format keyword_counts if it's the new format
+    if isinstance(keyword_counts, dict) and all(isinstance(v, dict) for v in keyword_counts.values()):
+        keyword_counts_simple = {k: v['count'] for k, v in keyword_counts.items()}
+    else:
+        keyword_counts_simple = keyword_counts
+    
+    # 1. If suspicious pattern detected, assign Clown class
+    if is_suspicious:
+        return "Clown"
+    
+    # 2. If very new account with few tweets, assign Newbie class
+    if account_age is not None and account_age < 30:
+        return "Newbie"
+    
+    # 3. Check for Blockchain Detective (rare class)
+    blockchain_detective_keywords = ['onchain', 'blockchain', 'detective', 'investigation', 'forensics', 'sleuth']
+    blockchain_detective_score = sum(keyword_counts_simple.get(keyword, 0) for keyword in blockchain_detective_keywords)
+    
+    if blockchain_detective_score >= 10 and account_age and account_age > 365:
+        # Only assign if they have been active for over a year and have significant relevant content
+        return "Blockchain Detective"
+    
+    # Define class criteria for regular classes
     class_criteria = {
         'Meme Overlord': ['meme', 'pepe', 'wojak'],
         'Crypto Knight': ['crypto', 'nft', 'hodl', 'moon'],
         'Alpha Chad': ['alpha', 'chad', 'based'],
-        'Sigma Grindset': ['sigma', 'based', 'alpha'],
-        'Ratio King': ['ratio', 'based', 'chad']
+        'Sigma Grindset': ['sigma', 'based', 'grind'],
+        'Ratio King': ['ratio', 'based', 'chad'],
+        'KOL': ['opinion', 'leader', 'influence', 'trend'],
+        'Tech Bro': ['startup', 'disrupt', 'scale', 'tech'],
+        'Gym Rat': ['gym', 'protein', 'lift', 'gains'],
+        'Debate Lord': ['debate', 'argument', 'logic', 'fallacy'],
+        'Diamond Hands': ['hodl', 'diamond', 'hands', 'hold'],
+        'Lore Master': ['lore', 'history', 'knowledge', 'facts']
     }
     
     # Score each class
     class_scores = {}
     for class_name, keywords in class_criteria.items():
-        score = sum(keyword_counts.get(keyword, 0) for keyword in keywords)
+        score = sum(keyword_counts_simple.get(keyword, 0) for keyword in keywords)
+        
+        # Apply tweet distribution factor if available
+        if tweet_distribution is not None:
+            score *= tweet_distribution
+            
         class_scores[class_name] = score
     
     # Find the highest scoring class

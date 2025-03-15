@@ -115,4 +115,71 @@ def edit_profile():
             logger.error(f"Error updating profile: {str(e)}")
             flash('An error occurred while updating your profile', 'danger')
     
-    return render_template('auth/edit_profile.html') 
+    return render_template('auth/edit_profile.html')
+
+@auth.route('/appeal-class', methods=['POST'])
+@login_required
+def appeal_class():
+    """Handle class appeal requests for the Blockchain Detective class"""
+    if not current_user.chad:
+        flash('You need to create a Chad character first', 'warning')
+        return redirect(url_for('auth.profile'))
+    
+    # Check if already Blockchain Detective
+    if current_user.chad.chad_class.name == 'Blockchain Detective':
+        flash('You already have the Blockchain Detective class', 'info')
+        return redirect(url_for('auth.profile'))
+    
+    # Check if user has appealed within the last month
+    from datetime import datetime, timedelta
+    from app.models.appeal import ClassAppeal
+    
+    one_month_ago = datetime.utcnow() - timedelta(days=30)
+    recent_appeal = ClassAppeal.query.filter_by(
+        user_id=current_user.id,
+        created_at=one_month_ago
+    ).first()
+    
+    if recent_appeal:
+        flash('You can only submit one appeal per month. Please try again later.', 'warning')
+        return redirect(url_for('auth.profile'))
+    
+    # Get form data
+    experience = request.form.get('blockchain_experience')
+    contributions = request.form.get('blockchain_contributions')
+    evidence = request.form.get('blockchain_evidence')
+    
+    # Validate input
+    if not experience or not contributions or not evidence:
+        flash('All fields are required', 'danger')
+        return redirect(url_for('auth.profile'))
+    
+    # Record the appeal
+    try:
+        from app.models.appeal import ClassAppeal
+        
+        # Create appeal record
+        appeal = ClassAppeal(
+            user_id=current_user.id,
+            chad_id=current_user.chad.id,
+            current_class=current_user.chad.chad_class.name,
+            requested_class='Blockchain Detective',
+            experience=experience,
+            contributions=contributions,
+            evidence=evidence,
+            status='pending'
+        )
+        
+        db.session.add(appeal)
+        db.session.commit()
+        
+        # Notify admins (would implement email/notification system)
+        logger.info(f"New class appeal from {current_user.username} for Blockchain Detective class")
+        
+        flash('Your class appeal has been submitted for review. You will be notified of the decision.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error submitting class appeal: {str(e)}")
+        flash('An error occurred while submitting your appeal', 'danger')
+    
+    return redirect(url_for('auth.profile')) 

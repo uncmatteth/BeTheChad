@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}How to Play - Chad Battles{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">How to Play Chad Battles</h1>
+                </div>
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Getting Started</h2>
+                    <p>Welcome to Chad Battles, the ultimate game where your online persona becomes your character!</p>
+                    
+                    <ol class="mb-4">
+                        <li>Connect your Twitter account to create your chad</li>
+                        <li>We'll analyze your tweets to determine your Chad Class</li>
+                        <li>Customize your chad with items and equipment</li>
+                        <li>Battle other chads to earn Chadcoin and experience</li>
+                        <li>Collect waifus to boost your stats</li>
+                        <li>Join or create a cabal with other players</li>
+                    </ol>
+                    
+                    <h2 class="h4 mb-3">Chad Classes</h2>
+                    <p>Your tweets and online behavior determine your Chad Class, each with unique stat bonuses:</p>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <ul class="list-group mb-3">
+                                <li class="list-group-item"><strong>Alpha Chad:</strong> Natural leaders with charisma</li>
+                                <li class="list-group-item"><strong>Sigma Grindset:</strong> Lone wolves with focus</li>
+                                <li class="list-group-item"><strong>Gigachad:</strong> Legendary individuals with status</li>
+                                <li class="list-group-item"><strong>Meme Overlord:</strong> Masters of internet culture</li>
+                                <li class="list-group-item"><strong>Crypto Knight:</strong> Digital asset warriors</li>
+                                <li class="list-group-item"><strong>Ratio King:</strong> Social media tacticians</li>
+                                <li class="list-group-item"><strong>Normie Chad:</strong> Balanced individuals</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group mb-3">
+                                <li class="list-group-item"><strong>KOL:</strong> Key Opinion Leaders who shape trends</li>
+                                <li class="list-group-item"><strong>Tech Bro:</strong> Startup enthusiasts who disrupt</li>
+                                <li class="list-group-item"><strong>Gym Rat:</strong> Fitness devotees</li>
+                                <li class="list-group-item"><strong>Debate Lord:</strong> Masters of rhetoric</li>
+                                <li class="list-group-item"><strong>Diamond Hands:</strong> Unshakeable investors</li>
+                                <li class="list-group-item"><strong>Lore Master:</strong> Knowledge keepers</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4">
+                        <h3 class="h5">Special Classes</h3>
+                        <p><strong>Blockchain Detective:</strong> A rare, prestigious class reserved for proven on-chain investigators with a long history of detective work in the blockchain space.</p>
+                        <p>Think you deserve this class? You can appeal your classification in your profile settings if you can demonstrate:</p>
+                        <ul>
+                            <li>At least 1 year of active blockchain investigation activity</li>
+                            <li>Evidence of significant on-chain analysis contributions</li>
+                            <li>Recognition within the blockchain investigation community</li>
+                        </ul>
+                        <p><small>Our system has anti-gaming measures to detect accounts created just to obtain specific classes or those engaging in suspicious activity patterns. These accounts may be assigned to special penalty classes.</small></p>
+                    </div>
+                    
+                    <h2 class="h4 mb-3">Stats and Attributes</h2>
+                    <p>Your chad has four primary attributes that determine performance in battles:</p>
+                    
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item"><strong>Clout:</strong> Your overall influence and status</li>
+                        <li class="list-group-item"><strong>Roast Level:</strong> Your ability to attack other chads</li>
+                        <li class="list-group-item"><strong>Cringe Resistance:</strong> Your defense against attacks</li>
+                        <li class="list-group-item"><strong>Drip Factor:</strong> Your style and swag factor</li>
+                    </ul>
+                    
+                    <h2 class="h4 mb-3">Battles</h2>
+                    <p>Challenge other chads to battles to earn rewards:</p>
+                    
+                    <ul class="mb-4">
+                        <li>Win battles to earn Chadcoin and experience</li>
+                        <li>Level up to increase your base stats</li>
+                        <li>Develop strategies based on your class strengths</li>
+                        <li>Use items and waifus to gain an edge in battle</li>
+                    </ul>
+                    
+                    <h2 class="h4 mb-3">Waifus</h2>
+                    <p>Collect waifus to boost your stats and gain special abilities:</p>
+                    
+                    <ul class="mb-4">
+                        <li>Waifus come in different rarities, from Common to Legendary</li>
+                        <li>Each waifu provides unique stat bonuses</li>
+                        <li>Equip waifus before battles for maximum advantage</li>
+                        <li>Some waifus have special abilities that can turn the tide of battle</li>
+                    </ul>
+                    
+                    <h2 class="h4 mb-3">Cabals</h2>
+                    <p>Join forces with other players in cabals:</p>
+                    
+                    <ul class="mb-4">
+                        <li>Create or join a cabal with like-minded chads</li>
+                        <li>Participate in cabal wars for massive rewards</li>
+                        <li>Contribute to your cabal's growth and prosperity</li>
+                        <li>Share resources and strategies with cabal members</li>
+                    </ul>
+                    
+                    <h2 class="h4 mb-3">Economy</h2>
+                    <p>The game has a thriving economic system:</p>
+                    
+                    <ul class="mb-4">
+                        <li>Earn Chadcoin through battles, quests, and activities</li>
+                        <li>Spend Chadcoin on items, waifus, and upgrades</li>
+                        <li>Trade with other players in the marketplace</li>
+                        <li>Invest in cabal treasury for long-term benefits</li>
+                    </ul>
+                    
+                    <div class="text-center mt-5">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-lg btn-primary">Start Your Chad Journey</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

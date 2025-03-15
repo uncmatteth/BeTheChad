@@ -245,6 +245,32 @@ def create_default_chad_class():
             base_roast_bonus=25,
             base_cringe_resistance_bonus=20,
             base_drip_bonus=10
+        ),
+        # Anti-gaming system classes
+        ChadClass(
+            name='Clown',
+            description='Detected trying to game the system. Nice try, but we see through your act.',
+            base_clout_bonus=5,
+            base_roast_bonus=5,
+            base_cringe_resistance_bonus=0,
+            base_drip_bonus=0
+        ),
+        ChadClass(
+            name='Newbie',
+            description='Fresh to the scene with potential yet to be realized.',
+            base_clout_bonus=10,
+            base_roast_bonus=10,
+            base_cringe_resistance_bonus=10,
+            base_drip_bonus=10
+        ),
+        # Special rare class
+        ChadClass(
+            name='Blockchain Detective',
+            description='Elite on-chain sleuths with proven track records of digital investigation.',
+            base_clout_bonus=35,
+            base_roast_bonus=20,
+            base_cringe_resistance_bonus=35,
+            base_drip_bonus=20
         )
     ]
     

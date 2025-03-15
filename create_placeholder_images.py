@@ -34,6 +34,9 @@ CHAD_CLASSES = [
     "Debate Lord",
     "Diamond Hands",
     "Lore Master",
+    "Clown",
+    "Newbie",
+    "Blockchain Detective",
 ]
 WAIFU_TYPES = [
     "Common",
