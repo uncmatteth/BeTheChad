@@ -19,9 +19,17 @@ class Referral(db.Model):
     cabal_id = db.Column(db.String(36), db.ForeignKey('cabal.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships
-    referrer = db.relationship('Chad', foreign_keys=[referrer_id], backref=db.backref('referrals_made', lazy='dynamic'))
-    referred = db.relationship('Chad', foreign_keys=[referred_id], backref=db.backref('referrals_received', lazy='dynamic'))
+    # Relationships with explicit primaryjoin conditions
+    referrer = db.relationship('Chad', 
+                             foreign_keys=[referrer_id],
+                             primaryjoin="Referral.referrer_id == Chad.id",
+                             backref=db.backref('referrals_made', lazy='dynamic'))
+    
+    referred = db.relationship('Chad', 
+                              foreign_keys=[referred_id],
+                              primaryjoin="Referral.referred_id == Chad.id",
+                              backref=db.backref('referrals_received', lazy='dynamic'))
+    
     cabal = db.relationship('Cabal', backref='referrals')
     
     def __repr__(self):

@@ -353,27 +353,65 @@ function initJukebox(containerId) {
     fetch('/music/tracks')
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`Failed to fetch tracks: ${response.status} ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
+            console.log('Loaded music tracks response:', data);
+            
             if (!data || data.length === 0) {
-                throw new Error('No music files available');
+                console.warn('No tracks returned from the server, using fallback tracks');
+                
+                // Use fallback direct URLs to the music files on the server
+                const fallbackTracks = [];
+                
+                // Add hardcoded tracks that point directly to the Namecheap server
+                for (let i = 1; i <= 103; i++) {
+                    fallbackTracks.push({
+                        title: `Be the Chad ${i}`,
+                        path: `https://chadbattles.fun/music/Be the Chad (${i}).m4a`,
+                        filename: `Be the Chad (${i}).m4a`,
+                        size: 2000000,
+                        type: 'm4a'
+                    });
+                }
+                
+                console.log(`Created ${fallbackTracks.length} fallback tracks`);
+                const jukebox = new Jukebox(containerId, fallbackTracks);
+                window.jukebox = jukebox;
+                return;
             }
-            console.log('Loaded music tracks:', data);
+            
+            console.log(`Loaded ${data.length} music tracks`);
             const jukebox = new Jukebox(containerId, data);
             window.jukebox = jukebox;
         })
         .catch(error => {
             console.error('Error loading music files:', error);
+            
+            // Use fallback direct URLs in case of error
+            const fallbackTracks = [];
+            
+            // Add hardcoded tracks that point directly to the Namecheap server
+            for (let i = 1; i <= 103; i++) {
+                fallbackTracks.push({
+                    title: `Be the Chad ${i}`,
+                    path: `https://chadbattles.fun/music/Be the Chad (${i}).m4a`,
+                    filename: `Be the Chad (${i}).m4a`,
+                    size: 2000000,
+                    type: 'm4a'
+                });
+            }
+            
+            console.log(`Created ${fallbackTracks.length} fallback tracks due to error`);
             const container = document.getElementById(containerId);
+            
             if (container) {
-                container.innerHTML = `
-                    <div class="jukebox-error">
-                        Error loading music player. Please try refreshing the page.
-                    </div>
-                `;
+                const jukebox = new Jukebox(containerId, fallbackTracks);
+                window.jukebox = jukebox;
+            } else {
+                console.error(`Container #${containerId} not found`);
             }
         });
 }
